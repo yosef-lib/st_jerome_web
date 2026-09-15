@@ -116,19 +116,19 @@
                 </div>
                 <div class="flex flex-col gap-4 xl:flex-row">
                     <div class="w-full xl:w-1/4">
-                        <label class="mb-2 block text-black font-medium text-sm">Classification (DDC)</label>
+                        <label class="mb-2 block text-black font-medium text-sm truncate" title="Klasifikasi (DDC)">Klasifikasi</label>
                         <input type="text" name="klasifikasi" placeholder="Cth: 200" required class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
                     </div>
                     <div class="w-full xl:w-1/4">
-                        <label class="mb-2 block text-black font-medium text-sm">Cutter <span class="text-primary text-xs bg-primary/10 px-1 py-0.5 rounded ml-1">Auto</span></label>
+                        <label class="mb-2 block text-black font-medium text-sm truncate" title="Cutter">Cutter <span class="text-primary text-xs bg-primary/10 px-1 py-0.5 rounded ml-1">Auto</span></label>
                         <input type="text" id="inputCutter" name="cutter" required class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
                     </div>
                     <div class="w-full xl:w-1/4">
-                        <label class="mb-2 block text-black font-medium text-sm">Huruf Judul <span class="text-primary text-xs bg-primary/10 px-1 py-0.5 rounded ml-1">Auto</span></label>
+                        <label class="mb-2 block text-black font-medium text-sm truncate" title="Huruf Judul">Huruf Judul <span class="text-primary text-xs bg-primary/10 px-1 py-0.5 rounded ml-1">Auto</span></label>
                         <input type="text" id="inputHurufJudul" name="huruf_judul" required class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
                     </div>
                     <div class="w-full xl:w-1/4">
-                        <label class="mb-2 block text-black font-medium text-sm">Copy Ke</label>
+                        <label class="mb-2 block text-black font-medium text-sm truncate" title="Copy Ke">Copy Ke</label>
                         <input type="number" name="copy_ke" value="1" min="1" class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
                     </div>
                 </div>
@@ -189,6 +189,24 @@
     const inputJudul = document.getElementById('inputJudul');
     const inputHurufJudul = document.getElementById('inputHurufJudul');
     
+    // Auto-generate cutter dari inputPengarang
+    inputPengarang.addEventListener('input', function() {
+        let author = this.value.trim();
+        if (author.length > 0) {
+            // Ambil 3 huruf pertama
+            let cutter = author.substring(0, 3);
+            if (cutter.length > 0) {
+                // Huruf pertama kapital, sisanya kecil
+                cutter = cutter.charAt(0).toUpperCase() + cutter.substring(1).toLowerCase();
+                inputCutter.value = cutter;
+            } else {
+                inputCutter.value = '';
+            }
+        } else {
+            inputCutter.value = '';
+        }
+    });
+
     // Auto-generate huruf_judul dari inputJudul
     inputJudul.addEventListener('input', function() {
         let title = this.value.trim().toLowerCase();
