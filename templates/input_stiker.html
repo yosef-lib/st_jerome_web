@@ -196,15 +196,19 @@
             // Ambil 3 huruf pertama
             let cutter = author.substring(0, 3);
             if (cutter.length > 0) {
-                // Huruf pertama kapital, sisanya kecil
-                cutter = cutter.charAt(0).toUpperCase() + cutter.substring(1).toLowerCase();
-                inputCutter.value = cutter;
+                // Sesuai instruksi: WAJIB CAPSLOCK semuanya
+                inputCutter.value = cutter.toUpperCase();
             } else {
                 inputCutter.value = '';
             }
         } else {
             inputCutter.value = '';
         }
+    });
+
+    // Paksa input manual agar selalu Capslock jika diketik sendiri
+    inputCutter.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
     });
 
     // Auto-generate huruf_judul dari inputJudul
