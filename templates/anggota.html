@@ -1,0 +1,227 @@
+{% extends 'layout.html' %}
+{% block page_title %}Daftar Anggota{% endblock %}
+{% block page_subtitle %}Melihat dan mengelola keanggotaan pemustaka{% endblock %}
+
+{% block content %}
+<div class="rounded-sm border border-stroke bg-white shadow-default">
+    <div class="border-b border-stroke py-4 px-6 md:px-6 xl:px-7.5 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h4 class="text-xl font-semibold text-black">Daftar Pemustaka</h4>
+            <p class="text-sm font-medium text-slate-500">Total {{ anggota_list|length }} anggota terdaftar</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3">
+            <form method="GET" action="/anggota" class="flex gap-2">
+                <input type="text" name="search" class="rounded border border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary" placeholder="Cari Nama / ID" value="{{ search }}">
+                <button type="submit" class="flex justify-center rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+            </form>
+            
+            <span id="selectCountLabel" class="hidden items-center justify-center rounded-full bg-blue-100 py-1 px-3 text-sm font-medium text-primary">0 Terpilih</span>
+            
+            <button type="button" id="btnResetSelection" class="hidden rounded border border-stroke py-2 px-4 font-medium text-black hover:bg-slate-100 transition" onclick="resetSelection()">
+                Reset
+            </button>
+            
+            <button form="cetakForm" type="submit" class="flex items-center gap-2 rounded border border-primary bg-white py-2 px-4 font-medium text-primary hover:bg-primary hover:text-white transition">
+                <i class="fa-solid fa-print"></i> Cetak Kartu
+            </button>
+            
+            <button type="button" class="flex items-center gap-2 rounded bg-success py-2 px-4 font-medium text-white hover:bg-opacity-90 transition" onclick="document.getElementById('importModal').showModal()">
+                <i class="fa-solid fa-download"></i> Import SLiMS
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-full overflow-x-auto">
+        <form id="cetakForm" method="POST" action="/cetak_kartu">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-2 text-left bg-slate-50">
+                        <th class="py-4 px-4 font-medium text-black xl:pl-11"><input type="checkbox" id="checkAll" class="rounded border-stroke cursor-pointer"></th>
+                        <th class="py-4 px-4 font-medium text-black">ID Anggota</th>
+                        <th class="py-4 px-4 font-medium text-black min-w-[200px]">Nama Lengkap</th>
+                        <th class="py-4 px-4 font-medium text-black">Status / Tipe</th>
+                        <th class="py-4 px-4 font-medium text-black">Masa Berlaku</th>
+                        <th class="py-4 px-4 font-medium text-black">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for anggota in anggota_list %}
+                    <tr class="border-b border-stroke hover:bg-slate-50 transition">
+                        <td class="py-4 px-4 xl:pl-11">
+                            <input type="checkbox" class="member-check rounded border-stroke cursor-pointer" value="{{ anggota['member_id'] }}">
+                        </td>
+                        <td class="py-4 px-4">
+                            <p class="text-black">{{ anggota['member_id'] }}</p>
+                        </td>
+                        <td class="py-4 px-4">
+                            <p class="text-black font-medium">{{ anggota['nama'] }}</p>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span class="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success">
+                                {{ anggota['tipe_anggota'] }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4">
+                            <p class="text-black">{{ anggota['masa_berlaku'] }}</p>
+                        </td>
+                        <td class="py-4 px-4">
+                            <button type="button" class="text-primary hover:text-blue-800 transition font-medium" onclick="openEditModal('{{ anggota['member_id'] }}', '{{ anggota['nama'] }}', '{{ anggota['tipe_anggota'] }}', '{{ anggota['masa_berlaku'] }}')">
+                                Edit
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-slate-500">
+                            Data tidak ditemukan. Silakan lakukan pencarian atau import data.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Anggota -->
+<dialog id="editModal" class="rounded-sm border border-stroke bg-white p-6 shadow-default w-full max-w-md fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999]">
+    <div class="flex justify-between items-center mb-5">
+        <h3 class="text-xl font-semibold text-black">Edit Data Keanggotaan</h3>
+        <button type="button" onclick="document.getElementById('editModal').close()" class="text-slate-400 hover:text-slate-700 text-2xl">&times;</button>
+    </div>
+    <form method="POST" action="/edit_anggota" id="editForm">
+        <input type="hidden" name="member_id" id="edit_member_id">
+        <div class="mb-4">
+            <label class="mb-2 block text-sm font-medium text-black">Nama Lengkap</label>
+            <input type="text" name="nama" id="edit_nama" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+        </div>
+        <div class="mb-4">
+            <label class="mb-2 block text-sm font-medium text-black">Tipe Anggota</label>
+            <input type="text" name="tipe_anggota" id="edit_tipe_anggota" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+        </div>
+        <div class="mb-5">
+            <label class="mb-1 block text-sm font-medium text-black">Masa Berlaku (Tahun-Bulan-Tanggal)</label>
+            <input type="text" name="masa_berlaku" id="edit_masa_berlaku" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            <span class="text-xs text-slate-500 mt-1 block">Contoh: 2029-12-31</span>
+        </div>
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="document.getElementById('editModal').close()" class="rounded border border-stroke py-2 px-6 font-medium text-black hover:bg-slate-100 transition">Batal</button>
+            <button type="submit" class="rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90 transition">Simpan</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal Import CSV -->
+<dialog id="importModal" class="rounded-sm border border-stroke bg-white p-6 shadow-default w-full max-w-lg fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999]">
+    <div class="flex justify-between items-center mb-5">
+        <h3 class="text-xl font-semibold text-black">Import Data dari SLiMS</h3>
+        <button type="button" onclick="document.getElementById('importModal').close()" class="text-slate-400 hover:text-slate-700 text-2xl">&times;</button>
+    </div>
+    <form action="/import_anggota" method="POST" enctype="multipart/form-data">
+        <div class="mb-5">
+            <label class="mb-2 block text-sm font-medium text-black">Pilih File CSV Export SLiMS</label>
+            <input type="file" name="file" accept=".csv" required class="w-full rounded-md border border-stroke p-3 outline-none transition file:mr-4 file:rounded file:border-[0.5px] file:border-stroke file:bg-[#EEEEEE] file:py-1 file:px-2.5 file:text-sm file:font-medium focus:border-primary file:focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter">
+            <p class="text-xs text-slate-500 mt-2 leading-relaxed">Data yang sama (ID kembar) akan otomatis diperbarui, dan ID baru akan ditambahkan tanpa membuat double data.</p>
+        </div>
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="document.getElementById('importModal').close()" class="rounded border border-stroke py-2 px-6 font-medium text-black hover:bg-slate-100 transition">Batal</button>
+            <button type="submit" class="rounded bg-success py-2 px-6 font-medium text-white hover:bg-opacity-90 transition">Mulai Import</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+// --- Logika Edit Modal ---
+function openEditModal(id, nama, tipe, masa) {
+    document.getElementById('edit_member_id').value = id;
+    document.getElementById('edit_nama').value = nama;
+    document.getElementById('edit_tipe_anggota').value = tipe;
+    document.getElementById('edit_masa_berlaku').value = masa;
+    document.getElementById('editModal').showModal();
+}
+
+// --- Logika Penyimpanan Pilihan (Checkbox) ---
+let selectedIds = JSON.parse(sessionStorage.getItem('selected_members') || '[]');
+
+function updateUI() {
+    const label = document.getElementById('selectCountLabel');
+    const btnReset = document.getElementById('btnResetSelection');
+    
+    if (selectedIds.length > 0) {
+        label.style.display = 'inline-flex';
+        label.textContent = selectedIds.length + ' Terpilih';
+        btnReset.style.display = 'inline-block';
+    } else {
+        label.style.display = 'none';
+        btnReset.style.display = 'none';
+    }
+}
+
+function resetSelection() {
+    selectedIds = [];
+    sessionStorage.setItem('selected_members', JSON.stringify(selectedIds));
+    document.querySelectorAll('.member-check').forEach(cb => cb.checked = false);
+    document.getElementById('checkAll').checked = false;
+    updateUI();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const checkboxes = document.querySelectorAll('.member-check');
+    checkboxes.forEach(cb => {
+        if (selectedIds.includes(cb.value)) cb.checked = true;
+        
+        cb.addEventListener('change', function() {
+            if (this.checked) {
+                if (!selectedIds.includes(this.value)) selectedIds.push(this.value);
+            } else {
+                selectedIds = selectedIds.filter(id => id !== this.value);
+            }
+            sessionStorage.setItem('selected_members', JSON.stringify(selectedIds));
+            updateUI();
+        });
+    });
+
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+        checkAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => {
+                cb.checked = this.checked;
+                if (this.checked) {
+                    if (!selectedIds.includes(cb.value)) selectedIds.push(cb.value);
+                } else {
+                    selectedIds = selectedIds.filter(id => id !== cb.value);
+                }
+            });
+            sessionStorage.setItem('selected_members', JSON.stringify(selectedIds));
+            updateUI();
+        });
+    }
+
+    updateUI();
+    
+    const cetakForm = document.getElementById('cetakForm');
+    if (cetakForm) {
+        cetakForm.addEventListener('submit', function(e) {
+            if (selectedIds.length === 0) {
+                e.preventDefault();
+                alert('Silakan pilih minimal 1 anggota untuk dicetak.');
+                return;
+            }
+            
+            checkboxes.forEach(cb => cb.disabled = true);
+            
+            selectedIds.forEach(id => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'member_ids';
+                hiddenInput.value = id;
+                this.appendChild(hiddenInput);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

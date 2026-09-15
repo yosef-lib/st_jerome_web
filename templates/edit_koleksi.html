@@ -1,0 +1,82 @@
+{% extends 'layout.html' %}
+{% block page_title %}Ubah Koleksi{% endblock %}
+{% block page_subtitle %}Edit data koleksi {{ buku.no_induk }}{% endblock %}
+{% block content %}
+<div class="rounded-sm border border-stroke bg-white shadow-default w-full max-w-4xl mx-auto">
+    <div class="border-b border-stroke py-4 px-6.5">
+        <h3 class="font-medium text-black">
+            <i class="fa-solid fa-pen-to-square mr-2 text-primary"></i> Formulir Ubah Buku
+        </h3>
+    </div>
+    
+    <form method="POST" class="p-6.5">
+        <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+            <div class="w-full xl:w-1/2">
+                <label class="mb-2.5 block text-black font-medium text-sm">No Induk</label>
+                <input type="text" name="no_induk" value="{{ buku.no_induk }}" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            </div>
+            <div class="w-full xl:w-1/2">
+                <label class="mb-2.5 block text-black font-medium text-sm">Lokasi</label>
+                <select name="lokasi" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                    <option value="STPD" {% if buku.lokasi == 'STPD' %}selected{% endif %}>STPD</option>
+                    <option value="IMAVI" {% if buku.lokasi == 'IMAVI' %}selected{% endif %}>IMAVI</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="mb-4.5">
+            <label class="mb-2.5 block text-black font-medium text-sm">Judul</label>
+            <input type="text" name="judul" value="{{ buku.judul }}" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+        </div>
+        
+        <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+            <div class="w-full xl:w-1/2">
+                <label class="mb-2.5 block text-black font-medium text-sm">Pengarang</label>
+                <input type="text" name="pengarang" value="{{ buku.pengarang }}" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            </div>
+            <div class="w-full xl:w-1/2">
+                <label class="mb-2.5 block text-black font-medium text-sm">Penerbit</label>
+                <input type="text" name="penerbit" value="{{ buku.penerbit }}" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            </div>
+        </div>
+        
+        <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+            <div class="w-full xl:w-1/2">
+                <label class="mb-2.5 block text-black font-medium text-sm">Tahun Terbit</label>
+                <input type="text" name="tahun_terbit" value="{{ buku.tahun_terbit }}" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            </div>
+            <div class="w-full xl:w-1/2">
+                <label class="mb-2.5 block text-black font-medium text-sm">Tempat Terbit</label>
+                <input type="text" name="tempat_terbit" value="{{ buku.tempat_terbit }}" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            </div>
+        </div>
+
+        <div class="mb-6 rounded-md border border-stroke bg-slate-50 p-4">
+            <div class="mb-3 text-xs font-bold text-primary uppercase tracking-wide">
+                <i class="fa-solid fa-bookmark text-primary"></i> Call Number
+            </div>
+            <div class="flex flex-col gap-4 xl:flex-row">
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2 block text-black font-medium text-sm">Klasifikasi DDC</label>
+                    <input type="text" name="klasifikasi" value="{{ buku.klasifikasi }}" class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2 block text-black font-medium text-sm">Cutter</label>
+                    <input type="text" name="cutter" value="{{ buku.cutter }}" class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2 block text-black font-medium text-sm">Huruf Judul</label>
+                    <input type="text" name="huruf_judul" value="{{ buku.huruf_judul }}" class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="/koleksi?lokasi={{ buku.lokasi }}" class="rounded border border-stroke py-2.5 px-6 font-medium text-black hover:bg-slate-100 transition">Batal</a>
+            <button type="submit" class="flex items-center gap-2 rounded bg-primary py-2.5 px-6 font-medium text-white hover:bg-opacity-90 transition">
+                <i class="fa-solid fa-save"></i> Simpan Perubahan
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

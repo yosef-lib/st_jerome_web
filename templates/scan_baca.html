@@ -1,0 +1,100 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}Scanner Meja Baca{% endblock %}
+{% block page_subtitle %}Pindai barcode buku yang tertinggal di meja baca menggunakan kamera HP{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default">
+        <div class="text-center pt-8 pb-4 px-6">
+            <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                <i class="fa-solid fa-qrcode text-3xl"></i>
+            </div>
+            <h4 class="text-xl font-bold text-black mb-1">Pemindai Meja Baca</h4>
+            <p class="text-sm font-medium text-slate-500">Arahkan kamera ke barcode buku, pencatatan otomatis ke log keterbacaan.</p>
+        </div>
+        
+        <div class="p-6">
+            <div id="reader" class="rounded-lg overflow-hidden border-2 border-stroke bg-slate-50"></div>
+            
+            <!-- Manual Input -->
+            <div class="mt-6 mb-5">
+                <label class="mb-2 block text-sm font-bold text-black">Atau Masukkan Manual:</label>
+                <div class="flex gap-2">
+                    <input type="text" id="manualInput" placeholder="Ketik No. Induk..." onkeypress="if(event.key === 'Enter') submitManual()" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary">
+                    <button class="flex items-center justify-center rounded bg-primary py-2 px-5 font-medium text-white hover:bg-opacity-90 transition" onclick="submitManual()">Catat</button>
+                </div>
+            </div>
+
+            <!-- Success Result -->
+            <div id="resultBox" class="hidden text-center rounded-lg border border-success bg-success/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
+                <i class="fa-solid fa-circle-check text-success text-3xl mb-2"></i>
+                <div class="font-bold text-lg text-success mb-1">Berhasil Dicatat!</div>
+                <div id="bookTitle" class="font-semibold text-black text-sm"></div>
+                <div id="bookSubject" class="text-xs font-medium text-slate-500 mt-1"></div>
+            </div>
+
+            <!-- Error Result -->
+            <div id="errorBox" class="hidden text-center rounded-lg border border-danger bg-danger/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
+                <i class="fa-solid fa-circle-xmark text-danger text-3xl mb-2"></i>
+                <div class="font-bold text-lg text-danger mb-1">Buku Tidak Ditemukan</div>
+                <div id="errorMsg" class="text-xs font-medium text-slate-500 mt-1"></div>
+            </div>
+
+            <!-- Tips -->
+            <div class="rounded-md bg-blue-50 border border-blue-100 p-4 text-center">
+                <div class="font-bold text-primary mb-1 text-sm"><i class="fa-solid fa-lightbulb"></i> Tips Penggunaan</div>
+                <p class="text-xs text-slate-500 leading-relaxed">Buka halaman ini di browser HP Anda dan izinkan akses kamera. Koneksi jaringan yang sama dan akses HTTPS/localhost disarankan.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Library Html5Qrcode -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+    function parseScanResult(code) {
+        document.getElementById('manualInput').value = code;
+        submitManual();
+    }
+
+    function submitManual() {
+        const no_induk = document.getElementById('manualInput').value.trim();
+        if(!no_induk) return;
+
+        // Hide previous boxes
+        document.getElementById('resultBox').style.display = 'none';
+        document.getElementById('errorBox').style.display = 'none';
+
+        fetch('/api/scan', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({no_induk: no_induk})
+        }).then(r => r.json()).then(data => {
+            if(data.status === 'success') {
+                document.getElementById('bookTitle').innerText = data.judul;
+                document.getElementById('bookSubject').innerText = data.subjek || 'Tanpa subjek';
+                document.getElementById('resultBox').style.display = 'block';
+                document.getElementById('manualInput').value = ''; // clear input
+            } else {
+                document.getElementById('errorMsg').innerText = `No Induk: ${no_induk}`;
+                document.getElementById('errorBox').style.display = 'block';
+            }
+        }).catch(err => {
+            console.error(err);
+            document.getElementById('errorMsg').innerText = 'Kesalahan jaringan.';
+            document.getElementById('errorBox').style.display = 'block';
+        });
+    }
+
+    // Initialize Scanner
+    document.addEventListener('DOMContentLoaded', () => {
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: {width: 250, height: 100} },
+            /* verbose= */ false);
+        html5QrcodeScanner.render(parseScanResult);
+    });
+</script>
+{% endblock %}

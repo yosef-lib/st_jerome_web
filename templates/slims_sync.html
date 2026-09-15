@@ -1,0 +1,106 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}Sinkronisasi SLiMS{% endblock %}
+{% block page_subtitle %}Impor master koleksi dari SLiMS dan bersihkan data dengan AI Agent{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+
+    <!-- Import Card -->
+    <div class="card">
+        <div class="card-header-clean">
+            <h5>⬆️ Impor Koleksi dari SLiMS</h5>
+            <p>Upload file CSV ekspor SLiMS untuk diproses dan dibersihkan oleh AI Agent</p>
+        </div>
+        <div class="card-body-clean">
+            <div class="alert-info-soft" style="margin-bottom:20px;">
+                <strong>🤖 AI Cleansing Aktif</strong><br>
+                Hermes Agent akan otomatis menstandarisasi nama pengarang dan memvalidasi format call number saat proses impor berlangsung.
+            </div>
+
+            <form id="uploadForm">
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('slimsFile').click()">
+                    <div class="upload-icon">📂</div>
+                    <h6>Klik untuk Pilih File</h6>
+                    <p>Format yang diterima: .csv dari ekspor SLiMS</p>
+                    <input type="file" id="slimsFile" accept=".csv" style="display:none;" required>
+                    <div id="fileName" style="margin-top:12px; font-size:13px; font-weight:600; color:var(--accent); display:none;"></div>
+                </div>
+
+                <div style="margin-top:20px; text-align:right;">
+                    <button type="submit" class="btn btn-primary">
+                        🔄 Proses & Impor dengan AI
+                    </button>
+                </div>
+            </form>
+
+            <div id="uploadResult" style="margin-top:16px; display:none;">
+                <div id="uploadMessage" style="padding:14px 18px; border-radius:12px; font-size:13.5px; font-weight:600;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+            <div class="card-header-clean"><h5>📋 Panduan Ekspor SLiMS</h5></div>
+            <div class="card-body-clean">
+                <ol style="font-size:13.5px; color:var(--text-muted); line-height:2; padding-left:18px;">
+                    <li>Login ke panel admin SLiMS 9 Bulian</li>
+                    <li>Buka menu <strong>Bibliografi → Ekspor Data</strong></li>
+                    <li>Pilih format <strong>CSV</strong> lalu klik Ekspor</li>
+                    <li>Upload file hasil ekspor ke form di sebelah kiri</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header-clean"><h5>📤 Ekspor Buku Baru ke SLiMS</h5></div>
+            <div class="card-body-clean">
+                <p style="font-size:13.5px; color:var(--text-muted); line-height:1.7; margin-bottom:16px;">
+                    Unduh file CSV yang sudah siap diimpor ke SLiMS 9, lengkap dengan data bibliografi dan eksemplar buku baru yang sudah diinput.
+                </p>
+                <a href="/export_slims" class="btn btn-dark" style="width:100%; justify-content:center;">
+                    ⬇️ Unduh CSV Siap Impor SLiMS
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('slimsFile').addEventListener('change', function() {
+    if (this.files[0]) {
+        const fn = document.getElementById('fileName');
+        fn.innerText = '📄 ' + this.files[0].name;
+        fn.style.display = 'block';
+    }
+});
+
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fileField = document.getElementById('slimsFile');
+    if (!fileField.files[0]) return;
+    const formData = new FormData();
+    formData.append('file', fileField.files[0]);
+
+    const btn = this.querySelector('button[type="submit"]');
+    btn.innerText = '⏳ Memproses...';
+    btn.disabled = true;
+
+    fetch('/import_slims', { method:'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        const resDiv = document.getElementById('uploadResult');
+        const msgDiv = document.getElementById('uploadMessage');
+        resDiv.style.display = 'block';
+        msgDiv.innerText = data.message;
+        msgDiv.style.background = data.status === 'success' ? 'rgba(16,185,129,.1)' : 'rgba(239,68,68,.08)';
+        msgDiv.style.color = data.status === 'success' ? 'var(--success)' : 'var(--danger)';
+        msgDiv.style.border = data.status === 'success' ? '1.5px solid rgba(16,185,129,.3)' : '1.5px solid rgba(239,68,68,.2)';
+        btn.innerText = '🔄 Proses & Impor dengan AI';
+        btn.disabled = false;
+    });
+});
+</script>
+{% endblock %}

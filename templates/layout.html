@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St. Jerome Library Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              boxdark: '#3E2723',
+              boxdark2: '#4E342E',
+              bodydark: '#A1887F',
+              bodydark2: '#A1887F',
+              stroke: '#D7CCC8',
+              primary: '#6D4C41',
+              success: '#10B981',
+              danger: '#EF4444',
+              warning: '#F59E0B',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            spacing: {
+              '2.5': '0.625rem',
+              '4.5': '1.125rem',
+              '5.5': '1.375rem',
+              '6.5': '1.625rem',
+              '7.5': '1.875rem',
+              '8.5': '2.125rem',
+              '9.5': '2.375rem',
+              '10.5': '2.625rem',
+              '11.5': '2.875rem',
+            },
+            zIndex: {
+              '99999': '99999',
+            }
+          }
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .shadow-default {
+                box-shadow: 0px 8px 13px -3px rgba(0, 0, 0, 0.07);
+            }
+            .text-title-xl2 {
+                font-size: 28px;
+                line-height: 35px;
+            }
+            .text-title-md {
+                font-size: 24px;
+                line-height: 30px;
+            }
+            .text-title-sm {
+                font-size: 20px;
+                line-height: 28px;
+            }
+        }
+        /* Custom scrollbar for sidebar */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Dialog polyfill/reset for Tailwind */
+        dialog::backdrop {
+            background: rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-600 text-sm font-sans antialiased overflow-hidden">
+    <!-- Flash Messages (Silent in background, or show as toasts later) -->
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- ===== SIDEBAR ===== -->
+        <aside id="sidebar" class="absolute left-0 top-0 z-[9999] flex h-screen w-72 flex-col overflow-y-hidden bg-boxdark duration-300 ease-linear lg:static lg:translate-x-0 -translate-x-full">
+            
+            <!-- Sidebar Header -->
+            <div class="flex items-center justify-between gap-2 px-6 py-6 lg:py-8 border-b border-boxdark2">
+                <a href="/" class="flex items-center gap-3 text-white">
+                    <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo" class="w-12 h-12 rounded-full border-2 border-boxdark2 object-cover">
+                    <div>
+                        <span class="block text-base font-bold">St. Jerome</span>
+                        <span class="block text-[11px] font-normal text-bodydark">Library Assistant</span>
+                    </div>
+                </a>
+                <button id="sidebar-close" class="lg:hidden text-bodydark hover:text-white">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Sidebar Nav -->
+            <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
+                <nav class="mt-5 py-4 px-4 lg:mt-6 lg:px-6">
+                    
+                    <div>
+                        <h3 class="mb-4 ml-4 text-sm font-semibold text-bodydark2 uppercase tracking-wider">Utama</h3>
+                        <ul class="mb-6 flex flex-col gap-1.5">
+                            <li>
+                                <a href="/anggota" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path.startswith('/anggota') %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                    <i class="fa-solid fa-users w-5 text-center"></i> Keanggotaan
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/koleksi" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path.startswith('/koleksi') %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                    <i class="fa-solid fa-book w-5 text-center"></i> Daftar Koleksi
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/' %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                    <i class="fa-solid fa-print w-5 text-center"></i> Cetak Stiker
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/scan" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/scan' %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                    <i class="fa-solid fa-barcode w-5 text-center"></i> Scanner Meja Baca
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="mb-4 ml-4 text-sm font-semibold text-bodydark2 uppercase tracking-wider">Ekspor Data</h3>
+                        <ul class="mb-6 flex flex-col gap-1.5">
+                            <li>
+                                <a href="/export_biblio" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium text-bodydark duration-300 ease-in-out hover:bg-boxdark2 hover:text-white">
+                                    <i class="fa-solid fa-file-export w-5 text-center"></i> Ekspor Bibliografi
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/export_item" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium text-bodydark duration-300 ease-in-out hover:bg-boxdark2 hover:text-white">
+                                    <i class="fa-solid fa-file-csv w-5 text-center"></i> Ekspor Item
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="mb-4 ml-4 text-sm font-semibold text-bodydark2 uppercase tracking-wider">Lainnya</h3>
+                        <ul class="flex flex-col gap-1.5">
+                            <li>
+                                <a href="/dashboard" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/dashboard' %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                    <i class="fa-solid fa-chart-pie w-5 text-center"></i> Analisis
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/backup" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium text-bodydark duration-300 ease-in-out hover:bg-boxdark2 hover:text-white">
+                                    <i class="fa-solid fa-database w-5 text-center"></i> Backup Database
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/logout" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium text-danger duration-300 ease-in-out hover:bg-boxdark2 hover:text-danger">
+                                    <i class="fa-solid fa-sign-out-alt w-5 text-center"></i> Keluar
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- ===== MAIN WRAPPER ===== -->
+        <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+            
+            <!-- ===== HEADER ===== -->
+            <header class="sticky top-0 z-[999] flex w-full bg-white shadow-sm border-b border-stroke">
+                <div class="flex flex-grow items-center justify-between px-4 py-4 md:px-6 2xl:px-11">
+                    <div class="flex items-center gap-2 sm:gap-4">
+                        <button id="sidebar-toggle" class="lg:hidden z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm">
+                            <i class="fa-solid fa-bars text-xl"></i>
+                        </button>
+                        <div class="hidden sm:block">
+                            <h1 class="text-2xl font-bold text-slate-800">{% block page_title %}Dashboard{% endblock %}</h1>
+                            <p class="text-sm font-medium text-slate-500 mt-1">{% block page_subtitle %}Sistem Asisten Perpustakaan{% endblock %}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 2x:gap-7">
+                        <div class="flex items-center gap-2 bg-blue-50 text-primary px-3 py-1.5 rounded-full text-sm font-semibold border border-blue-100">
+                            <i class="fa-solid fa-server"></i> SLiMS 9 Bulian
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ===== MAIN CONTENT ===== -->
+            <main>
+                <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Script for mobile sidebar toggle -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle');
+            const closeBtn = document.getElementById('sidebar-close');
+
+            if(toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                });
+            }
+            
+            if(closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    sidebar.classList.add('-translate-x-full');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

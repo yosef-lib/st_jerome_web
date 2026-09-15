@@ -1,0 +1,315 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}Katalog & Cetak Stiker{% endblock %}
+{% block page_subtitle %}Input bibliografi buku baru dan kelola antrean cetak stiker{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+
+    <!-- ===== FORM CARD ===== -->
+    <div class="xl:col-span-2 rounded-sm border border-stroke bg-white shadow-default">
+        <div class="border-b border-stroke py-4 px-6.5">
+            <h3 class="font-medium text-black">
+                <i class="fa-solid fa-book-medical mr-2 text-primary"></i> Input Bibliografi Buku Baru
+            </h3>
+            <p class="text-sm text-slate-500 mt-1">Semua kolom otomatis tersinkronisasi dengan format SLiMS 9 Bulian</p>
+        </div>
+        
+        <form id="formInputBuku" class="p-6.5">
+
+            <!-- Baris 1: Identitas Penerimaan & Lokasi -->
+            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                <div class="w-full xl:w-1/4">
+                    <label class="mb-2.5 block text-black font-medium text-sm">No Induk (Barcode)</label>
+                    <input type="text" name="no_induk" placeholder="Cth: BK-2026-001" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/4">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Tanggal Terima</label>
+                    <input type="date" name="tgl_terima" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/4">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Status</label>
+                    <select name="status_buku" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                        <option value="BELI">Beli</option>
+                        <option value="HADIAH">Hadiah</option>
+                    </select>
+                </div>
+                <div class="w-full xl:w-1/4">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Lokasi</label>
+                    <select name="lokasi" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                        <option value="STPD">STPD</option>
+                        <option value="IMAVI">IMAVI</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Baris 2: Judul -->
+            <div class="mb-4.5">
+                <label class="mb-2.5 block text-black font-medium text-sm">Title (Judul)</label>
+                <input type="text" id="inputJudul" name="judul" placeholder="Judul lengkap buku..." required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            </div>
+
+            <!-- Baris 3: Pengarang + Subjek -->
+            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                <div class="w-full xl:w-1/2">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Author (Pengarang)</label>
+                    <input type="text" id="inputPengarang" name="pengarang" placeholder="Nama, Depan" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/2">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Subject (Subjek)</label>
+                    <input type="text" name="subjek" placeholder="Topik utama buku" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+            </div>
+
+            <!-- Baris 4: GMD, Edisi, ISBN -->
+            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2.5 block text-black font-medium text-sm">GMD</label>
+                    <input type="text" name="gmd" value="Text" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Edition (Edisi)</label>
+                    <input type="text" name="edisi" placeholder="Cth: Ed. ke-2" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2.5 block text-black font-medium text-sm">ISBN/ISSN</label>
+                    <input type="text" name="isbn" placeholder="978-xxx-xxx" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+            </div>
+
+            <!-- Baris 5: Penerbit, Tahun, Tempat -->
+            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Publisher (Penerbit)</label>
+                    <input type="text" name="penerbit" placeholder="Gramedia..." class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Publish Year</label>
+                    <input type="text" name="tahun_terbit" placeholder="2024" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/3">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Publish Place</label>
+                    <input type="text" name="tempat_terbit" placeholder="Jakarta" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+            </div>
+
+            <!-- Baris 6: Deskripsi, Seri, Bahasa -->
+            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                <div class="w-full xl:w-1/2">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Physical Description</label>
+                    <input type="text" name="deskripsi_fisik" placeholder="xiv, 200 hlm. ; 21 cm" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/4">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Series Title</label>
+                    <input type="text" name="judul_seri" placeholder="(jika ada)" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full xl:w-1/4">
+                    <label class="mb-2.5 block text-black font-medium text-sm">Language</label>
+                    <input type="text" name="bahasa" value="Indonesia" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+                </div>
+            </div>
+
+            <!-- Baris 7: Call Number (Auto) + Lokasi -->
+            <div class="mb-6 rounded-md border border-stroke bg-slate-50 p-4">
+                <div class="mb-3 text-xs font-bold text-primary uppercase tracking-wide">
+                    <i class="fa-solid fa-magic text-primary"></i> Nomor Panggil (Auto-Generated)
+                </div>
+                <div class="flex flex-col gap-4 xl:flex-row">
+                    <div class="w-full xl:w-1/4">
+                        <label class="mb-2 block text-black font-medium text-sm">Classification (DDC)</label>
+                        <input type="text" name="klasifikasi" placeholder="Cth: 200" required class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
+                    </div>
+                    <div class="w-full xl:w-1/4">
+                        <label class="mb-2 block text-black font-medium text-sm">Cutter <span class="text-primary text-xs bg-primary/10 px-1 py-0.5 rounded ml-1">Auto</span></label>
+                        <input type="text" id="inputCutter" name="cutter" required class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
+                    </div>
+                    <div class="w-full xl:w-1/4">
+                        <label class="mb-2 block text-black font-medium text-sm">Huruf Judul <span class="text-primary text-xs bg-primary/10 px-1 py-0.5 rounded ml-1">Auto</span></label>
+                        <input type="text" id="inputHurufJudul" name="huruf_judul" required class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
+                    </div>
+                    <div class="w-full xl:w-1/4">
+                        <label class="mb-2 block text-black font-medium text-sm">Copy Ke</label>
+                        <input type="number" name="copy_ke" value="1" min="1" class="w-full rounded border-[1.5px] border-stroke bg-white py-2 px-3 outline-none transition focus:border-primary active:border-primary text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catatan -->
+            <div class="mb-6">
+                <label class="mb-2.5 block text-black font-medium text-sm">Notes (Catatan)</label>
+                <input type="text" name="catatan" placeholder="Catatan tambahan (opsional)" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="flex items-center gap-2 rounded bg-primary py-2.5 px-6 font-medium text-white hover:bg-opacity-90 transition">
+                    <i class="fa-solid fa-save"></i> Simpan & Antrekan Stiker
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== QUEUE CARD ===== -->
+    <div class="xl:col-span-1 rounded-sm border border-stroke bg-white shadow-default sticky top-24">
+        <div class="border-b border-stroke py-4 px-6">
+            <h3 class="font-medium text-black">
+                <i class="fa-solid fa-list-ol mr-2 text-primary"></i> Antrean Cetak Stiker
+            </h3>
+            <p class="text-sm text-slate-500 mt-1">Hanya buku baru yang diinput langsung</p>
+        </div>
+        
+        <div id="listAntrean" class="p-6 max-h-[380px] overflow-y-auto">
+            <div class="text-center py-10 text-slate-400">
+                <i class="fa-solid fa-inbox text-4xl mb-2"></i>
+                <p class="text-sm">Antrean kosong</p>
+            </div>
+        </div>
+        
+        <div class="p-6 pt-0 flex flex-col gap-3 border-t border-stroke mt-4">
+            <button onclick="cetakPDF()" class="mt-4 flex w-full justify-center rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 transition gap-2">
+                <i class="fa-solid fa-file-pdf mt-1"></i> Unduh PDF Stiker A4
+            </button>
+            <button onclick="kosongkanAntrean()" class="flex w-full justify-center rounded border border-danger text-danger py-2 px-4 font-medium hover:bg-danger hover:text-white transition gap-2">
+                <i class="fa-solid fa-trash mt-1"></i> Bersihkan Antrean
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-6 right-6 z-[9999] hidden rounded-md bg-boxdark py-3 px-5 text-white shadow-lg">
+    <i class="fa-solid fa-check-circle text-success mr-2"></i> Buku berhasil ditambahkan ke antrean!
+</div>
+
+<!-- Logika JS bawaan tetap ada di script bawah ini -->
+<script>
+    // Logic js dari sebelumnya
+    const inputPengarang = document.getElementById('inputPengarang');
+    const inputCutter = document.getElementById('inputCutter');
+    const inputJudul = document.getElementById('inputJudul');
+    const inputHurufJudul = document.getElementById('inputHurufJudul');
+    
+    // Auto-generate huruf_judul dari inputJudul
+    inputJudul.addEventListener('input', function() {
+        let title = this.value.trim().toLowerCase();
+        let words = title.split(' ');
+        
+        // Buang artikel The, A, An
+        const articles = ['the', 'a', 'an'];
+        if(words.length > 1 && articles.includes(words[0])) {
+            title = words.slice(1).join(' ');
+        }
+        
+        // Ambil huruf pertama
+        let huruf = '';
+        if(title.length > 0) {
+            huruf = title[0];
+            // Pastikan huruf adalah alfabet
+            if(huruf.match(/[a-z]/i)) {
+                inputHurufJudul.value = huruf;
+            } else {
+                inputHurufJudul.value = '';
+            }
+        } else {
+            inputHurufJudul.value = '';
+        }
+    });
+
+    // Panggil API cutter backend
+    inputPengarang.addEventListener('blur', function() {
+        const authorName = this.value;
+        if(authorName.trim().length > 0) {
+            fetch(`/api/cutter?author=${encodeURIComponent(authorName)}`)
+            .then(r => r.json())
+            .then(data => {
+                if(data.cutter) {
+                    inputCutter.value = data.cutter;
+                }
+            }).catch(e => console.error(e));
+        }
+    });
+    
+    // Memuat Antrean
+    function muatAntrean() {
+        fetch('/api/antrean')
+        .then(r => r.json())
+        .then(data => {
+            const list = document.getElementById('listAntrean');
+            if(data.length === 0) {
+                list.innerHTML = `
+                <div class="text-center py-10 text-slate-400">
+                    <i class="fa-solid fa-inbox text-4xl mb-2"></i>
+                    <p class="text-sm">Antrean kosong</p>
+                </div>`;
+            } else {
+                let html = '';
+                data.forEach(item => {
+                    html += `
+                    <div class="mb-3 rounded border border-stroke p-3 bg-slate-50 relative flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-black text-sm">${item.no_induk}</div>
+                            <div class="text-xs text-slate-500 mt-1 truncate w-48" title="${item.judul}">${item.judul}</div>
+                        </div>
+                        <button type="button" class="text-slate-400 hover:text-danger transition" onclick="hapusAntrean('${item.no_induk}')"><i class="fa-solid fa-times"></i></button>
+                    </div>`;
+                });
+                list.innerHTML = html;
+            }
+        });
+    }
+
+    // Hapus satu item dari antrean
+    function hapusAntrean(noInduk) {
+        if(!confirm('Hapus dari antrean?')) return;
+        fetch('/api/antrean/hapus', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({no_induk: noInduk})
+        }).then(r => r.json()).then(() => {
+            muatAntrean();
+        });
+    }
+
+    // Kosongkan semua antrean
+    function kosongkanAntrean() {
+        if(!confirm('Yakin ingin mengosongkan seluruh antrean?')) return;
+        fetch('/api/antrean/hapus_semua', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => muatAntrean());
+    }
+
+    // Submit form tambah buku
+    document.getElementById('formInputBuku').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        fetch('/api/antrean', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(r => r.json()).then(resp => {
+            // Tampilkan Toast Success
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+            
+            // Reset form
+            this.reset();
+            
+            muatAntrean();
+        }).catch(err => {
+            alert('Gagal menyimpan data.');
+            console.error(err);
+        });
+    });
+
+    // Cetak PDF
+    function cetakPDF() {
+        window.location.href = '/cetak_pdf';
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', muatAntrean);
+</script>
+{% endblock %}
