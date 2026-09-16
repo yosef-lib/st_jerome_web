@@ -68,11 +68,9 @@
                 <button onclick="location.reload()" class="flex items-center gap-2 rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 transition text-sm">
                     <i class="fa-solid fa-rotate"></i> Segarkan Tabel
                 </button>
-                <form action="/reset_audit" method="POST" onsubmit="return confirm('Yakin ingin menghapus seluruh riwayat stok opname saat ini? Pastikan Anda sudah merekapnya.');">
-                    <button type="submit" class="flex items-center gap-2 rounded bg-danger py-2 px-4 font-medium text-white hover:bg-opacity-90 transition text-sm">
-                        <i class="fa-solid fa-trash"></i> Reset Data
-                    </button>
-                </form>
+                <a href="/export_audit" class="flex items-center gap-2 rounded bg-success py-2 px-4 font-medium text-white hover:bg-opacity-90 transition text-sm">
+                    <i class="fa-solid fa-file-excel"></i> Ekspor ke Excel
+                </a>
             </div>
         </div>
 

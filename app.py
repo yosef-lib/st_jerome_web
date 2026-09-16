@@ -794,12 +794,33 @@ def audit_rak():
     
     return render_template('audit_rak.html', riwayat=riwayat, stats=stats)
 
-@app.route('/reset_audit', methods=['POST'])
+@app.route('/export_audit')
 @login_required
-def reset_audit():
+def export_audit():
+    import pandas as pd
+    from io import BytesIO
+    from flask import send_file
+    
     conn = database.get_db_connection()
-    conn.execute('DELETE FROM audit_rak')
-    return redirect(url_for('audit_rak'))
+    df = pd.read_sql_query("""
+        SELECT a.waktu_scan as 'Waktu Scan', a.no_induk as 'No Induk', b.judul as 'Judul Buku', a.rak_target as 'Target Rak', a.status_audit as 'Status', b.klasifikasi as 'DDC Seharusnya'
+        FROM audit_rak a
+        JOIN buku b ON a.no_induk = b.no_induk
+        ORDER BY a.id DESC
+    """, conn)
+    
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Riwayat Audit')
+    
+    output.seek(0)
+    
+    return send_file(
+        output, 
+        as_attachment=True, 
+        download_name='Laporan_Audit_Rak.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
