@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buku Tamu - St. Jerome Library Assistant</title>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/970fb6757c.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .kiosk-bg {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        /* Hide scrollbar for autocomplete */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="kiosk-bg min-h-screen flex items-center justify-center p-4">
+    
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
+        
+        <!-- Notifikasi Sukses Mengambang -->
+        <div id="successToast" class="absolute top-0 left-0 w-full h-full bg-success/95 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-300 opacity-0 pointer-events-none">
+            <i class="fa-solid fa-circle-check text-8xl mb-6 shadow-sm rounded-full bg-white text-success"></i>
+            <h2 id="successMessage" class="text-4xl font-bold mb-2 text-center px-4">Selamat Datang!</h2>
+            <p class="text-xl opacity-90">Kunjungan Anda telah tercatat.</p>
+        </div>
+
+        <!-- Bagian Kiri: Header & Info -->
+        <div class="md:w-5/12 bg-primary p-8 md:p-12 text-white flex flex-col justify-between">
+            <div>
+                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" onerror="this.src='https://ui-avatars.com/api/?name=St+Jerome&background=fff&color=1e293b'" alt="Logo" class="w-14 h-14 object-contain">
+                </div>
+                <h1 class="text-3xl font-bold mb-4 leading-tight">Buku Tamu Perpustakaan</h1>
+                <p class="text-primary-light text-lg mb-8 opacity-90">Silakan scan Kartu Anggota Anda atau isi form buku tamu jika Anda bukan anggota tetap.</p>
+            </div>
+            <div class="mt-auto">
+                <p class="text-sm opacity-70">St. Jerome Library Assistant</p>
+            </div>
+        </div>
+
+        <!-- Bagian Kanan: Form -->
+        <div class="md:w-7/12 p-8 md:p-12 relative">
+            
+            <!-- Tab Selector -->
+            <div class="flex border-b border-stroke mb-8">
+                <button id="tabMember" class="w-1/2 py-4 text-center font-bold text-primary border-b-2 border-primary transition-colors hover:bg-gray-50">
+                    <i class="fa-solid fa-id-card mr-2"></i> Anggota SLiMS
+                </button>
+                <button id="tabTamu" class="w-1/2 py-4 text-center font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-gray-50 transition-colors">
+                    <i class="fa-solid fa-user-pen mr-2"></i> Tamu / Non-Member
+                </button>
+            </div>
+
+            <!-- Konten Member -->
+            <div id="contentMember" class="block animate-fade-in">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-black mb-2">Scan Barcode / KTM</h3>
+                    <p class="text-sm text-slate-500">Arahkan kartu ke kamera, atau gunakan scanner fisik di meja.</p>
+                </div>
+                
+                <div id="reader" class="rounded-lg overflow-hidden border-2 border-stroke bg-black w-full min-h-[250px] flex items-center justify-center relative mb-6">
+                    <button id="btnStartScan" class="absolute z-10 flex items-center gap-2 rounded bg-primary py-3 px-6 font-medium text-white hover:bg-opacity-90 transition shadow-lg">
+                        <i class="fa-solid fa-camera"></i> Aktifkan Kamera
+                    </button>
+                </div>
+                
+                <div class="flex justify-center hidden mb-6" id="scanActions">
+                    <button id="btnStopScan" class="flex items-center gap-2 rounded border border-danger text-danger py-1.5 px-4 font-medium hover:bg-danger hover:text-white transition text-sm">
+                        <i class="fa-solid fa-stop"></i> Hentikan Kamera
+                    </button>
+                </div>
+
+                <div class="relative">
+                    <input type="text" id="memberIdInput" placeholder="Atau ketik ID Anggota & Enter..." onkeypress="if(event.key === 'Enter') submitMember()" class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                    <button onclick="submitMember()" class="absolute right-2 top-2 bottom-2 rounded bg-primary px-4 font-medium text-white hover:bg-opacity-90">Kirim</button>
+                </div>
+                <p id="memberError" class="text-danger text-sm mt-2 hidden text-center font-medium"></p>
+            </div>
+
+            <!-- Konten Tamu -->
+            <div id="contentTamu" class="hidden animate-fade-in">
+                <form id="formTamu" onsubmit="event.preventDefault(); submitTamu();">
+                    
+                    <div class="mb-5 relative">
+                        <label class="mb-2 block text-sm font-bold text-black">Nama Lengkap</label>
+                        <input type="text" id="tamuNama" required autocomplete="off" placeholder="Ketik nama Anda..." class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                        
+                        <!-- Autocomplete Suggestions -->
+                        <div id="autocompleteList" class="absolute z-40 w-full bg-white border border-stroke rounded-lg mt-1 shadow-lg hidden max-h-48 overflow-y-auto no-scrollbar">
+                            <!-- Items injected via JS -->
+                        </div>
+                    </div>
+
+                    <div class="mb-5">
+                        <label class="mb-2 block text-sm font-bold text-black">Asal Instansi / Fakultas</label>
+                        <select id="tamuInstansi" required class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary cursor-pointer appearance-none">
+                            <option value="" disabled selected>-- Pilih Asal Instansi --</option>
+                            <option value="Fakultas Teologi">Fakultas Teologi</option>
+                            <option value="Fakultas Filsafat">Fakultas Filsafat</option>
+                            <option value="Umum / Masyarakat">Umum / Masyarakat</option>
+                            <option value="Institusi Lain">Institusi Lain (Kampus/Sekolah Luar)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="mb-2 block text-sm font-bold text-black">Tujuan Kunjungan</label>
+                        <select id="tamuTujuan" required class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary cursor-pointer appearance-none">
+                            <option value="Membaca Buku">Membaca Buku</option>
+                            <option value="Mengerjakan Tugas / Riset">Mengerjakan Tugas / Riset</option>
+                            <option value="Meminjam / Mengembalikan Buku">Meminjam / Mengembalikan Buku</option>
+                            <option value="Diskusi Kelompok">Diskusi Kelompok</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full rounded-lg bg-primary py-4 px-6 text-center font-bold text-white hover:bg-opacity-90 transition text-lg shadow-md">
+                        <i class="fa-solid fa-check-circle mr-2"></i> Rekam Kunjungan
+                    </button>
+                    <p id="tamuError" class="text-danger text-sm mt-3 hidden text-center font-medium"></p>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Audio Beep -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(success=true) {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine';
+            if(success) {
+                oscillator.frequency.value = 880; 
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } else {
+                oscillator.frequency.value = 300;
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+    </script>
+
+    <!-- UI Logic -->
+    <script>
+        const tabMember = document.getElementById('tabMember');
+        const tabTamu = document.getElementById('tabTamu');
+        const contentMember = document.getElementById('contentMember');
+        const contentTamu = document.getElementById('contentTamu');
+        const toast = document.getElementById('successToast');
+        const msg = document.getElementById('successMessage');
+
+        function switchTab(mode) {
+            if(mode === 'member') {
+                tabMember.className = "w-1/2 py-4 text-center font-bold text-primary border-b-2 border-primary transition-colors hover:bg-gray-50";
+                tabTamu.className = "w-1/2 py-4 text-center font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-gray-50 transition-colors";
+                contentMember.classList.remove('hidden');
+                contentTamu.classList.add('hidden');
+                document.getElementById('memberIdInput').focus();
+            } else {
+                tabTamu.className = "w-1/2 py-4 text-center font-bold text-primary border-b-2 border-primary transition-colors hover:bg-gray-50";
+                tabMember.className = "w-1/2 py-4 text-center font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-gray-50 transition-colors";
+                contentTamu.classList.remove('hidden');
+                contentMember.classList.add('hidden');
+                document.getElementById('tamuNama').focus();
+            }
+        }
+
+        tabMember.addEventListener('click', () => switchTab('member'));
+        tabTamu.addEventListener('click', () => switchTab('tamu'));
+
+        function showSuccess(name) {
+            playBeep(true);
+            msg.innerText = "Selamat Datang, " + name + "!";
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('memberIdInput').value = '';
+                document.getElementById('formTamu').reset();
+                if(!contentMember.classList.contains('hidden')) {
+                    document.getElementById('memberIdInput').focus();
+                } else {
+                    document.getElementById('tamuNama').focus();
+                }
+            }, 3000);
+        }
+
+        async function submitMember(barcode = null) {
+            const err = document.getElementById('memberError');
+            err.classList.add('hidden');
+            
+            const id = barcode || document.getElementById('memberIdInput').value;
+            if(!id) return;
+            
+            try {
+                const res = await fetch('/api/kunjungan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        tipe_pengunjung: 'Member',
+                        identitas: id,
+                        tujuan_kunjungan: 'Kunjungan Member'
+                    })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    showSuccess(data.display_name);
+                } else {
+                    playBeep(false);
+                    err.innerText = data.message || "Gagal merekam data.";
+                    err.classList.remove('hidden');
+                }
+            } catch(e) {
+                playBeep(false);
+                err.innerText = "Terjadi kesalahan jaringan.";
+                err.classList.remove('hidden');
+            }
+        }
+
+        async function submitTamu() {
+            const err = document.getElementById('tamuError');
+            err.classList.add('hidden');
+            
+            const nama = document.getElementById('tamuNama').value;
+            const instansi = document.getElementById('tamuInstansi').value;
+            const tujuan = document.getElementById('tamuTujuan').value;
+            
+            if(!instansi) {
+                err.innerText = "Silakan pilih Asal Instansi.";
+                err.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/kunjungan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        tipe_pengunjung: 'Non-Member',
+                        identitas: nama,
+                        asal_instansi: instansi,
+                        tujuan_kunjungan: tujuan
+                    })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    showSuccess(data.display_name);
+                } else {
+                    err.innerText = data.message || "Gagal merekam data.";
+                    err.classList.remove('hidden');
+                }
+            } catch(e) {
+                err.innerText = "Terjadi kesalahan jaringan.";
+                err.classList.remove('hidden');
+            }
+        }
+
+        // Autocomplete Logic
+        const tamuNama = document.getElementById('tamuNama');
+        const autocompleteList = document.getElementById('autocompleteList');
+        let debounceTimer;
+
+        tamuNama.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const val = this.value;
+            if(val.length < 3) {
+                autocompleteList.classList.add('hidden');
+                return;
+            }
+            debounceTimer = setTimeout(async () => {
+                const res = await fetch('/api/kunjungan/autocomplete?q=' + encodeURIComponent(val));
+                if(res.ok) {
+                    const data = await res.json();
+                    autocompleteList.innerHTML = '';
+                    if(data.length > 0) {
+                        data.forEach(name => {
+                            const div = document.createElement('div');
+                            div.className = "p-3 hover:bg-gray-2 cursor-pointer border-b border-[#eee] text-sm font-medium text-black last:border-b-0";
+                            div.innerHTML = name;
+                            div.addEventListener('click', () => {
+                                tamuNama.value = name;
+                                autocompleteList.classList.add('hidden');
+                            });
+                            autocompleteList.appendChild(div);
+                        });
+                        autocompleteList.classList.remove('hidden');
+                    } else {
+                        autocompleteList.classList.add('hidden');
+                    }
+                }
+            }, 300);
+        });
+        
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if(e.target !== tamuNama && e.target !== autocompleteList) {
+                autocompleteList.classList.add('hidden');
+            }
+        });
+
+        // Kamera Logic
+        let html5QrcodeScanner = null;
+        let isProcessing = false;
+        
+        document.getElementById('btnStartScan').addEventListener('click', () => {
+            document.getElementById('btnStartScan').style.display = 'none';
+            document.getElementById('scanActions').classList.remove('hidden');
+            
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 100 } },
+                (decodedText) => {
+                    if(isProcessing) return;
+                    isProcessing = true;
+                    submitMember(decodedText).finally(() => {
+                        setTimeout(() => { isProcessing = false; }, 2000);
+                    });
+                },
+                (errorMessage) => { }
+            ).catch((err) => {
+                alert("Kamera gagal diakses: " + err);
+                document.getElementById('btnStartScan').style.display = 'flex';
+                document.getElementById('scanActions').classList.add('hidden');
+            });
+        });
+
+        document.getElementById('btnStopScan').addEventListener('click', () => {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('btnStartScan').style.display = 'flex';
+                    document.getElementById('scanActions').classList.add('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
