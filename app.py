@@ -1069,7 +1069,7 @@ def analitik_kunjungan():
         
         # Metrik 3: Top 10 Pengunjung (Bulan Ini)
         top_visitors = conn.execute("""
-            SELECT identitas, tipe_pengunjung, asal_instansi, peran_jabatan, COUNT(id) as jumlah_kunjungan
+            SELECT identitas, tipe_pengunjung, asal_instansi, peran_jabatan, fakultas, COUNT(id) as jumlah_kunjungan
             FROM sjla_visitor_logs 
             WHERE strftime('%Y-%m', waktu_kunjungan) = strftime('%Y-%m', 'now', 'localtime')
             GROUP BY identitas

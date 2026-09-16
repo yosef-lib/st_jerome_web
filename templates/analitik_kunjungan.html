@@ -80,7 +80,11 @@
                             </td>
                             <td class="border-b border-[#eee] py-3 px-4">
                                 <h5 class="font-medium text-black">{{ v.identitas }}</h5>
-                                <p class="text-xs text-slate-500">{{ v.tipe_pengunjung }} - {{ v.peran_jabatan }}</p>
+                                <p class="text-xs text-slate-500">
+                                    {{ v.tipe_pengunjung }}
+                                    {% if v.peran_jabatan %} - {{ v.peran_jabatan }}{% endif %}
+                                    {% if v.fakultas %} ({{ v.fakultas }}){% endif %}
+                                </p>
                             </td>
                             <td class="border-b border-[#eee] py-3 px-4">
                                 <p class="text-sm text-black">{{ v.asal_instansi }}</p>
