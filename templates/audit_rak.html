@@ -58,6 +58,82 @@
             </div>
         </div>
     </div>
+
+    <!-- STATISTIK & RIWAYAT -->
+    <div class="mt-6 rounded-sm border border-stroke bg-white shadow-default p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="text-xl font-bold text-black">Riwayat Sensus & Audit</h4>
+            
+            <div class="flex gap-2">
+                <button onclick="location.reload()" class="flex items-center gap-2 rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 transition text-sm">
+                    <i class="fa-solid fa-rotate"></i> Segarkan Tabel
+                </button>
+                <form action="/reset_audit" method="POST" onsubmit="return confirm('Yakin ingin menghapus seluruh riwayat stok opname saat ini? Pastikan Anda sudah merekapnya.');">
+                    <button type="submit" class="flex items-center gap-2 rounded bg-danger py-2 px-4 font-medium text-white hover:bg-opacity-90 transition text-sm">
+                        <i class="fa-solid fa-trash"></i> Reset Data
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-2 rounded p-3 text-center border-b-4 border-primary">
+                <div class="text-2xl font-bold text-black">{{ stats.total }}</div>
+                <div class="text-xs text-slate-500 uppercase">Total Scan</div>
+            </div>
+            <div class="bg-success/10 rounded p-3 text-center border-b-4 border-success">
+                <div class="text-2xl font-bold text-success">{{ stats.benar or 0 }}</div>
+                <div class="text-xs text-slate-500 uppercase">Sesuai Rak</div>
+            </div>
+            <div class="bg-danger/10 rounded p-3 text-center border-b-4 border-danger">
+                <div class="text-2xl font-bold text-danger">{{ stats.salah or 0 }}</div>
+                <div class="text-xs text-slate-500 uppercase">Salah Rak</div>
+            </div>
+            <div class="bg-warning/10 rounded p-3 text-center border-b-4 border-warning">
+                <div class="text-2xl font-bold text-warning">{{ stats.anomali or 0 }}</div>
+                <div class="text-xs text-slate-500 uppercase">Anomali</div>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="max-w-full overflow-x-auto">
+            <table class="w-full table-auto text-sm">
+                <thead>
+                    <tr class="bg-gray-2 text-left">
+                        <th class="py-2 px-3 font-medium text-black">Waktu</th>
+                        <th class="py-2 px-3 font-medium text-black">No Induk</th>
+                        <th class="py-2 px-3 font-medium text-black">Judul</th>
+                        <th class="py-2 px-3 font-medium text-black">Target</th>
+                        <th class="py-2 px-3 font-medium text-black">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in riwayat %}
+                    <tr class="{% if loop.index0 == 0 %}bg-primary/5{% endif %}">
+                        <td class="border-b border-[#eee] py-3 px-3 text-slate-500 text-xs">{{ r.waktu_scan[-8:] }}</td>
+                        <td class="border-b border-[#eee] py-3 px-3 font-bold">{{ r.no_induk }}</td>
+                        <td class="border-b border-[#eee] py-3 px-3 line-clamp-1" title="{{ r.judul }}">{{ r.judul }}</td>
+                        <td class="border-b border-[#eee] py-3 px-3 font-bold">{{ r.rak_target }}</td>
+                        <td class="border-b border-[#eee] py-3 px-3">
+                            {% if r.status_audit == 'BENAR' %}
+                                <span class="bg-success/10 text-success px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-check"></i> BENAR</span>
+                            {% elif r.status_audit == 'SALAH RAK' %}
+                                <span class="bg-danger/10 text-danger px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-xmark"></i> SALAH RAK ({{ r.klasifikasi }})</span>
+                            {% else %}
+                                <span class="bg-warning/10 text-warning px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-triangle-exclamation"></i> ANOMALI</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-6 text-slate-500">Belum ada buku yang diaudit. Silakan mulai memindai!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>

@@ -774,7 +774,32 @@ def anomali():
 @app.route('/audit_rak')
 @login_required
 def audit_rak():
-    return render_template('audit_rak.html')
+    conn = database.get_db_connection()
+    riwayat = conn.execute("""
+        SELECT a.waktu_scan, a.rak_target, a.status_audit, b.no_induk, b.judul, b.klasifikasi
+        FROM audit_rak a
+        JOIN buku b ON a.no_induk = b.no_induk
+        ORDER BY a.id DESC LIMIT 100
+    """).fetchall()
+    
+    # Statistik
+    stats = conn.execute("""
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN status_audit = 'BENAR' THEN 1 ELSE 0 END) as benar,
+            SUM(CASE WHEN status_audit = 'SALAH RAK' THEN 1 ELSE 0 END) as salah,
+            SUM(CASE WHEN status_audit = 'ANOMALI' THEN 1 ELSE 0 END) as anomali
+        FROM audit_rak
+    """).fetchone()
+    
+    return render_template('audit_rak.html', riwayat=riwayat, stats=stats)
+
+@app.route('/reset_audit', methods=['POST'])
+@login_required
+def reset_audit():
+    conn = database.get_db_connection()
+    conn.execute('DELETE FROM audit_rak')
+    return redirect(url_for('audit_rak'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
