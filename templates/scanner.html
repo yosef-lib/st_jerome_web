@@ -1,0 +1,151 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="mx-auto max-w-screen-md p-4 md:p-6 2xl:p-10">
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-title-md2 font-bold text-black dark:text-white">
+            Scanner Perpustakaan
+        </h2>
+    </div>
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        
+        <!-- Mode Selection -->
+        <div class="mb-6 p-4 bg-gray-2 rounded-md">
+            <h3 class="font-bold text-black mb-3">Pilih Mode Scanner:</h3>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="mode" value="meja_baca" checked class="w-5 h-5 text-primary">
+                    <span class="font-medium">Mode Meja Baca (Pencatatan)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="mode" value="audit_rak" class="w-5 h-5 text-warning">
+                    <span class="font-medium text-warning">Mode Audit Rak (Stok Opname)</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Target Rak (Only visible in Audit Mode) -->
+        <div id="targetRakContainer" class="mb-6 hidden">
+            <label class="mb-2.5 block font-medium text-black">
+                Anda Sedang Mengaudit Rak DDC Berapa?
+            </label>
+            <select id="target_rak" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                <option value="000">000 - Komputer, Informasi & Umum</option>
+                <option value="100">100 - Filsafat & Psikologi</option>
+                <option value="200" selected>200 - Agama & Teologi</option>
+                <option value="300">300 - Ilmu Sosial</option>
+                <option value="400">400 - Bahasa</option>
+                <option value="500">500 - Sains & Matematika</option>
+                <option value="600">600 - Teknologi</option>
+                <option value="700">700 - Kesenian & Rekreasi</option>
+                <option value="800">800 - Sastra</option>
+                <option value="900">900 - Sejarah & Geografi</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="mb-2.5 block font-medium text-black dark:text-white">
+                Scan Barcode Buku (Nomor Induk)
+            </label>
+            <div class="relative">
+                <input type="text" id="no_induk" autofocus
+                    placeholder="Contoh: 260901"
+                    class="w-full rounded border-[1.5px] border-stroke bg-transparent py-4 px-5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input" />
+                <span class="absolute right-4 top-4">
+                    <i class="fa-solid fa-barcode text-xl text-body"></i>
+                </span>
+            </div>
+            <p class="text-sm mt-2 text-slate-500">Pastikan kursor berada di dalam kotak ini saat menggunakan scanner barcode fisik.</p>
+        </div>
+        
+        <div id="result" class="mt-6 hidden rounded p-4 text-center text-lg font-bold"></div>
+    </div>
+</div>
+
+<script>
+    const noIndukInput = document.getElementById('no_induk');
+    const resultDiv = document.getElementById('result');
+    const modeRadios = document.querySelectorAll('input[name="mode"]');
+    const targetRakContainer = document.getElementById('targetRakContainer');
+    const targetRakSelect = document.getElementById('target_rak');
+
+    // Audio effects for feedback (optional, handled by UI flash for now as requested earlier)
+
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'audit_rak') {
+                targetRakContainer.classList.remove('hidden');
+            } else {
+                targetRakContainer.classList.add('hidden');
+            }
+            noIndukInput.focus();
+        });
+    });
+
+    noIndukInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const no_induk = this.value.trim();
+            if (no_induk) {
+                const mode = document.querySelector('input[name="mode"]:checked').value;
+                const target_rak = targetRakSelect.value;
+                
+                fetch('/api/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ no_induk, mode, target_rak })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    resultDiv.classList.remove('hidden', 'bg-success/20', 'text-success', 'bg-danger/20', 'text-danger', 'bg-warning/20', 'text-warning');
+                    
+                    if (data.status === 'success') {
+                        resultDiv.classList.add('bg-success/20', 'text-success');
+                        
+                        // User request: "alangkah lebih bagus juga muncul suara tut bahwa sudah berhasil di catat."
+                        // We will play a short beep using Web Audio API
+                        playBeep(800, 150, 'sine');
+                        
+                    } else if (data.status === 'danger' || data.status === 'error') {
+                        resultDiv.classList.add('bg-danger/20', 'text-danger');
+                        playBeep(300, 400, 'sawtooth'); // Error buzz
+                    } else if (data.status === 'warning') {
+                        resultDiv.classList.add('bg-warning/20', 'text-warning');
+                        playBeep(400, 200, 'square');
+                    }
+                    
+                    resultDiv.innerHTML = data.message;
+                    noIndukInput.value = '';
+                    noIndukInput.focus();
+                })
+                .catch(err => {
+                    resultDiv.classList.remove('hidden', 'bg-success/20', 'text-success');
+                    resultDiv.classList.add('bg-danger/20', 'text-danger');
+                    resultDiv.innerHTML = "Terjadi kesalahan jaringan.";
+                });
+            }
+        }
+    });
+    
+    function playBeep(freq, duration, type) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = type;
+            oscillator.frequency.value = freq;
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            setTimeout(function() {
+                oscillator.stop();
+            }, duration);
+        } catch (e) {
+            console.log("Audio not supported");
+        }
+    }
+</script>
+{% endblock %}
