@@ -70,8 +70,10 @@
                 <h1 class="text-3xl font-bold mb-4 leading-tight tracking-tight">Selamat Datang di<br>Perpustakaan<br>St. Jerome</h1>
                 <p class="text-bodydark text-sm mb-8 font-medium px-4">Silakan pindai Kartu Anggota Anda, atau isi form buku tamu jika Anda bukan anggota.</p>
             </div>
-            <div class="mt-auto relative z-10 flex items-center justify-center gap-3 border-t border-bodydark/30 pt-4">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="SJLA" class="w-10 h-10 object-contain bg-white rounded-full border border-stroke">
+            <div class="mt-auto relative z-10 flex items-center justify-start gap-3 border-t border-bodydark/30 pt-4">
+                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 shrink-0">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="SJLA" class="w-full h-full object-cover">
+                </div>
                 <div class="text-left">
                     <p class="text-sm font-bold text-white tracking-wide">ST. JEROME</p>
                     <p class="text-xs text-bodydark">Library Assistant</p>
