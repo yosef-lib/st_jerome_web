@@ -1014,10 +1014,16 @@ def submit_kunjungan():
                 return jsonify({"status": "error", "message": f"Member dengan ID {identitas} tidak ditemukan."}), 404
         
         # Simpan log
+        fakultas = data.get('fakultas', '').strip()
+        try:
+            conn.execute("ALTER TABLE sjla_visitor_logs ADD COLUMN fakultas TEXT")
+        except:
+            pass
+            
         conn.execute("""
-            INSERT INTO sjla_visitor_logs (tipe_pengunjung, identitas, asal_instansi, peran_jabatan)
-            VALUES (?, ?, ?, ?)
-        """, (tipe_pengunjung, identitas, asal_instansi, peran))
+            INSERT INTO sjla_visitor_logs (tipe_pengunjung, identitas, asal_instansi, peran_jabatan, fakultas)
+            VALUES (?, ?, ?, ?, ?)
+        """, (tipe_pengunjung, identitas, asal_instansi, peran, fakultas))
         conn.commit()
         
         display_name = member_name if member_name else identitas

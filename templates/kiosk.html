@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Kehadiran - Perpustakaan IMAVI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Buku Tamu - St. Jerome Library Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -13,188 +13,161 @@
           extend: {
             colors: {
               boxdark: '#3E2723',
+              boxdark2: '#4E342E',
+              bodydark: '#A1887F',
+              bodydark2: '#A1887F',
               primary: '#6D4C41',
+              secondary: '#8D6E63',
               stroke: '#E2E8F0',
               danger: '#E53935',
               success: '#43A047',
+              warning: '#F57C00',
               'gray-2': '#F8FAFC',
-              'brand-bg': '#EFEBE9',
-              'brand-card': '#FFFFFF',
             },
             fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+              satoshi: ['Inter', 'sans-serif'],
             },
           }
         }
       }
     </script>
+    
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: linear-gradient(135deg, #795548 0%, #3E2723 100%);
-            min-height: 100vh;
+        body { font-family: 'Inter', sans-serif; }
+        .kiosk-bg {
+            background-color: #F3E5F5;
+            background-image: radial-gradient(#6D4C41 0.5px, transparent 0.5px), radial-gradient(#6D4C41 0.5px, #F3E5F5 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            background-opacity: 0.1;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* Custom Radio Styling */
-        input[type="radio"] {
-            display: none;
-        }
-        input[type="radio"] + label {
-            cursor: pointer;
-            border: 1px solid #E2E8F0;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            transition: all 0.2s ease-in-out;
-        }
-        input[type="radio"]:checked + label {
-            border-color: #6D4C41;
-            background-color: rgba(109, 76, 65, 0.05);
-        }
-        .radio-circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid #CBD5E1;
-            margin-right: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        input[type="radio"]:checked + label .radio-circle {
-            border-color: #6D4C41;
-        }
-        input[type="radio"]:checked + label .radio-circle::after {
-            content: '';
-            width: 10px;
-            height: 10px;
-            background-color: #6D4C41;
-            border-radius: 50%;
-        }
     </style>
 </head>
-<body class="flex flex-col items-center py-10 px-4 relative">
+<body class="kiosk-bg min-h-screen flex items-center justify-center p-4 relative">
     
     <!-- Tombol Kembali -->
-    <a href="/" class="absolute top-6 left-6 md:top-10 md:left-10 bg-white text-black font-semibold py-2 px-4 rounded shadow hover:bg-gray-50 transition flex items-center gap-2 text-sm z-10">
+    <a href="/" class="absolute top-6 left-6 bg-white text-black font-semibold py-2 px-4 rounded shadow hover:bg-gray-50 transition flex items-center gap-2 text-sm z-10 border border-stroke">
         <i class="fa-solid fa-arrow-left"></i> Kembali
     </a>
     
-    <!-- Success Toast -->
-    <div id="successToast" class="fixed inset-0 bg-success/95 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-300 opacity-0 pointer-events-none">
-        <i class="fa-solid fa-circle-check text-8xl mb-6 shadow-sm rounded-full bg-white text-success"></i>
-        <h2 id="successMessage" class="text-4xl font-bold mb-2 text-center px-4">Selamat Datang!</h2>
-        <p class="text-xl opacity-90">Kehadiran Anda telah tercatat.</p>
-    </div>
-
-    <!-- Header Section -->
-    <div class="w-full max-w-3xl mb-8 flex flex-col items-center text-white">
-        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-lg">
-            <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="Logo" class="w-10 h-10 object-contain">
-        </div>
-        <h1 class="text-3xl font-bold mb-1">Form Kehadiran</h1>
-        <p class="text-sm opacity-80">Perpustakaan IMAVI</p>
-    </div>
-
-    <!-- Main Card -->
-    <div class="w-full max-w-3xl bg-brand-bg rounded-2xl p-4 md:p-8 shadow-2xl">
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
         
-        <form id="kioskForm" onsubmit="event.preventDefault(); submitForm();">
+        <!-- Notifikasi Sukses Mengambang -->
+        <div id="successToast" class="absolute top-0 left-0 w-full h-full bg-success/95 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-300 opacity-0 pointer-events-none">
+            <i class="fa-solid fa-circle-check text-8xl mb-6 shadow-sm rounded-full bg-white text-success"></i>
+            <h2 id="successMessage" class="text-4xl font-bold mb-2 text-center px-4">Selamat Datang!</h2>
+            <p class="text-xl opacity-90">Kunjungan Anda telah tercatat.</p>
+        </div>
+
+        <!-- Bagian Kiri: Header & Info -->
+        <div class="md:w-5/12 bg-boxdark p-8 md:p-12 text-white flex flex-col justify-between relative overflow-hidden">
+            <!-- Decorative circle -->
+            <div class="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-primary opacity-50 blur-3xl"></div>
+            <div class="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-primary opacity-50 blur-3xl"></div>
             
-            <!-- Status Member -->
-            <div class="bg-brand-card rounded-xl p-6 shadow-sm mb-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <i class="fa-solid fa-user text-primary text-xl"></i>
-                    <h2 class="text-lg font-bold text-black">Status Member</h2>
+            <div class="relative z-10">
+                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg border-4 border-primary">
+                    <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-16 h-16 object-contain">
+                </div>
+                <h1 class="text-4xl font-bold mb-4 leading-tight tracking-tight">Buku Tamu<br>IMAVI</h1>
+                <p class="text-bodydark text-lg mb-8 font-medium">Silakan pindai Kartu Anggota Anda atau isi form buku tamu jika Anda bukan anggota tetap (tamu).</p>
+            </div>
+            <div class="mt-auto relative z-10 flex items-center gap-3">
+                <i class="fa-solid fa-book-open-reader text-2xl text-bodydark"></i>
+                <div>
+                    <p class="text-sm font-bold text-white tracking-wide">ST. JEROME</p>
+                    <p class="text-xs text-bodydark">Library Assistant</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bagian Kanan: Form -->
+        <div class="md:w-7/12 p-8 md:p-12 relative">
+            
+            <!-- Tab Selector -->
+            <div class="flex border-b border-stroke mb-8">
+                <button id="tabMember" class="w-1/2 py-4 text-center font-bold text-primary border-b-2 border-primary transition-colors hover:bg-gray-50">
+                    <i class="fa-solid fa-id-card mr-2"></i> Anggota Perpustakaan
+                </button>
+                <button id="tabTamu" class="w-1/2 py-4 text-center font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-gray-50 transition-colors">
+                    <i class="fa-solid fa-user-pen mr-2"></i> Tamu / Non-Member
+                </button>
+            </div>
+
+            <!-- Konten Member -->
+            <div id="contentMember" class="block animate-fade-in">
+                <div class="text-center mb-10">
+                    <h3 class="text-2xl font-bold text-black mb-3">Scan Barcode Anda</h3>
+                    <p class="text-slate-500">Gunakan scanner fisik di meja untuk memindai kartu anggota Anda.</p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <input type="radio" name="statusMember" id="bukanMember" value="Non-Member" checked onchange="toggleForm()">
-                        <label for="bukanMember">
-                            <div class="radio-circle"></div>
-                            <div>
-                                <div class="font-bold text-black text-sm">Bukan Member</div>
-                                <div class="text-xs text-slate-500">Pengunjung umum</div>
-                            </div>
-                        </label>
+                <div class="relative mt-8">
+                    <i class="fa-solid fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-slate-400"></i>
+                    <input type="text" id="memberIdInput" placeholder="Arahkan kursor kesini dan Scan Barcode..." onkeypress="if(event.key === 'Enter') submitMember()" class="w-full rounded-xl border-2 border-stroke bg-gray-50 py-5 pl-14 pr-24 outline-none transition focus:border-primary focus:bg-white text-lg font-semibold">
+                    <button onclick="submitMember()" class="absolute right-2 top-2 bottom-2 rounded-lg bg-primary px-6 font-bold text-white hover:bg-opacity-90 transition">Kirim</button>
+                </div>
+                <p id="memberError" class="text-danger text-sm mt-3 hidden text-center font-bold"></p>
+                
+                <div class="mt-12 text-center">
+                    <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 mb-4">
+                        <i class="fa-solid fa-qrcode text-4xl text-primary"></i>
                     </div>
-                    <div>
-                        <input type="radio" name="statusMember" id="adalahMember" value="Member" onchange="toggleForm()">
-                        <label for="adalahMember">
-                            <div class="radio-circle"></div>
-                            <div>
-                                <div class="font-bold text-black text-sm">Member</div>
-                                <div class="text-xs text-slate-500">Anggota perpustakaan</div>
-                            </div>
-                        </label>
-                    </div>
+                    <p class="text-sm font-medium text-slate-500">Sistem otomatis mendeteksi barcode Anda.</p>
                 </div>
             </div>
 
-            <!-- Data Pengunjung -->
-            <div class="bg-brand-card rounded-xl p-6 shadow-sm mb-6">
-                <div class="flex items-center gap-3 mb-6">
-                    <i class="fa-solid fa-user-check text-success text-xl"></i>
-                    <h2 class="text-lg font-bold text-black">Data Pengunjung</h2>
-                </div>
-                
-                <!-- View: Bukan Member -->
-                <div id="viewBukanMember" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Konten Tamu -->
+            <div id="contentTamu" class="hidden animate-fade-in">
+                <form id="formTamu" onsubmit="event.preventDefault(); submitTamu();">
                     
-                    <div class="relative md:col-span-1">
-                        <label class="mb-2 block text-sm font-semibold text-slate-600">Nama Lengkap</label>
-                        <input type="text" id="tamuNama" autocomplete="off" placeholder="Masukkan nama lengkap" class="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 outline-none transition focus:border-primary">
+                    <div class="mb-5 relative">
+                        <label class="mb-2 block text-sm font-bold text-black">Nama Lengkap</label>
+                        <input type="text" id="tamuNama" required autocomplete="off" placeholder="Ketik nama Anda..." class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
                         
+                        <!-- Autocomplete Suggestions -->
                         <div id="autocompleteList" class="absolute z-40 w-full bg-white border border-stroke rounded-lg mt-1 shadow-lg hidden max-h-48 overflow-y-auto no-scrollbar">
-                            <!-- Injected -->
+                            <!-- Items injected via JS -->
                         </div>
                     </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-600">Instansi</label>
-                        <select id="tamuInstansi" class="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 outline-none transition focus:border-primary cursor-pointer appearance-none">
-                            <option value="" disabled selected>Pilih Instansi</option>
-                            <option value="Fakultas Teologi">Fakultas Teologi</option>
-                            <option value="Fakultas Filsafat">Fakultas Filsafat</option>
-                            <option value="Umum / Masyarakat">Umum / Masyarakat</option>
-                            <option value="Institusi Lain">Institusi Lain</option>
-                        </select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div>
+                            <label class="mb-2 block text-sm font-bold text-black">Asal Instansi</label>
+                            <select id="tamuInstansi" required class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary cursor-pointer appearance-none">
+                                <option value="" disabled selected>-- Pilih Instansi --</option>
+                                <option value="IMAVI">IMAVI</option>
+                                <option value="UKWMS">UKWMS</option>
+                                <option value="Lain-lain">Lain-lain</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="mb-2 block text-sm font-bold text-black">Peran / Jabatan</label>
+                            <select id="tamuPeran" required onchange="checkPeran()" class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary cursor-pointer appearance-none">
+                                <option value="" disabled selected>-- Pilih Peran --</option>
+                                <option value="Dosen">Dosen</option>
+                                <option value="Karyawan">Karyawan</option>
+                                <option value="Mahasiswa">Mahasiswa</option>
+                                <option value="Romo">Romo</option>
+                                <option value="Umum">Umum</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="md:col-span-1">
-                        <label class="mb-2 block text-sm font-semibold text-slate-600">Peran/Jabatan</label>
-                        <select id="tamuPeran" class="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 outline-none transition focus:border-primary cursor-pointer appearance-none">
-                            <option value="" disabled selected>Pilih Peran</option>
-                            <option value="Mahasiswa">Mahasiswa</option>
-                            <option value="Dosen">Dosen</option>
-                            <option value="Staf">Staf</option>
-                            <option value="Peneliti">Peneliti</option>
-                            <option value="Lainnya">Lainnya</option>
-                        </select>
+                    <div id="fakultasContainer" class="mb-8 hidden animate-fade-in">
+                        <label class="mb-2 block text-sm font-bold text-black">Fakultas (Wajib bagi Mahasiswa)</label>
+                        <input type="text" id="tamuFakultas" placeholder="Contoh: Fakultas Filsafat" class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
                     </div>
-                </div>
 
-                <!-- View: Member -->
-                <div id="viewMember" class="hidden">
-                    <label class="mb-2 block text-sm font-semibold text-slate-600">Scan Barcode / Ketik ID Anggota</label>
-                    <input type="text" id="memberBarcode" placeholder="Scan Barcode disini..." class="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 outline-none transition focus:border-primary shadow-inner">
-                    <p class="text-xs text-slate-500 mt-2"><i class="fa-solid fa-info-circle"></i> Gunakan alat scanner barcode atau ketik ID lalu tekan Enter.</p>
-                </div>
-                
-                <p id="formError" class="text-danger text-sm mt-4 hidden text-center font-bold bg-danger/10 p-2 rounded"></p>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="flex justify-end">
-                <button type="submit" id="btnSubmit" class="rounded-lg bg-primary py-3 px-8 text-center font-bold text-white hover:bg-opacity-90 transition shadow-lg w-full md:w-auto flex items-center justify-center">
-                    <i class="fa-solid fa-check-circle mr-2"></i> Daftar Kehadiran
-                </button>
+                    <button type="submit" class="w-full rounded-lg bg-primary py-4 px-6 text-center font-bold text-white hover:bg-opacity-90 transition text-lg shadow-md mt-4">
+                        <i class="fa-solid fa-check-circle mr-2"></i> Rekam Kunjungan
+                    </button>
+                    <p id="tamuError" class="text-danger text-sm mt-3 hidden text-center font-bold"></p>
+                </form>
             </div>
             
-        </form>
+        </div>
     </div>
 
     <!-- Audio Beep -->
@@ -222,46 +195,33 @@
         }
     </script>
 
-    <!-- Logic -->
+    <!-- UI Logic -->
     <script>
-        const viewBukanMember = document.getElementById('viewBukanMember');
-        const viewMember = document.getElementById('viewMember');
-        const inputNama = document.getElementById('tamuNama');
-        const inputBarcode = document.getElementById('memberBarcode');
-        const err = document.getElementById('formError');
+        const tabMember = document.getElementById('tabMember');
+        const tabTamu = document.getElementById('tabTamu');
+        const contentMember = document.getElementById('contentMember');
+        const contentTamu = document.getElementById('contentTamu');
         const toast = document.getElementById('successToast');
         const msg = document.getElementById('successMessage');
-        const btnSubmit = document.getElementById('btnSubmit');
-        
-        let isMemberMode = false;
 
-        function toggleForm() {
-            err.classList.add('hidden');
-            if (document.getElementById('adalahMember').checked) {
-                isMemberMode = true;
-                viewBukanMember.classList.add('hidden');
-                viewMember.classList.remove('hidden');
-                btnSubmit.classList.add('hidden'); // Barcode scanner auto submits usually
-                inputBarcode.focus();
+        function switchTab(mode) {
+            if(mode === 'member') {
+                tabMember.className = "w-1/2 py-4 text-center font-bold text-primary border-b-2 border-primary transition-colors hover:bg-gray-50";
+                tabTamu.className = "w-1/2 py-4 text-center font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-gray-50 transition-colors";
+                contentMember.classList.remove('hidden');
+                contentTamu.classList.add('hidden');
+                document.getElementById('memberIdInput').focus();
             } else {
-                isMemberMode = false;
-                viewMember.classList.add('hidden');
-                viewBukanMember.classList.remove('hidden');
-                btnSubmit.classList.remove('hidden');
-                inputNama.focus();
+                tabTamu.className = "w-1/2 py-4 text-center font-bold text-primary border-b-2 border-primary transition-colors hover:bg-gray-50";
+                tabMember.className = "w-1/2 py-4 text-center font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-gray-50 transition-colors";
+                contentTamu.classList.remove('hidden');
+                contentMember.classList.add('hidden');
+                document.getElementById('tamuNama').focus();
             }
         }
 
-        // Initialize focus
-        inputNama.focus();
-
-        // Member Barcode Auto Submit
-        inputBarcode.addEventListener('keypress', function(e) {
-            if(e.key === 'Enter') {
-                e.preventDefault();
-                submitForm();
-            }
-        });
+        tabMember.addEventListener('click', () => switchTab('member'));
+        tabTamu.addEventListener('click', () => switchTab('tamu'));
 
         function showSuccess(name) {
             playBeep(true);
@@ -269,49 +229,33 @@
             toast.classList.remove('opacity-0', 'pointer-events-none');
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'pointer-events-none');
-                document.getElementById('kioskForm').reset();
-                toggleForm(); // restore correct focus based on current radio selection
+                document.getElementById('memberIdInput').value = '';
+                document.getElementById('formTamu').reset();
+                checkPeran();
+                if(!contentMember.classList.contains('hidden')) {
+                    document.getElementById('memberIdInput').focus();
+                } else {
+                    document.getElementById('tamuNama').focus();
+                }
             }, 3000);
         }
 
-        async function submitForm() {
+        async function submitMember(barcode = null) {
+            const err = document.getElementById('memberError');
             err.classList.add('hidden');
-            let payload = {};
-
-            if (isMemberMode) {
-                const id = inputBarcode.value.trim();
-                if (!id) {
-                    err.innerText = "Silakan scan barcode terlebih dahulu.";
-                    err.classList.remove('hidden');
-                    return;
-                }
-                payload = {
-                    tipe_pengunjung: 'Member',
-                    identitas: id
-                };
-            } else {
-                const nama = inputNama.value.trim();
-                const instansi = document.getElementById('tamuInstansi').value;
-                const peran = document.getElementById('tamuPeran').value;
-                
-                if(!nama || !instansi || !peran) {
-                    err.innerText = "Harap lengkapi Nama, Instansi, dan Peran.";
-                    err.classList.remove('hidden');
-                    return;
-                }
-                payload = {
-                    tipe_pengunjung: 'Non-Member',
-                    identitas: nama,
-                    asal_instansi: instansi,
-                    peran_jabatan: peran
-                };
-            }
+            
+            const id = barcode || document.getElementById('memberIdInput').value;
+            if(!id) return;
             
             try {
                 const res = await fetch('/api/kunjungan', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        tipe_pengunjung: 'Member',
+                        identitas: id,
+                        tujuan_kunjungan: 'Kunjungan Member'
+                    })
                 });
                 const data = await res.json();
                 if(res.ok) {
@@ -320,7 +264,6 @@
                     playBeep(false);
                     err.innerText = data.message || "Gagal merekam data.";
                     err.classList.remove('hidden');
-                    if(isMemberMode) inputBarcode.select();
                 }
             } catch(e) {
                 playBeep(false);
@@ -329,11 +272,50 @@
             }
         }
 
+        async function submitTamu() {
+            const err = document.getElementById('tamuError');
+            err.classList.add('hidden');
+            
+            const nama = document.getElementById('tamuNama').value;
+            const instansi = document.getElementById('tamuInstansi').value;
+            const tujuan = document.getElementById('tamuTujuan').value;
+            
+            if(!instansi) {
+                err.innerText = "Silakan pilih Asal Instansi.";
+                err.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/kunjungan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        tipe_pengunjung: 'Non-Member',
+                        identitas: nama,
+                        asal_instansi: instansi,
+                        tujuan_kunjungan: tujuan
+                    })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    showSuccess(data.display_name);
+                } else {
+                    err.innerText = data.message || "Gagal merekam data.";
+                    err.classList.remove('hidden');
+                }
+            } catch(e) {
+                err.innerText = "Terjadi kesalahan jaringan.";
+                err.classList.remove('hidden');
+            }
+        }
+
         // Autocomplete Logic
+        const tamuNama = document.getElementById('tamuNama');
         const autocompleteList = document.getElementById('autocompleteList');
         let debounceTimer;
 
-        inputNama.addEventListener('input', function() {
+        tamuNama.addEventListener('input', function() {
             clearTimeout(debounceTimer);
             const val = this.value;
             if(val.length < 3) {
@@ -348,10 +330,10 @@
                     if(data.length > 0) {
                         data.forEach(name => {
                             const div = document.createElement('div');
-                            div.className = "p-3 hover:bg-gray-100 cursor-pointer border-b border-[#eee] text-sm font-medium text-black last:border-b-0";
+                            div.className = "p-3 hover:bg-gray-2 cursor-pointer border-b border-[#eee] text-sm font-medium text-black last:border-b-0";
                             div.innerHTML = name;
                             div.addEventListener('click', () => {
-                                inputNama.value = name;
+                                tamuNama.value = name;
                                 autocompleteList.classList.add('hidden');
                             });
                             autocompleteList.appendChild(div);
@@ -364,11 +346,28 @@
             }, 300);
         });
         
+        // Hide autocomplete when clicking outside
         document.addEventListener('click', function(e) {
-            if(e.target !== inputNama && e.target !== autocompleteList) {
+            if(e.target !== tamuNama && e.target !== autocompleteList) {
                 autocompleteList.classList.add('hidden');
             }
         });
-    </script>
+
+        function checkPeran() {
+            const peran = document.getElementById('tamuPeran').value;
+            const facContainer = document.getElementById('fakultasContainer');
+            const facInput = document.getElementById('tamuFakultas');
+            if(peran === 'Mahasiswa') {
+                facContainer.classList.remove('hidden');
+                facInput.setAttribute('required', 'true');
+            } else {
+                facContainer.classList.add('hidden');
+                facInput.removeAttribute('required');
+                facInput.value = '';
+            }
+        }
+        
+        // Remove camera logic block completely
+        </script>
 </body>
 </html>
