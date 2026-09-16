@@ -742,5 +742,33 @@ def export_akreditasi():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 
+
+@app.route('/anomali')
+@login_required
+def anomali():
+    lokasi = request.args.get('lokasi', 'STPD')
+    conn = database.get_db_connection()
+    
+    # 1. Metadata Tidak Lengkap
+    metadata_cacat = conn.execute("""
+        SELECT no_induk, judul, pengarang, klasifikasi 
+        FROM buku 
+        WHERE lokasi = ? AND 
+        (klasifikasi IS NULL OR klasifikasi = '' OR pengarang IS NULL OR pengarang = '' OR judul IS NULL OR judul = '')
+        LIMIT 50
+    """, (lokasi,)).fetchall()
+    
+    # 2. Inkonsistensi Klasifikasi (Judul sama persis, tapi beda klasifikasi)
+    inkonsistensi = conn.execute("""
+        SELECT a.judul, a.no_induk as no_induk_1, a.klasifikasi as kelas_1, b.no_induk as no_induk_2, b.klasifikasi as kelas_2
+        FROM buku a
+        JOIN buku b ON a.judul = b.judul AND a.lokasi = b.lokasi AND a.id != b.id
+        WHERE a.lokasi = ? AND a.klasifikasi != b.klasifikasi AND a.klasifikasi != '' AND b.klasifikasi != ''
+        GROUP BY a.judul
+        LIMIT 50
+    """, (lokasi,)).fetchall()
+
+    return render_template('anomali.html', lokasi=lokasi, metadata_cacat=metadata_cacat, inkonsistensi=inkonsistensi)
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
