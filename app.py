@@ -760,7 +760,10 @@ def anomali():
     
     # 2. Inkonsistensi Klasifikasi (Judul sama persis, tapi beda klasifikasi)
     inkonsistensi = conn.execute("""
-        SELECT a.judul, a.no_induk as no_induk_1, a.klasifikasi as kelas_1, b.no_induk as no_induk_2, b.klasifikasi as kelas_2
+        SELECT a.judul, a.no_induk as no_induk_1, a.klasifikasi as kelas_1, 
+               TRIM(a.klasifikasi || ' ' || COALESCE(a.cutter, '') || ' ' || COALESCE(a.huruf_judul, '')) as panggil_1, 
+               b.no_induk as no_induk_2, b.klasifikasi as kelas_2, 
+               TRIM(b.klasifikasi || ' ' || COALESCE(b.cutter, '') || ' ' || COALESCE(b.huruf_judul, '')) as panggil_2
         FROM buku a
         JOIN buku b ON a.judul = b.judul AND a.lokasi = b.lokasi AND a.id != b.id
         WHERE a.lokasi = ? AND a.klasifikasi != b.klasifikasi AND a.klasifikasi != '' AND b.klasifikasi != ''
