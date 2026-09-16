@@ -64,8 +64,8 @@
             <div class="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-primary opacity-50 blur-3xl"></div>
             
             <div class="relative z-10 flex flex-col items-center text-center mt-4">
-                <div class="w-28 h-28 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg border-4 border-primary mx-auto">
-                    <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-20 h-20 object-contain">
+                <div class="w-28 h-28 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg border-4 border-primary mx-auto overflow-hidden">
+                    <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-full h-full object-cover">
                 </div>
                 <h1 class="text-3xl font-bold mb-4 leading-tight tracking-tight">Selamat Datang di<br>Perpustakaan<br>St. Jerome</h1>
                 <p class="text-bodydark text-sm mb-8 font-medium px-4">Silakan pindai Kartu Anggota Anda, atau isi form buku tamu jika Anda bukan anggota.</p>
@@ -103,8 +103,8 @@
                 
                 <div class="relative mt-8">
                     <i class="fa-solid fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-slate-400"></i>
-                    <input type="text" id="memberIdInput" autofocus placeholder="Arahkan kursor kesini dan Scan Barcode..." onkeypress="if(event.key === 'Enter') submitMember()" class="w-full rounded-xl border-2 border-stroke bg-gray-50 py-5 pl-14 pr-24 outline-none transition focus:border-primary focus:bg-white text-lg font-semibold">
-                    <button onclick="submitMember()" class="absolute right-2 top-2 bottom-2 rounded-lg bg-primary px-6 font-bold text-white hover:bg-opacity-90 transition">Kirim</button>
+                    <input type="text" id="memberIdInput" autofocus placeholder="Arahkan kursor kesini dan Scan Barcode..." class="w-full rounded-xl border-2 border-stroke bg-gray-50 py-5 pl-14 pr-8 outline-none transition focus:border-primary focus:bg-white text-lg font-semibold">
+                    
                 </div>
                 <p id="memberError" class="text-danger text-sm mt-3 hidden text-center font-bold"></p>
                 
@@ -370,6 +370,26 @@
             }, 100);
         });
         
+        
+        let barcodeTimer;
+        document.getElementById('memberIdInput').addEventListener('input', function() {
+            clearTimeout(barcodeTimer);
+            if(this.value.trim().length > 0) {
+                barcodeTimer = setTimeout(() => {
+                    submitMember();
+                }, 300); // 300ms after last character is typed by scanner
+            }
+        });
+        
+        // Still keep Enter key support just in case
+        document.getElementById('memberIdInput').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') {
+                clearTimeout(barcodeTimer);
+                e.preventDefault();
+                submitMember();
+            }
+        });
+
         // Ensure clicking anywhere on the document refocuses if on member tab
         document.addEventListener('click', function(e) {
             if(!contentMember.classList.contains('hidden') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
