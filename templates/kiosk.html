@@ -46,17 +46,14 @@
 </head>
 <body class="kiosk-bg min-h-screen flex items-center justify-center p-4 relative">
     
-    <!-- Tombol Kembali -->
-    <a href="/" class="absolute top-6 left-6 bg-white text-black font-semibold py-2 px-4 rounded shadow hover:bg-gray-50 transition flex items-center gap-2 text-sm z-10 border border-stroke">
-        <i class="fa-solid fa-arrow-left"></i> Kembali
-    </a>
+    
     
     <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative">
         
         <!-- Notifikasi Sukses Mengambang -->
         <div id="successToast" class="absolute top-0 left-0 w-full h-full bg-success/95 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-300 opacity-0 pointer-events-none">
             <i class="fa-solid fa-circle-check text-8xl mb-6 shadow-sm rounded-full bg-white text-success"></i>
-            <h2 id="successMessage" class="text-4xl font-bold mb-2 text-center px-4">Selamat Datang!</h2>
+            <h2 id="successMessage" class="text-3xl md:text-4xl font-bold mb-2 text-center px-4 whitespace-pre-line leading-tight">Selamat Datang!</h2>
             <p class="text-xl opacity-90">Kunjungan Anda telah tercatat.</p>
         </div>
 
@@ -109,12 +106,7 @@
                 </div>
                 <p id="memberError" class="text-danger text-sm mt-3 hidden text-center font-bold"></p>
                 
-                <div class="mt-12 text-center">
-                    <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 mb-4">
-                        <i class="fa-solid fa-qrcode text-4xl text-primary"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-500">Sistem otomatis mendeteksi barcode Anda.</p>
-                </div>
+                
             </div>
 
             <!-- Konten Tamu -->
@@ -225,7 +217,7 @@
 
         function showSuccess(name) {
             playBeep(true);
-            msg.innerText = "Selamat Datang, " + name + "!";
+            msg.innerText = "Halo " + name + ",\nselamat datang di perpustakaan St. Jerome.";
             toast.classList.remove('opacity-0', 'pointer-events-none');
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'pointer-events-none');
