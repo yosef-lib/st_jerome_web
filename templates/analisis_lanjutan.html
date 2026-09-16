@@ -1,0 +1,158 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}Analisis & Kinerja Sirkulasi Lanjutan{% endblock %}
+{% block page_subtitle %}Berdasarkan data sinkronisasi SLiMS (Offline Sync){% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Turnover Rate Chart -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <h3 class="font-bold text-black mb-4"><i class="fa-solid fa-arrow-right-arrow-left text-primary mr-2"></i> Turnover Rate (Perputaran Koleksi per Kelas DDC)</h3>
+        <p class="text-xs text-slate-500 mb-4">Rasio peminjaman dibandingkan dengan ketersediaan eksemplar. Angka tinggi berarti buku di kelas ini sangat produktif.</p>
+        <div class="h-[300px] w-full">
+            <canvas id="turnoverChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Peminjaman vs Baca Ditempat -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <h3 class="font-bold text-black mb-4"><i class="fa-solid fa-users-viewfinder text-primary mr-2"></i> Peminjaman Luar vs Baca di Tempat</h3>
+        <p class="text-xs text-slate-500 mb-4">Perbandingan antara peminjaman yang dicatat SLiMS dengan buku yang hanya dibaca di meja perpustakaan.</p>
+        <div class="h-[300px] w-full flex items-center justify-center">
+            <canvas id="inoutChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 gap-6">
+    <!-- Dead Stock Table -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default flex flex-col max-h-[600px]">
+        <div class="border-b border-stroke py-4 px-6 flex justify-between items-center shrink-0 bg-danger/10">
+            <h3 class="font-bold text-danger">
+                <i class="fa-solid fa-skull-crossbones mr-2"></i> Buku Dorman (Dead Stock) - 50 Teratas
+            </h3>
+            <span class="text-xs font-medium text-danger bg-white px-2 py-1 rounded border border-danger/30">Kandidat Penyiangan (Weeding)</span>
+        </div>
+        <div class="p-6 text-sm text-slate-600 border-b border-stroke shrink-0">
+            Daftar koleksi berikut tercatat di sistem namun <strong>tidak pernah ada di riwayat peminjaman SLiMS</strong> dan <strong>tidak pernah ter-scan di meja baca</strong>. Pertimbangkan untuk reposisi rak display, promosi, atau penyiangan (weeding).
+        </div>
+        <div class="p-0 overflow-y-auto grow">
+            <table class="w-full table-auto">
+                <thead class="sticky top-0 z-10 bg-slate-50 border-b border-stroke shadow-sm">
+                    <tr class="text-left">
+                        <th class="py-3 px-6 font-medium text-black text-sm">No Induk</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm">Judul Buku</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm">Pengarang</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Kelas DDC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in dead_stock_data %}
+                    <tr class="border-b border-stroke last:border-b-0 hover:bg-slate-50 transition">
+                        <td class="py-3 px-6 font-medium text-black text-sm">{{ book.no_induk }}</td>
+                        <td class="py-3 px-6 font-medium text-black text-sm max-w-[300px] truncate" title="{{ book.judul }}">{{ book.judul }}</td>
+                        <td class="py-3 px-6 text-sm text-slate-500">{{ book.pengarang }}</td>
+                        <td class="py-3 px-6 text-center">
+                            <span class="inline-block rounded bg-danger/10 py-1 px-2.5 text-xs font-medium text-danger">
+                                {{ book.klasifikasi }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="py-6 text-center text-slate-400 text-sm">Hebat! Tidak ada koleksi dorman sama sekali.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Turnover Chart
+    const turnoverCtx = document.getElementById('turnoverChart').getContext('2d');
+    const turnoverData = [
+        {% for row in turnover_data %}
+            {
+                label: '{{ row.kategori }}',
+                turnover: {{ row.turnover }}
+            },
+        {% endfor %}
+    ];
+
+    new Chart(turnoverCtx, {
+        type: 'bar',
+        data: {
+            labels: turnoverData.map(d => d.label.split('-')[0].trim()),
+            datasets: [{
+                label: 'Turnover Rate',
+                data: turnoverData.map(d => d.turnover),
+                backgroundColor: '#3b82f6', // Primary color
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return turnoverData[context[0].dataIndex].label;
+                        },
+                        label: function(context) {
+                            return 'Turnover: ' + context.raw;
+                        }
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Turnover Rate'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Kelas DDC'
+                    }
+                }
+            }
+        }
+    });
+
+    // In-House vs Out Chart
+    const inoutCtx = document.getElementById('inoutChart').getContext('2d');
+    new Chart(inoutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Peminjaman (Bawa Pulang)', 'Baca di Tempat (In-House)'],
+            datasets: [{
+                data: [{{ out_house_count }}, {{ in_house_count }}],
+                backgroundColor: ['#10b981', '#f59e0b'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
