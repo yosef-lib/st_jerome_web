@@ -762,7 +762,7 @@ def import_slims_katalog():
                 lokasi_raw = row[7].upper()
                 status_buku = row[9]
                 
-                lokasi = 'IMAVI' if 'IMAVI' in lokasi_raw else lokasi_raw
+                lokasi = 'IMAVI' if 'IMAVI' in lokasi_raw else ('STPD' if 'STPD' in lokasi_raw else 'UMUM')
                 
                 bib = biblio_map.get(no_induk, {})
                 judul = bib.get('title', row[18] if len(row) > 18 else '')
