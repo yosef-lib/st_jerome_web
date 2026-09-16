@@ -770,5 +770,11 @@ def anomali():
 
     return render_template('anomali.html', lokasi=lokasi, metadata_cacat=metadata_cacat, inkonsistensi=inkonsistensi)
 
+
+@app.route('/audit_rak')
+@login_required
+def audit_rak():
+    return render_template('audit_rak.html')
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

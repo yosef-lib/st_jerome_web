@@ -1,0 +1,115 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="mx-auto max-w-screen-md p-4 md:p-6 2xl:p-10">
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-title-md2 font-bold text-black dark:text-white">
+            Stok Opname & Audit Rak
+        </h2>
+    </div>
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 border-t-4 border-t-warning">
+        
+        <!-- Target Rak -->
+        <div id="targetRakContainer" class="mb-6">
+            <label class="mb-2.5 block font-medium text-black text-lg">
+                <i class="fa-solid fa-boxes-packing text-warning mr-2"></i> Anda Sedang Mengaudit Rak DDC Berapa?
+            </label>
+            <select id="target_rak" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-4 px-5 outline-none transition focus:border-warning active:border-warning text-lg font-bold">
+                <option value="000">000 - Komputer, Informasi & Umum</option>
+                <option value="100">100 - Filsafat & Psikologi</option>
+                <option value="200" selected>200 - Agama & Teologi</option>
+                <option value="300">300 - Ilmu Sosial</option>
+                <option value="400">400 - Bahasa</option>
+                <option value="500">500 - Sains & Matematika</option>
+                <option value="600">600 - Teknologi</option>
+                <option value="700">700 - Kesenian & Rekreasi</option>
+                <option value="800">800 - Sastra</option>
+                <option value="900">900 - Sejarah & Geografi</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="mb-2.5 block font-medium text-black dark:text-white">
+                Scan Barcode Buku di Rak Ini
+            </label>
+            <div class="relative">
+                <input type="text" id="no_induk" autofocus
+                    placeholder="Contoh: 260901"
+                    class="w-full rounded border-[1.5px] border-stroke bg-transparent py-4 px-5 outline-none transition focus:border-warning active:border-warning text-xl text-center tracking-widest" />
+                <span class="absolute right-4 top-4">
+                    <i class="fa-solid fa-barcode text-2xl text-body"></i>
+                </span>
+            </div>
+            <p class="text-sm mt-2 text-slate-500 text-center">Jika klasifikasi buku tidak cocok dengan rak pilihan Anda, layar akan memerah dan berbunyi!</p>
+        </div>
+        
+        <div id="result" class="mt-6 hidden rounded p-4 text-center text-lg font-bold border-2"></div>
+    </div>
+</div>
+
+<script>
+    const noIndukInput = document.getElementById('no_induk');
+    const resultDiv = document.getElementById('result');
+    const targetRakSelect = document.getElementById('target_rak');
+
+    // Always keep focus on input even when select changes
+    targetRakSelect.addEventListener('change', () => {
+        noIndukInput.focus();
+    });
+
+    noIndukInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const no_induk = this.value.trim();
+            if (no_induk) {
+                const mode = 'audit_rak';
+                const target_rak = targetRakSelect.value;
+                
+                fetch('/api/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ no_induk, mode, target_rak })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    resultDiv.classList.remove('hidden', 'bg-success/20', 'text-success', 'border-success', 'bg-danger/20', 'text-danger', 'border-danger', 'bg-warning/20', 'text-warning', 'border-warning');
+                    
+                    if (data.status === 'success') {
+                        resultDiv.classList.add('bg-success/20', 'text-success', 'border-success');
+                        playBeep(800, 150, 'sine');
+                    } else if (data.status === 'danger' || data.status === 'error') {
+                        resultDiv.classList.add('bg-danger/20', 'text-danger', 'border-danger');
+                        playBeep(300, 500, 'sawtooth'); // Error buzz
+                    } else if (data.status === 'warning') {
+                        resultDiv.classList.add('bg-warning/20', 'text-warning', 'border-warning');
+                        playBeep(400, 300, 'square');
+                    }
+                    
+                    resultDiv.innerHTML = data.message;
+                    noIndukInput.value = '';
+                    noIndukInput.focus();
+                })
+                .catch(err => {
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.classList.add('bg-danger/20', 'text-danger', 'border-danger');
+                    resultDiv.innerHTML = "Terjadi kesalahan jaringan.";
+                });
+            }
+        }
+    });
+    
+    function playBeep(freq, duration, type) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.value = freq;
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            setTimeout(function() { oscillator.stop(); }, duration);
+        } catch (e) {}
+    }
+</script>
+{% endblock %}
