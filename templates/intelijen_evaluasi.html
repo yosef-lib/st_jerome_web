@@ -1,318 +1,176 @@
 {% extends 'layout.html' %}
 
-{% block page_title %}Analisis Koleksi: {{ lokasi }}{% endblock %}
-{% block page_subtitle %}Statistik dan Sebaran Koleksi Perpustakaan di {{ lokasi }}{% endblock %}
-
 {% block content %}
-
-<!-- GREETING -->
-<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h2 class="text-title-md2 font-bold text-black" id="greetingText">
-        Halo Yosef, Selamat Datang!
-    </h2>
-    <span class="text-sm font-medium text-slate-500">Ada yang bisa dibantu hari ini?</span>
-</div>
-
-<!-- STAT CARDS -->
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-    <div class="rounded-sm border border-stroke bg-boxdark py-6 px-7.5 shadow-default text-white relative overflow-hidden">
-        <div class="absolute -right-4 -bottom-4 opacity-10">
-            <i class="fa-solid fa-book text-8xl"></i>
-        </div>
-        <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-white bg-opacity-20 mb-4">
-            <i class="fa-solid fa-book-open text-xl"></i>
-        </div>
-        <div class="mt-4 flex items-end justify-between">
-            <div>
-                <h4 class="text-title-md font-bold text-white">{{ total_buku }}</h4>
-                <span class="text-sm font-medium text-slate-300">Total Koleksi di {{ lokasi }}</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="rounded-sm border border-stroke bg-primary py-6 px-7.5 shadow-default text-white relative overflow-hidden">
-        <div class="absolute -right-4 -bottom-4 opacity-10">
-            <i class="fa-solid fa-user-pen text-8xl"></i>
-        </div>
-        <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-white bg-opacity-20 mb-4">
-            <i class="fa-solid fa-user-pen text-xl"></i>
-        </div>
-        <div class="mt-4 flex items-end justify-between">
-            <div>
-                <h4 class="text-title-sm font-bold text-white mb-1 leading-tight">{{ dominant_author }}</h4>
-                <span class="text-sm font-medium text-slate-200">Pengarang Terbanyak</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
-        <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-slate-100 text-primary mb-4">
-            <i class="fa-solid fa-tags text-xl"></i>
-        </div>
-        <div class="mt-4 flex items-end justify-between">
-            <div>
-                <h4 class="text-title-sm font-bold text-black mb-1">{{ pop_subject }}</h4>
-                <span class="text-sm font-medium text-slate-500">Subjek Terpopuler (DDC)</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
-        <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-slate-100 text-primary mb-4">
-            <i class="fa-solid fa-copy text-xl"></i>
-        </div>
-        <div class="mt-4 flex items-end justify-between">
-            <div>
-                <h4 class="text-title-sm font-bold text-black mb-1 truncate w-48" title="{{ most_copies }}">{{ most_copies }}</h4>
-                <span class="text-sm font-medium text-slate-500">Judul Kopi Terbanyak</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CHARTS / TABLES -->
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-    <!-- Distribusi Subjek -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default">
-        <div class="border-b border-stroke py-4 px-6.5">
-            <h3 class="font-medium text-black">
-                Distribusi Subjek Koleksi
-            </h3>
-        </div>
-        <div class="p-6.5">
-            <table class="w-full table-auto">
-                <thead>
-                    <tr class="bg-slate-50 text-left">
-                        <th class="py-3 px-4 font-medium text-black">Kelas DDC</th>
-                        <th class="py-3 px-4 font-medium text-black">Topik Umum</th>
-                        <th class="py-3 px-4 font-medium text-black text-right">Jumlah</th>
-                        <th class="py-3 px-4 font-medium text-black text-right">Persentase</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for kl in ddc_distribution %}
-                    <tr class="border-b border-stroke">
-                        <td class="py-3 px-4"><span class="font-medium text-primary">{{ kl.klasifikasi }}</span></td>
-                        <td class="py-3 px-4 text-slate-500">{{ kl.topik }}</td>
-                        <td class="py-3 px-4 text-right font-medium text-black">{{ kl.count }}</td>
-                        <td class="py-3 px-4 text-right">
-                            <span class="inline-flex rounded-full bg-primary bg-opacity-10 py-1 px-3 text-xs font-medium text-primary">
-                                {{ kl.percent }}%
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Info Box & Chart -->
-    <div class="flex flex-col gap-6">
-        <!-- Grafik -->
-        <div class="rounded-sm border border-stroke bg-white shadow-default">
-            <div class="border-b border-stroke py-4 px-6.5">
-                <h3 class="font-medium text-black">
-                    Grafik Distribusi Subjek
-                </h3>
-            </div>
-            <div class="p-6.5">
-                <canvas id="ddcChart" width="400" height="300"></canvas>
-            </div>
-        </div>
+<div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-title-md2 font-bold text-black dark:text-white">
+            Kokpit Operasional Harian
+        </h2>
         
-        <div class="rounded-sm border border-stroke bg-white shadow-default">
-            <div class="border-b border-stroke py-4 px-6.5">
-                <h3 class="font-medium text-black">
-                    Insight Koleksi
-                </h3>
+        <nav>
+            <ol class="flex items-center gap-2">
+                <li><a class="font-medium" href="/">Beranda /</a></li>
+                <li class="font-medium text-primary">Kokpit: {{ lokasi }}</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- TABS MOCKUP (As requested in PDF) -->
+    <div class="mb-6 flex flex-wrap gap-3">
+        <a href="#" class="inline-flex items-center justify-center rounded-md bg-primary py-4 px-10 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10">
+            TAB 1: KOKPIT OPERASIONAL HARIAN
+        </a>
+        <a href="/analisis_lanjutan?lokasi={{ lokasi }}" class="inline-flex items-center justify-center rounded-md border border-primary py-4 px-10 text-center font-medium text-primary hover:bg-gray-2 lg:px-8 xl:px-10">
+            TAB 2: ANALISIS STRATEGIS & AKREDITASI
+        </a>
+    </div>
+
+    <!-- METRICS CARDS -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+        <!-- Input Hari Ini -->
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
+            <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2">
+                <i class="fa-solid fa-book-medical text-primary text-xl"></i>
             </div>
-            <div class="p-6.5">
-                <div class="flex items-center gap-4 mb-6">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary bg-opacity-10 text-primary">
-                        <i class="fa-solid fa-lightbulb text-xl"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-black font-semibold">Tumbuh Kembang Koleksi</h4>
-                        <p class="text-sm text-slate-500">Perhatikan topik-topik DDC yang masih memiliki persentase rendah untuk pengadaan selanjutnya.</p>
-                    </div>
+            <div class="mt-4 flex items-end justify-between">
+                <div>
+                    <h4 class="text-title-md font-bold text-black">{{ input_hari_ini }}</h4>
+                    <span class="text-sm font-medium">INPUT HARI INI</span>
                 </div>
-                
-                <div class="flex items-center gap-4">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-success bg-opacity-10 text-success">
-                        <i class="fa-solid fa-book-reader text-xl"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-black font-semibold">Fokus Pengarang</h4>
-                        <p class="text-sm text-slate-500">Karya dari pengarang <strong>{{ dominant_author }}</strong> mendominasi rak buku di perpustakaan ini.</p>
-                    </div>
+            </div>
+        </div>
+
+        <!-- Dibaca Meja Baca -->
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
+            <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2">
+                <i class="fa-solid fa-book-open-reader text-success text-xl"></i>
+            </div>
+            <div class="mt-4 flex items-end justify-between">
+                <div>
+                    <h4 class="text-title-md font-bold text-black">{{ dibaca_hari_ini }}</h4>
+                    <span class="text-sm font-medium">DIBACA DI MEJA BACA</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Antrean Cetak Label -->
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
+            <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2">
+                <i class="fa-solid fa-tags text-warning text-xl"></i>
+            </div>
+            <div class="mt-4 flex items-end justify-between">
+                <div>
+                    <h4 class="text-title-md font-bold text-black">{{ antrean_count }}</h4>
+                    <span class="text-sm font-medium">ANTREAN CETAK LABEL</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anomali Metadata -->
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
+            <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2">
+                <i class="fa-solid fa-triangle-exclamation text-danger text-xl"></i>
+            </div>
+            <div class="mt-4 flex items-end justify-between">
+                <div>
+                    <h4 class="text-title-md font-bold text-black">{{ anomali }}</h4>
+                    <span class="text-sm font-medium">ANOMALI METADATA</span>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- ADDITIONAL ANALYSIS TABLES -->
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
-    <!-- Top Read Books -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default flex flex-col max-h-[500px]">
-        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center shrink-0">
-            <h3 class="font-medium text-black">
-                <i class="fa-solid fa-book-reader text-primary mr-2"></i> Buku Paling Sering Dibaca (Per Kelas)
-            </h3>
-            <a href="/export_baca" class="text-xs font-medium bg-primary/10 text-primary py-1.5 px-3 rounded hover:bg-primary hover:text-white transition">
-                <i class="fa-solid fa-download"></i> Unduh CSV
-            </a>
+    <!-- TABLES SECTION -->
+    <div class="mt-4 grid grid-cols-1 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5 xl:grid-cols-2">
+        <!-- TABEL 1: Rekapan Input -->
+        <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
+            <h4 class="mb-6 text-xl font-semibold text-black">
+                REKAPAN INPUT HARI INI <span class="text-sm font-normal text-meta-3 bg-meta-3/10 px-2 py-1 rounded">(Audit Mandiri)</span>
+            </h4>
+            <p class="text-sm text-slate-500 mb-4">Memverifikasi kelengkapan nomor induk, nomor panggil (DDC/Cutter), dan status label stiker.</p>
+
+            <div class="max-w-full overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-2 text-left">
+                            <th class="py-4 px-4 font-medium text-black">No Induk</th>
+                            <th class="py-4 px-4 font-medium text-black">Judul Buku</th>
+                            <th class="py-4 px-4 font-medium text-black">DDC</th>
+                            <th class="py-4 px-4 font-medium text-black">Stiker</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in rekapan_list %}
+                        <tr>
+                            <td class="border-b border-[#eee] py-5 px-4"><p class="text-black">{{ b.no_induk }}</p></td>
+                            <td class="border-b border-[#eee] py-5 px-4"><p class="text-black truncate max-w-40" title="{{ b.judul }}">{{ b.judul }}</p></td>
+                            <td class="border-b border-[#eee] py-5 px-4"><p class="text-black">{{ b.ddc }}</p></td>
+                            <td class="border-b border-[#eee] py-5 px-4">
+                                {% if b.status == 'SIAP' %}
+                                <p class="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success">SIAP</p>
+                                {% else %}
+                                <p class="inline-flex rounded-full bg-warning bg-opacity-10 py-1 px-3 text-sm font-medium text-warning">ANTRE</p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-slate-500">Belum ada buku yang diinput hari ini.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Quick Action -->
+            <div class="mt-4 p-4 bg-gray-2 rounded border-l-4 border-primary">
+                <p class="text-sm mb-3"><strong>Tindakan Cepat:</strong> Klik tombol "Cetak Semua Antrean Hari Ini" untuk langsung diteruskan ke modul cetak stiker PDF.</p>
+                <a href="/cetak_stiker" class="inline-flex items-center justify-center rounded bg-primary py-2 px-6 text-center font-medium text-white hover:bg-opacity-90">
+                    Cetak Semua Antrean Hari Ini
+                </a>
+            </div>
         </div>
-        <div class="p-0 overflow-y-auto grow">
-            <table class="w-full table-auto">
-                <thead class="sticky top-0 z-10 bg-slate-50 border-b border-stroke shadow-sm">
-                    <tr class="text-left">
-                        <th class="py-3 px-6 font-medium text-black text-sm">Judul & Pengarang</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Kelas DDC</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Total Baca</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for book in top_read_books %}
-                    <tr class="border-b border-stroke last:border-b-0">
-                        <td class="py-3 px-6">
-                            <p class="font-medium text-black text-sm">{{ book.judul }}</p>
-                            <p class="text-xs text-slate-500">{{ book.pengarang }}</p>
-                        </td>
-                        <td class="py-3 px-6 text-center">
-                            <span class="inline-block rounded bg-primary/10 py-1 px-2.5 text-xs font-medium text-primary">
-                                {{ book.klasifikasi or '-' }}
-                            </span>
-                        </td>
-                        <td class="py-3 px-6 text-center font-bold text-success">
-                            {{ book.read_count }}x
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="py-6 text-center text-slate-400 text-sm">Belum ada data baca.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+        <!-- TABEL 2: Paling Sering Dibaca -->
+        <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
+            <h4 class="mb-6 text-xl font-semibold text-black">
+                BUKU PALING SERING DIBACA <span class="text-sm font-normal text-meta-3 bg-meta-3/10 px-2 py-1 rounded">(Meja Baca)</span>
+            </h4>
+            <p class="text-sm text-slate-500 mb-4">Aktivitas riil konsumsi koleksi di tempat (in-house usage).</p>
+
+            <div class="max-w-full overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-2 text-left">
+                            <th class="py-4 px-4 font-medium text-black">Judul & Pengarang</th>
+                            <th class="py-4 px-4 font-medium text-black">Kelas</th>
+                            <th class="py-4 px-4 font-medium text-black">Frekuensi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in buku_sering_dibaca %}
+                        <tr>
+                            <td class="border-b border-[#eee] py-5 px-4">
+                                <p class="text-black font-medium line-clamp-1" title="{{ b.judul }}">{{ b.judul }}</p>
+                                <p class="text-sm text-slate-500 line-clamp-1">{{ b.pengarang }}</p>
+                            </td>
+                            <td class="border-b border-[#eee] py-5 px-4"><p class="text-black">{{ b.klasifikasi }}</p></td>
+                            <td class="border-b border-[#eee] py-5 px-4"><p class="text-black font-bold">{{ b.freq }}x</p></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-5 text-slate-500">Belum ada data bacaan in-house.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Insight Note -->
+            <div class="mt-4 p-4 bg-meta-6/10 rounded border-l-4 border-meta-6">
+                <p class="text-sm text-meta-6"><strong>Korelasi Sirkulasi:</strong> Menampilkan buku referensi bertanda "R" yang tidak boleh dipinjam keluar di SLiMS, namun terbukti tinggi peminat di tempat.</p>
+            </div>
         </div>
     </div>
-
-    <!-- Inputted Today -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default flex flex-col max-h-[500px]">
-        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center shrink-0">
-            <h3 class="font-medium text-black">
-                <i class="fa-solid fa-clock-rotate-left text-primary mr-2"></i> Rekapan Input Hari Ini
-            </h3>
-        </div>
-        <div class="p-0 overflow-y-auto grow">
-            <table class="w-full table-auto">
-                <thead class="sticky top-0 z-10 bg-slate-50 border-b border-stroke shadow-sm">
-                    <tr class="text-left">
-                        <th class="py-3 px-6 font-medium text-black text-sm">No Induk</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm">Judul Buku</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm text-center">DDC/Cutter</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for book in today_input_books %}
-                    <tr class="border-b border-stroke last:border-b-0">
-                        <td class="py-3 px-6">
-                            <span class="font-medium text-black text-sm">{{ book.no_induk }}</span>
-                        </td>
-                        <td class="py-3 px-6">
-                            <p class="font-medium text-black text-sm truncate max-w-[200px]" title="{{ book.judul }}">{{ book.judul }}</p>
-                            <p class="text-xs text-slate-500">{{ book.pengarang }}</p>
-                        </td>
-                        <td class="py-3 px-6 text-center">
-                            <div class="flex flex-col items-center">
-                                <span class="text-xs font-medium text-primary">{{ book.klasifikasi }}</span>
-                                <span class="text-xs text-slate-500">{{ book.cutter }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="py-6 text-center text-slate-400 text-sm">Belum ada buku yang diinput hari ini.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // GREETING & CLOCK DYNAMIC TIME
-    function updateClock() {
-        const now = new Date();
-        const hour = now.getHours();
-        
-        let greeting = "Malam";
-        if (hour >= 4 && hour < 11) greeting = "Pagi";
-        else if (hour >= 11 && hour < 15) greeting = "Siang";
-        else if (hour >= 15 && hour < 18) greeting = "Sore";
-        
-        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        
-        const dayName = days[now.getDay()];
-        const date = now.getDate();
-        const monthName = months[now.getMonth()];
-        const year = now.getFullYear();
-        
-        const h = String(hour).padStart(2, '0');
-        const m = String(now.getMinutes()).padStart(2, '0');
-        const s = String(now.getSeconds()).padStart(2, '0');
-        
-        document.getElementById('greetingText').innerHTML = `Halo Yosef, Selamat ${greeting}! <br><span class="text-sm font-normal text-slate-500 mt-1 block">${dayName}, ${date} ${monthName} ${year} | <i class="fa-regular fa-clock"></i> ${h}:${m}:${s} WIB</span>`;
-    }
-    
-    setInterval(updateClock, 1000);
-    updateClock();
-    const ctx = document.getElementById('ddcChart').getContext('2d');
-    
-    // Ambil data dari Jinja
-    const ddcData = [
-        {% for kl in ddc_distribution %}
-            {
-                label: '{{ kl.klasifikasi }} ({{ kl.topik }})',
-                count: {{ kl.count }}
-            },
-        {% endfor %}
-    ];
-
-    const labels = ddcData.map(d => d.label);
-    const data = ddcData.map(d => d.count);
-
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: [
-                    '#6D4C41', '#8D6E63', '#A1887F', '#BCAAA4', '#D7CCC8',
-                    '#3E2723', '#4E342E', '#5D4037', '#795548', '#EFEBE9'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                }
-            }
-        }
-    });
-});
-</script>
 {% endblock %}

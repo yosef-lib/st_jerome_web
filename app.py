@@ -216,72 +216,75 @@ def dashboard():
         return render_template('pilih_lokasi.html', mode='dashboard')
         
     conn = database.get_db_connection()
-    total_buku = conn.execute('SELECT COUNT(*) FROM buku WHERE lokasi = ?', (lokasi,)).fetchone()[0]
-    total_baca = conn.execute('SELECT COUNT(*) FROM buku_dibaca bd JOIN buku b ON bd.no_induk = b.no_induk WHERE b.lokasi = ?', (lokasi,)).fetchone()[0]
     
-    ddc_data = conn.execute('''
-        SELECT substr(klasifikasi, 1, 1) || '00' as ddc_kelas, COUNT(*) as total_count
+    # 1. Input Hari Ini (today's date in YYYY-MM-DD)
+    from datetime import date
+    today_str = date.today().strftime('%Y-%m-%d')
+    
+    input_hari_ini = conn.execute('SELECT COUNT(*) FROM buku WHERE tgl_terima = ? AND lokasi = ?', (today_str, lokasi)).fetchone()[0]
+    
+    # 2. Dibaca di Meja Baca (today)
+    dibaca_hari_ini = conn.execute('SELECT COUNT(*) FROM buku_dibaca bd JOIN buku b ON bd.no_induk = b.no_induk WHERE bd.tanggal = ? AND b.lokasi = ?', (today_str, lokasi)).fetchone()[0]
+    
+    # 3. Antrean Cetak Label
+    import os, json
+    antrean_count = 0
+    antrean_list = []
+    if os.path.exists(ANTREAN_FILE):
+        with open(ANTREAN_FILE, 'r') as f:
+            try:
+                antrean_list = json.load(f)
+                antrean_count = len(antrean_list)
+            except:
+                pass
+    
+    # Get all no_induk in antrean for quick lookup
+    antrean_no_induk = [item.get('no_induk') for item in antrean_list]
+    
+    # 4. Anomali Metadata (missing DDC or missing Author/Title)
+    anomali = conn.execute("""
+        SELECT COUNT(*) FROM buku 
+        WHERE lokasi = ? AND 
+        (klasifikasi IS NULL OR klasifikasi = '' OR pengarang IS NULL OR pengarang = '' OR judul IS NULL OR judul = '')
+    """, (lokasi,)).fetchone()[0]
+    
+    # 5. Tabel Rekapan Input Hari Ini
+    buku_input_hari_ini = conn.execute("""
+        SELECT no_induk, judul, klasifikasi 
         FROM buku 
-        WHERE klasifikasi IS NOT NULL AND klasifikasi != '' AND lokasi = ?
-        GROUP BY ddc_kelas
-        ORDER BY total_count DESC
-    ''', (lokasi,)).fetchall()
+        WHERE tgl_terima = ? AND lokasi = ?
+        ORDER BY id DESC LIMIT 20
+    """, (today_str, lokasi)).fetchall()
     
-    labels = [d['ddc_kelas'] for d in ddc_data]
-    data_counts = [d['total_count'] for d in ddc_data]
-    
-    dominant_author_row = conn.execute('SELECT pengarang, COUNT(*) as c FROM buku WHERE pengarang != "" AND lokasi = ? GROUP BY pengarang ORDER BY c DESC LIMIT 1', (lokasi,)).fetchone()
-    dominant_author = dominant_author_row['pengarang'] if dominant_author_row else "Tidak diketahui"
-    
-    dominant_title_row = conn.execute('SELECT judul, COUNT(*) as c FROM buku WHERE judul != "" AND lokasi = ? GROUP BY judul ORDER BY c DESC LIMIT 1', (lokasi,)).fetchone()
-    dominant_title = dominant_title_row['judul'] if dominant_title_row else "Tidak diketahui"
-    
-    # Koleksi Terbaru
-    recent_books = conn.execute('SELECT no_induk, judul, pengarang FROM buku WHERE lokasi = ? ORDER BY id DESC LIMIT 5', (lokasi,)).fetchall()
-    
-    # Buku Sering Dibaca (Top Read - Dikategorikan berdasar DDC)
-    top_read_books = conn.execute('''
-        SELECT b.no_induk, b.judul, b.pengarang, b.klasifikasi, COUNT(bd.id) as read_count 
-        FROM buku_dibaca bd 
-        JOIN buku b ON bd.no_induk = b.no_induk 
-        WHERE b.lokasi = ? 
-        GROUP BY b.no_induk 
-        ORDER BY b.klasifikasi ASC, read_count DESC 
-        LIMIT 20
-    ''', (lokasi,)).fetchall()
-
-    # Rekapan Hari Ini (Inputted Today)
-    # We use tgl_terima for date or just look at last added if tgl_terima is YYYY-MM-DD
-    # Let's query books inputted today by comparing tgl_terima with current date (WIB)
-    # Since SQLite date('now','localtime') might be different from WIB, we just do a LIKE on current date
-    # Or just use the last 10 inserted books.
-    import datetime
-    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
-    today_input_books = conn.execute('''
-        SELECT no_induk, judul, pengarang, klasifikasi, cutter
-        FROM buku
-        WHERE lokasi = ? AND tgl_terima LIKE ?
-        ORDER BY id DESC
-    ''', (lokasi, f"{today_str}%")).fetchall()
-    
-    pop_subject = "Ilmu Sosial (300)"
-    if labels:
-        pop_subject = f"Kelas DDC {labels[0]}"
+    rekapan_list = []
+    for b in buku_input_hari_ini:
+        status = 'ANTRE' if b['no_induk'] in antrean_no_induk else 'SIAP'
+        rekapan_list.append({
+            'no_induk': b['no_induk'],
+            'judul': b['judul'],
+            'ddc': b['klasifikasi'] if b['klasifikasi'] else '-',
+            'status': status
+        })
         
-    conn.close()
+    # 6. Buku Paling Sering Dibaca (In-house usage)
+    buku_sering_dibaca = conn.execute("""
+        SELECT b.judul, b.pengarang, b.klasifikasi, COUNT(bd.id) as freq
+        FROM buku_dibaca bd
+        JOIN buku b ON bd.no_induk = b.no_induk
+        WHERE b.lokasi = ?
+        GROUP BY b.no_induk
+        ORDER BY freq DESC
+        LIMIT 10
+    """, (lokasi,)).fetchall()
     
     return render_template('intelijen_evaluasi.html', 
-                           total_buku=total_buku, 
-                           lokasi=lokasi,
-                           total_baca=total_baca, 
-                           labels=labels, 
-                           data_counts=data_counts,
-                           dominant_author=dominant_author,
-                           dominant_title=dominant_title,
-                           recent_books=recent_books,
-                           top_read_books=top_read_books,
-                           today_input_books=today_input_books,
-                           pop_subject=pop_subject)
+                          lokasi=lokasi, 
+                          input_hari_ini=input_hari_ini,
+                          dibaca_hari_ini=dibaca_hari_ini,
+                          antrean_count=antrean_count,
+                          anomali=anomali,
+                          rekapan_list=rekapan_list,
+                          buku_sering_dibaca=buku_sering_dibaca)
 
 @app.route('/koleksi')
 @login_required
