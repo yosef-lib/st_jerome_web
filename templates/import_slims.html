@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}Sinkronisasi Data SLiMS{% endblock %}
+{% block page_subtitle %}Unggah Laporan Peminjaman (Loan History) dari SLiMS{% endblock %}
+
+{% block content %}
+<div class="rounded-sm border border-stroke bg-white shadow-default p-8 max-w-2xl mx-auto text-center mt-10">
+    <div class="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <i class="fa-solid fa-cloud-arrow-up text-4xl"></i>
+    </div>
+    
+    <h2 class="text-2xl font-bold text-black mb-4">Unggah Laporan SLiMS</h2>
+    <p class="text-slate-600 mb-8">Untuk memunculkan <strong>Analisis Lanjutan</strong> (Turnover, Dead Stock, Tren), Anda harus mengekspor menu "Laporan Peminjaman" dari SLiMS sebagai Excel (.xlsx), lalu mengunggahnya di sini.</p>
+    
+    <form action="/import_slims" method="POST" enctype="multipart/form-data" class="flex flex-col items-center gap-4">
+        <div class="w-full">
+            <label class="mb-3 block text-sm font-medium text-black text-left">Pilih File Excel Laporan Peminjaman (.xlsx)</label>
+            <input type="file" name="file" accept=".xlsx, .xls" required
+                class="w-full cursor-pointer rounded-lg border-[1.5px] border-stroke bg-transparent font-medium outline-none transition file:mr-5 file:border-collapse file:cursor-pointer file:border-0 file:border-r file:border-solid file:border-stroke file:bg-whiter file:py-3 file:px-5 file:hover:bg-primary file:hover:bg-opacity-10 focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter" />
+        </div>
+        
+        <button type="submit" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary py-3 px-6 text-center font-medium text-white hover:bg-opacity-90 transition">
+            <i class="fa-solid fa-upload"></i> Unggah & Sinkronisasi Sekarang
+        </button>
+    </form>
+</div>
+{% endblock %}
