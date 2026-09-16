@@ -206,9 +206,9 @@ def dashboard():
     # Koleksi Terbaru
     recent_books = conn.execute('SELECT no_induk, judul, pengarang FROM buku WHERE lokasi = ? ORDER BY id DESC LIMIT 5', (lokasi,)).fetchall()
     
-    # Buku Sering Dibaca
+    # Buku Sering Dibaca (Top Read)
     top_read_books = conn.execute('''
-        SELECT b.no_induk, b.judul, b.pengarang, COUNT(bd.id) as read_count 
+        SELECT b.no_induk, b.judul, b.pengarang, b.klasifikasi, COUNT(bd.id) as read_count 
         FROM buku_dibaca bd 
         JOIN buku b ON bd.no_induk = b.no_induk 
         WHERE b.lokasi = ? 
@@ -216,6 +216,20 @@ def dashboard():
         ORDER BY read_count DESC 
         LIMIT 5
     ''', (lokasi,)).fetchall()
+
+    # Rekapan Hari Ini (Inputted Today)
+    # We use tgl_terima for date or just look at last added if tgl_terima is YYYY-MM-DD
+    # Let's query books inputted today by comparing tgl_terima with current date (WIB)
+    # Since SQLite date('now','localtime') might be different from WIB, we just do a LIKE on current date
+    # Or just use the last 10 inserted books.
+    import datetime
+    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    today_input_books = conn.execute('''
+        SELECT no_induk, judul, pengarang, klasifikasi, cutter
+        FROM buku
+        WHERE lokasi = ? AND tgl_terima LIKE ?
+        ORDER BY id DESC
+    ''', (lokasi, f"{today_str}%")).fetchall()
     
     pop_subject = "Ilmu Sosial (300)"
     if labels:
@@ -233,6 +247,7 @@ def dashboard():
                            dominant_title=dominant_title,
                            recent_books=recent_books,
                            top_read_books=top_read_books,
+                           today_input_books=today_input_books,
                            pop_subject=pop_subject)
 
 @app.route('/koleksi')

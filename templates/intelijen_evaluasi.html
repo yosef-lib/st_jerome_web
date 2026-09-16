@@ -5,6 +5,14 @@
 
 {% block content %}
 
+<!-- GREETING -->
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-title-md2 font-bold text-black" id="greetingText">
+        Halo Yosef, Selamat Datang!
+    </h2>
+    <span class="text-sm font-medium text-slate-500">Ada yang bisa dibantu hari ini?</span>
+</div>
+
 <!-- STAT CARDS -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
     <div class="rounded-sm border border-stroke bg-boxdark py-6 px-7.5 shadow-default text-white relative overflow-hidden">
@@ -145,10 +153,106 @@
     </div>
 </div>
 
+<!-- ADDITIONAL ANALYSIS TABLES -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+    <!-- Top Read Books -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default">
+        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center">
+            <h3 class="font-medium text-black">
+                <i class="fa-solid fa-book-reader text-primary mr-2"></i> Buku Paling Sering Dibaca
+            </h3>
+        </div>
+        <div class="p-0">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-slate-50 text-left border-b border-stroke">
+                        <th class="py-3 px-6 font-medium text-black text-sm">Judul & Pengarang</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Kelas</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Total Baca</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in top_read_books %}
+                    <tr class="border-b border-stroke last:border-b-0">
+                        <td class="py-3 px-6">
+                            <p class="font-medium text-black text-sm">{{ book.judul }}</p>
+                            <p class="text-xs text-slate-500">{{ book.pengarang }}</p>
+                        </td>
+                        <td class="py-3 px-6 text-center">
+                            <span class="inline-block rounded bg-primary/10 py-1 px-2.5 text-xs font-medium text-primary">
+                                {{ book.klasifikasi or '-' }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-6 text-center font-bold text-success">
+                            {{ book.read_count }}x
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="py-6 text-center text-slate-400 text-sm">Belum ada data baca.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Inputted Today -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default">
+        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center">
+            <h3 class="font-medium text-black">
+                <i class="fa-solid fa-clock-rotate-left text-primary mr-2"></i> Rekapan Input Hari Ini
+            </h3>
+        </div>
+        <div class="p-0">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-slate-50 text-left border-b border-stroke">
+                        <th class="py-3 px-6 font-medium text-black text-sm">No Induk</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm">Judul Buku</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm text-center">DDC/Cutter</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in today_input_books %}
+                    <tr class="border-b border-stroke last:border-b-0">
+                        <td class="py-3 px-6">
+                            <span class="font-medium text-black text-sm">{{ book.no_induk }}</span>
+                        </td>
+                        <td class="py-3 px-6">
+                            <p class="font-medium text-black text-sm truncate max-w-[200px]" title="{{ book.judul }}">{{ book.judul }}</p>
+                            <p class="text-xs text-slate-500">{{ book.pengarang }}</p>
+                        </td>
+                        <td class="py-3 px-6 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="text-xs font-medium text-primary">{{ book.klasifikasi }}</span>
+                                <span class="text-xs text-slate-500">{{ book.cutter }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="py-6 text-center text-slate-400 text-sm">Belum ada buku yang diinput hari ini.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // GREETING DYNAMIC TIME
+    const hour = new Date().getHours();
+    let greeting = "Malam";
+    if (hour >= 4 && hour < 11) greeting = "Pagi";
+    else if (hour >= 11 && hour < 15) greeting = "Siang";
+    else if (hour >= 15 && hour < 18) greeting = "Sore";
+    document.getElementById('greetingText').innerText = `Halo Yosef, Selamat ${greeting}!`;
     const ctx = document.getElementById('ddcChart').getContext('2d');
     
     // Ambil data dari Jinja

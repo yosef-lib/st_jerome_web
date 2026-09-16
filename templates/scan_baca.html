@@ -16,7 +16,17 @@
         </div>
         
         <div class="p-6">
-            <div id="reader" class="rounded-lg overflow-hidden border-2 border-stroke bg-slate-50"></div>
+            <div id="reader" class="rounded-lg overflow-hidden border-2 border-stroke bg-black w-full min-h-[250px] flex items-center justify-center relative">
+                <button id="btnStartScan" class="absolute z-10 flex items-center gap-2 rounded bg-primary py-3 px-6 font-medium text-white hover:bg-opacity-90 transition shadow-lg">
+                    <i class="fa-solid fa-camera"></i> Buka Kamera HP
+                </button>
+            </div>
+            
+            <div class="mt-4 flex justify-center hidden" id="scanActions">
+                <button id="btnStopScan" class="flex items-center gap-2 rounded border border-danger text-danger py-1.5 px-4 font-medium hover:bg-danger hover:text-white transition text-sm">
+                    <i class="fa-solid fa-stop"></i> Hentikan Kamera
+                </button>
+            </div>
             
             <!-- Manual Input -->
             <div class="mt-6 mb-5">
@@ -45,7 +55,7 @@
             <!-- Tips -->
             <div class="rounded-md bg-blue-50 border border-blue-100 p-4 text-center">
                 <div class="font-bold text-primary mb-1 text-sm"><i class="fa-solid fa-lightbulb"></i> Tips Penggunaan</div>
-                <p class="text-xs text-slate-500 leading-relaxed">Buka halaman ini di browser HP Anda dan izinkan akses kamera. Koneksi jaringan yang sama dan akses HTTPS/localhost disarankan.</p>
+                <p class="text-xs text-slate-500 leading-relaxed">Buka halaman ini di browser HP Anda dan izinkan akses kamera. Koneksi jaringan yang sama dan akses HTTPS disarankan.</p>
             </div>
         </div>
     </div>
@@ -54,9 +64,23 @@
 <!-- Library Html5Qrcode -->
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script>
+    let html5QrCode;
+    
     function parseScanResult(code) {
+        // Hentikan scan sejenak biar ga double scan
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.pause();
+        }
+        
         document.getElementById('manualInput').value = code;
         submitManual();
+        
+        // Resume setelah 2 detik
+        setTimeout(() => {
+            if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+                html5QrCode.resume();
+            }
+        }, 2000);
     }
 
     function submitManual() {
@@ -88,13 +112,42 @@
         });
     }
 
-    // Initialize Scanner
     document.addEventListener('DOMContentLoaded', () => {
-        let html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: {width: 250, height: 100} },
-            /* verbose= */ false);
-        html5QrcodeScanner.render(parseScanResult);
+        html5QrCode = new Html5Qrcode("reader");
+        const btnStart = document.getElementById('btnStartScan');
+        const btnStop = document.getElementById('btnStopScan');
+        const actionBox = document.getElementById('scanActions');
+
+        btnStart.addEventListener('click', () => {
+            // Start scanning, prefer back camera
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 100 }
+                },
+                (decodedText) => {
+                    parseScanResult(decodedText);
+                },
+                (errorMessage) => {
+                    // Abaikan error frame kosong
+                }
+            ).then(() => {
+                btnStart.style.display = 'none';
+                actionBox.classList.remove('hidden');
+            }).catch((err) => {
+                alert("Gagal mengakses kamera. Pastikan Anda sudah memberikan izin kamera pada browser.");
+            });
+        });
+
+        btnStop.addEventListener('click', () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    btnStart.style.display = 'flex';
+                    actionBox.classList.add('hidden');
+                });
+            }
+        });
     });
 </script>
 {% endblock %}
