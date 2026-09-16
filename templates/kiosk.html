@@ -54,7 +54,7 @@
         <div id="successToast" class="absolute top-0 left-0 w-full h-full bg-success/95 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-300 opacity-0 pointer-events-none">
             <i class="fa-solid fa-circle-check text-8xl mb-6 shadow-sm rounded-full bg-white text-success"></i>
             <h2 id="successMessage" class="text-3xl md:text-4xl font-bold mb-2 text-center px-4 whitespace-pre-line leading-tight">Selamat Datang!</h2>
-            <p class="text-xl opacity-90">Kunjungan Anda telah tercatat.</p>
+            
         </div>
 
         <!-- Bagian Kiri: Header & Info -->
@@ -63,16 +63,16 @@
             <div class="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-primary opacity-50 blur-3xl"></div>
             <div class="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-primary opacity-50 blur-3xl"></div>
             
-            <div class="relative z-10">
-                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg border-4 border-primary">
-                    <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-16 h-16 object-contain">
+            <div class="relative z-10 flex flex-col items-center text-center mt-4">
+                <div class="w-28 h-28 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg border-4 border-primary mx-auto">
+                    <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-20 h-20 object-contain">
                 </div>
-                <h1 class="text-4xl font-bold mb-4 leading-tight tracking-tight">Buku Tamu<br>IMAVI</h1>
-                <p class="text-bodydark text-lg mb-8 font-medium">Silakan pindai Kartu Anggota Anda atau isi form buku tamu jika Anda bukan anggota tetap (tamu).</p>
+                <h1 class="text-3xl font-bold mb-4 leading-tight tracking-tight">Selamat Datang di<br>Perpustakaan<br>St. Jerome</h1>
+                <p class="text-bodydark text-sm mb-8 font-medium px-4">Silakan pindai Kartu Anggota Anda, atau isi form buku tamu jika Anda bukan anggota.</p>
             </div>
-            <div class="mt-auto relative z-10 flex items-center gap-3">
-                <i class="fa-solid fa-book-open-reader text-2xl text-bodydark"></i>
-                <div>
+            <div class="mt-auto relative z-10 flex items-center justify-center gap-3 border-t border-bodydark/30 pt-4">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="SJLA" class="w-10 h-10 object-contain bg-white rounded-full border border-stroke">
+                <div class="text-left">
                     <p class="text-sm font-bold text-white tracking-wide">ST. JEROME</p>
                     <p class="text-xs text-bodydark">Library Assistant</p>
                 </div>
@@ -101,7 +101,7 @@
                 
                 <div class="relative mt-8">
                     <i class="fa-solid fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-slate-400"></i>
-                    <input type="text" id="memberIdInput" placeholder="Arahkan kursor kesini dan Scan Barcode..." onkeypress="if(event.key === 'Enter') submitMember()" class="w-full rounded-xl border-2 border-stroke bg-gray-50 py-5 pl-14 pr-24 outline-none transition focus:border-primary focus:bg-white text-lg font-semibold">
+                    <input type="text" id="memberIdInput" autofocus placeholder="Arahkan kursor kesini dan Scan Barcode..." onkeypress="if(event.key === 'Enter') submitMember()" class="w-full rounded-xl border-2 border-stroke bg-gray-50 py-5 pl-14 pr-24 outline-none transition focus:border-primary focus:bg-white text-lg font-semibold">
                     <button onclick="submitMember()" class="absolute right-2 top-2 bottom-2 rounded-lg bg-primary px-6 font-bold text-white hover:bg-opacity-90 transition">Kirim</button>
                 </div>
                 <p id="memberError" class="text-danger text-sm mt-3 hidden text-center font-bold"></p>
@@ -359,7 +359,22 @@
             }
         }
         
-        // Remove camera logic block completely
+        
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if(!contentMember.classList.contains('hidden')) {
+                    document.getElementById('memberIdInput').focus();
+                }
+            }, 100);
+        });
+        
+        // Ensure clicking anywhere on the document refocuses if on member tab
+        document.addEventListener('click', function(e) {
+            if(!contentMember.classList.contains('hidden') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+                document.getElementById('memberIdInput').focus();
+            }
+        });
+
         </script>
 </body>
 </html>
