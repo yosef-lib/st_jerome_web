@@ -67,7 +67,7 @@ def add_antrean():
     conn = database.get_db_connection()
     try:
         conn.execute('''
-            INSERT INTO buku (
+            INSERT OR REPLACE INTO buku (
                 no_induk, tgl_terima, status_buku, judul, pengarang, subjek, gmd, edisi, 
                 isbn, penerbit, tahun_terbit, tempat_terbit, deskripsi_fisik, 
                 judul_seri, bahasa, klasifikasi, cutter, huruf_judul, copy_ke, catatan, lokasi
@@ -200,7 +200,7 @@ def api_scan():
     buku = conn.execute('SELECT judul, subjek FROM buku WHERE no_induk = ?', (no_induk,)).fetchone()
     
     if buku:
-        conn.execute('INSERT INTO buku_dibaca (no_induk) VALUES (?)', (no_induk,))
+        conn.execute('INSERT OR REPLACE INTO buku_dibaca (no_induk) VALUES (?)', (no_induk,))
         conn.commit()
         conn.close()
         return jsonify({'status': 'success', 'judul': buku['judul'], 'subjek': buku['subjek']})
@@ -782,7 +782,7 @@ def import_slims_katalog():
                 huruf = parts[2] if len(parts) > 2 else ''
                 
                 conn.execute("""
-                    INSERT INTO buku (no_induk, judul, pengarang, lokasi, klasifikasi, cutter, huruf_judul, subjek,
+                    INSERT OR REPLACE INTO buku (no_induk, judul, pengarang, lokasi, klasifikasi, cutter, huruf_judul, subjek,
                                     gmd, edisi, isbn, penerbit, tahun_terbit, tempat_terbit, 
                                     deskripsi_fisik, status_buku, tgl_terima)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
