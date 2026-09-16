@@ -483,7 +483,7 @@ def backup_db():
 def analisis_lanjutan():
     lokasi = request.args.get('lokasi')
     if not lokasi:
-        return redirect(url_for('pilih_lokasi', mode='analisis_lanjutan'))
+        return render_template('pilih_lokasi.html', mode='analisis_lanjutan')
         
     conn = database.get_db_connection()
     
