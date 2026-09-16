@@ -1,158 +1,158 @@
 {% extends 'layout.html' %}
 
-{% block page_title %}Analisis & Kinerja Sirkulasi Lanjutan{% endblock %}
-{% block page_subtitle %}Berdasarkan data sinkronisasi SLiMS (Offline Sync){% endblock %}
-
 {% block content %}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-    <!-- Turnover Rate Chart -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
-        <h3 class="font-bold text-black mb-4"><i class="fa-solid fa-arrow-right-arrow-left text-primary mr-2"></i> Turnover Rate (Perputaran Koleksi per Kelas DDC)</h3>
-        <p class="text-xs text-slate-500 mb-4">Rasio peminjaman dibandingkan dengan ketersediaan eksemplar. Angka tinggi berarti buku di kelas ini sangat produktif.</p>
-        <div class="h-[300px] w-full">
-            <canvas id="turnoverChart"></canvas>
-        </div>
+<div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-title-md2 font-bold text-black dark:text-white">
+            Analisis Strategis & Akreditasi
+        </h2>
+        
+        <nav>
+            <ol class="flex items-center gap-2">
+                <li><a class="font-medium" href="/">Beranda /</a></li>
+                <li class="font-medium text-primary">Strategis: {{ lokasi }}</li>
+            </ol>
+        </nav>
     </div>
-    
-    <!-- Peminjaman vs Baca Ditempat -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
-        <h3 class="font-bold text-black mb-4"><i class="fa-solid fa-users-viewfinder text-primary mr-2"></i> Peminjaman Luar vs Baca di Tempat</h3>
-        <p class="text-xs text-slate-500 mb-4">Perbandingan antara peminjaman yang dicatat SLiMS dengan buku yang hanya dibaca di meja perpustakaan.</p>
-        <div class="h-[300px] w-full flex items-center justify-center">
-            <canvas id="inoutChart"></canvas>
+
+    <!-- TABS MOCKUP -->
+    <div class="mb-6 flex flex-wrap gap-3">
+        <a href="/dashboard?lokasi={{ lokasi }}" class="inline-flex items-center justify-center rounded-md border border-primary py-4 px-10 text-center font-medium text-primary hover:bg-gray-2 lg:px-8 xl:px-10">
+            TAB 1: KOKPIT OPERASIONAL HARIAN
+        </a>
+        <a href="#" class="inline-flex items-center justify-center rounded-md bg-primary py-4 px-10 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10">
+            TAB 2: ANALISIS STRATEGIS & AKREDITASI
+        </a>
+    </div>
+
+    <!-- PENGADAAN & AKREDITASI -->
+    <div class="grid grid-cols-1 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5 xl:grid-cols-2">
+        
+        <!-- A. REKOMENDASI PENGADAAN -->
+        <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
+            <h4 class="mb-4 text-xl font-semibold text-black">
+                A. REKOMENDASI PENGADAAN <span class="text-xs font-normal text-primary bg-primary/10 px-2 py-1 rounded uppercase">Smart Procurement</span>
+            </h4>
+            <p class="text-sm text-slate-500 mb-6">Sistem secara otomatis menghitung algoritma kebutuhan belanja buku.</p>
+
+            <h5 class="text-md font-bold text-black mb-2">1. Salinan Tunggal Berisiko (Butuh Eksemplar Tambahan)</h5>
+            <p class="text-sm text-slate-500 mb-2">Buku yang sering dibaca di meja baca atau dipinjam, namun eksemplar fisik hanya 1.</p>
+            <div class="max-w-full overflow-x-auto mb-6">
+                <table class="w-full table-auto text-sm">
+                    <thead>
+                        <tr class="bg-gray-2 text-left">
+                            <th class="py-2 px-2 font-medium text-black">Judul</th>
+                            <th class="py-2 px-2 font-medium text-black">DDC</th>
+                            <th class="py-2 px-2 font-medium text-black text-center">Total Pakai</th>
+                            <th class="py-2 px-2 font-medium text-black text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in smart_procurement %}
+                        <tr>
+                            <td class="border-b border-[#eee] py-3 px-2 line-clamp-2" title="{{ b.judul }}">{{ b.judul }}</td>
+                            <td class="border-b border-[#eee] py-3 px-2">{{ b.klasifikasi }}</td>
+                            <td class="border-b border-[#eee] py-3 px-2 text-center font-bold text-danger">{{ b.total_usage }}x</td>
+                            <td class="border-b border-[#eee] py-3 px-2 text-center">
+                                <span class="text-xs bg-meta-3/10 text-meta-3 px-2 py-1 rounded">+ Eksemplar</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-slate-500">Belum ada rekomendasi.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h5 class="text-md font-bold text-black mb-2">2. Gap Subjek Prioritas</h5>
+            <p class="text-sm text-slate-500 mb-2">Kelas klasifikasi inti yang paling lama tidak mengalami peremajaan judul.</p>
+            <div class="max-w-full overflow-x-auto mb-4">
+                <table class="w-full table-auto text-sm">
+                    <thead>
+                        <tr class="bg-gray-2 text-left">
+                            <th class="py-2 px-2 font-medium text-black">Subjek DDC</th>
+                            <th class="py-2 px-2 font-medium text-black">Update Terakhir</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in gap_subjek %}
+                        <tr>
+                            <td class="border-b border-[#eee] py-3 px-2 font-medium text-black">{{ g.ddc_group }}</td>
+                            <td class="border-b border-[#eee] py-3 px-2 text-danger">{{ g.update_terakhir }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <button class="mb-4 w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90">
+                Ekspor Usulan Anggaran (.xlsx)
+            </button>
+        </div>
+
+        <!-- C. OTOMASI LAPORAN AKREDITASI -->
+        <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
+            <h4 class="mb-4 text-xl font-semibold text-black">
+                B. OTOMASI LAPORAN AKREDITASI <span class="text-xs font-normal text-success bg-success/10 px-2 py-1 rounded uppercase">One-Click Report</span>
+            </h4>
+            <p class="text-sm text-slate-500 mb-6">Menghilangkan stres rekap manual saat evaluasi berkala.</p>
+
+            <div class="max-w-full overflow-x-auto mb-6">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-2 text-left">
+                            <th class="py-3 px-4 font-medium text-black">Indikator Akreditasi</th>
+                            <th class="py-3 px-4 font-medium text-black text-right">Nilai Saat Ini</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border-b border-[#eee] py-4 px-4">
+                                <h5 class="font-medium text-black">Jumlah Judul & Eksemplar</h5>
+                                <p class="text-sm text-slate-500">Dihitung riil dari database</p>
+                            </td>
+                            <td class="border-b border-[#eee] py-4 px-4 text-right">
+                                <span class="font-bold text-black">{{ akr_je.j }}</span> Judul<br>
+                                <span class="font-bold text-primary">{{ akr_je.e }}</span> Eksemplar
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border-b border-[#eee] py-4 px-4">
+                                <h5 class="font-medium text-black">Rasio Koleksi Inti vs Umum</h5>
+                                <p class="text-sm text-slate-500">Persentase DDC inti (100 & 200) vs lainnya</p>
+                            </td>
+                            <td class="border-b border-[#eee] py-4 px-4 text-right">
+                                {% set pct_inti = (akr_iu.inti / akr_iu.total * 100)|round(1) if akr_iu.total > 0 else 0 %}
+                                {% set pct_umum = (akr_iu.umum / akr_iu.total * 100)|round(1) if akr_iu.total > 0 else 0 %}
+                                <span class="font-bold text-success">{{ pct_inti }}%</span> Inti<br>
+                                <span class="font-bold text-warning">{{ pct_umum }}%</span> Umum
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="border-b border-[#eee] py-4 px-4">
+                                <h5 class="font-medium text-black">Pertambahan Koleksi / Tahun</h5>
+                                <p class="text-sm text-slate-500">Agregasi tanggal input katalog (3 tahun terakhir)</p>
+                            </td>
+                            <td class="border-b border-[#eee] py-4 px-4 text-right text-sm">
+                                {% for t in akr_tambah %}
+                                    {{ t.tahun }}: <span class="font-bold text-black">{{ t.jumlah }}</span> eks<br>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-4 p-4 bg-meta-3/10 rounded border-l-4 border-meta-3 mb-6">
+                <p class="text-sm text-meta-3"><strong>Fitur Kunci:</strong> Tombol "Generate Borang Akreditasi" di bawah akan langsung memetakan angka-angka di atas ke format standar formulir instrumen perpustakaan.</p>
+            </div>
+
+            <button class="mb-4 w-full justify-center rounded bg-meta-3 p-3 font-medium text-gray hover:bg-opacity-90">
+                Generate Borang Akreditasi (.xlsx)
+            </button>
         </div>
     </div>
 </div>
-
-<div class="grid grid-cols-1 gap-6">
-    <!-- Dead Stock Table -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default flex flex-col max-h-[600px]">
-        <div class="border-b border-stroke py-4 px-6 flex justify-between items-center shrink-0 bg-danger/10">
-            <h3 class="font-bold text-danger">
-                <i class="fa-solid fa-skull-crossbones mr-2"></i> Buku Dorman (Dead Stock) - 50 Teratas
-            </h3>
-            <span class="text-xs font-medium text-danger bg-white px-2 py-1 rounded border border-danger/30">Kandidat Penyiangan (Weeding)</span>
-        </div>
-        <div class="p-6 text-sm text-slate-600 border-b border-stroke shrink-0">
-            Daftar koleksi berikut tercatat di sistem namun <strong>tidak pernah ada di riwayat peminjaman SLiMS</strong> dan <strong>tidak pernah ter-scan di meja baca</strong>. Pertimbangkan untuk reposisi rak display, promosi, atau penyiangan (weeding).
-        </div>
-        <div class="p-0 overflow-y-auto grow">
-            <table class="w-full table-auto">
-                <thead class="sticky top-0 z-10 bg-slate-50 border-b border-stroke shadow-sm">
-                    <tr class="text-left">
-                        <th class="py-3 px-6 font-medium text-black text-sm">No Induk</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm">Judul Buku</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm">Pengarang</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Kelas DDC</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for book in dead_stock_data %}
-                    <tr class="border-b border-stroke last:border-b-0 hover:bg-slate-50 transition">
-                        <td class="py-3 px-6 font-medium text-black text-sm">{{ book.no_induk }}</td>
-                        <td class="py-3 px-6 font-medium text-black text-sm max-w-[300px] truncate" title="{{ book.judul }}">{{ book.judul }}</td>
-                        <td class="py-3 px-6 text-sm text-slate-500">{{ book.pengarang }}</td>
-                        <td class="py-3 px-6 text-center">
-                            <span class="inline-block rounded bg-danger/10 py-1 px-2.5 text-xs font-medium text-danger">
-                                {{ book.klasifikasi }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="py-6 text-center text-slate-400 text-sm">Hebat! Tidak ada koleksi dorman sama sekali.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Turnover Chart
-    const turnoverCtx = document.getElementById('turnoverChart').getContext('2d');
-    const turnoverData = [
-        {% for row in turnover_data %}
-            {
-                label: '{{ row.kategori }}',
-                turnover: {{ row.turnover }}
-            },
-        {% endfor %}
-    ];
-
-    new Chart(turnoverCtx, {
-        type: 'bar',
-        data: {
-            labels: turnoverData.map(d => d.label.split('-')[0].trim()),
-            datasets: [{
-                label: 'Turnover Rate',
-                data: turnoverData.map(d => d.turnover),
-                backgroundColor: '#3b82f6', // Primary color
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        title: function(context) {
-                            return turnoverData[context[0].dataIndex].label;
-                        },
-                        label: function(context) {
-                            return 'Turnover: ' + context.raw;
-                        }
-                    }
-                },
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Turnover Rate'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Kelas DDC'
-                    }
-                }
-            }
-        }
-    });
-
-    // In-House vs Out Chart
-    const inoutCtx = document.getElementById('inoutChart').getContext('2d');
-    new Chart(inoutCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Peminjaman (Bawa Pulang)', 'Baca di Tempat (In-House)'],
-            datasets: [{
-                data: [{{ out_house_count }}, {{ in_house_count }}],
-                backgroundColor: ['#10b981', '#f59e0b'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-});
-</script>
 {% endblock %}
