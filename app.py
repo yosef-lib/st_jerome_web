@@ -514,7 +514,7 @@ def analisis_lanjutan():
             COUNT(DISTINCT b.no_induk) as total_eksemplar,
             COUNT(DISTINCT p.id) as total_pinjam
         FROM buku b
-        LEFT JOIN peminjaman p ON b.no_induk = p.Kode Eksemplar
+        LEFT JOIN peminjaman p ON b.no_induk = p.no_induk
         WHERE b.lokasi = ?
         GROUP BY ddc_group
     """
@@ -537,9 +537,9 @@ def analisis_lanjutan():
             GROUP BY b.judul
         ),
         ExternalLoans AS (
-            SELECT p.Judul as judul, COUNT(p.id) as loan_count
+            SELECT p.judul as judul, COUNT(p.id) as loan_count
             FROM peminjaman p
-            GROUP BY p.Judul
+            GROUP BY p.judul
         )
         SELECT 
             c.judul, 
