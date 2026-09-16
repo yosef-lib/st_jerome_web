@@ -1,27 +1,60 @@
 {% extends 'layout.html' %}
 
 {% block page_title %}Sinkronisasi Data SLiMS{% endblock %}
-{% block page_subtitle %}Unggah Laporan Peminjaman (Loan History) dari SLiMS{% endblock %}
+{% block page_subtitle %}Unggah Data Ekspor SLiMS Anda ke St. Jerome{% endblock %}
 
 {% block content %}
-<div class="rounded-sm border border-stroke bg-white shadow-default p-8 max-w-2xl mx-auto text-center mt-10">
-    <div class="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <i class="fa-solid fa-cloud-arrow-up text-4xl"></i>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    
+    <!-- Upload Katalog (Biblio & Item) -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 text-center">
+        <div class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <i class="fa-solid fa-book text-3xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-black mb-2">1. Sinkronisasi Katalog Buku</h2>
+        <p class="text-sm text-slate-600 mb-6">Wajib dilakukan untuk <strong>Audit Rak</strong>, <strong>Akreditasi</strong>, dan mencetak stiker. Pastikan format CSV dengan pembatas koma (,) dan header dicentang.</p>
+        
+        <form action="/import_slims_katalog" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4 text-left">
+            <div>
+                <label class="mb-2 block text-sm font-medium text-black">File Daftar Judul (biblio.csv)</label>
+                <input type="file" name="biblio_file" accept=".csv" required
+                    class="w-full cursor-pointer rounded border-[1.5px] border-stroke bg-transparent font-medium outline-none transition file:mr-4 file:border-0 file:bg-gray-2 file:py-2 file:px-4 file:hover:bg-primary file:hover:text-white focus:border-primary active:border-primary" />
+            </div>
+            
+            <div>
+                <label class="mb-2 block text-sm font-medium text-black">File Daftar Fisik (item.csv)</label>
+                <input type="file" name="item_file" accept=".csv" required
+                    class="w-full cursor-pointer rounded border-[1.5px] border-stroke bg-transparent font-medium outline-none transition file:mr-4 file:border-0 file:bg-gray-2 file:py-2 file:px-4 file:hover:bg-primary file:hover:text-white focus:border-primary active:border-primary" />
+            </div>
+            
+            <button type="submit" class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded bg-primary py-2.5 px-6 font-medium text-white hover:bg-opacity-90 transition">
+                <i class="fa-solid fa-upload"></i> Unggah & Proses
+            </button>
+        </form>
     </div>
     
-    <h2 class="text-2xl font-bold text-black mb-4">Unggah Laporan SLiMS</h2>
-    <p class="text-slate-600 mb-8">Untuk memunculkan <strong>Analisis Lanjutan</strong> (Turnover, Dead Stock, Tren), Anda harus mengekspor menu "Laporan Peminjaman" dari SLiMS sebagai Excel (.xlsx), lalu mengunggahnya di sini.</p>
-    
-    <form action="/import_slims" method="POST" enctype="multipart/form-data" class="flex flex-col items-center gap-4">
-        <div class="w-full">
-            <label class="mb-3 block text-sm font-medium text-black text-left">Pilih File Excel Laporan Peminjaman (.xlsx)</label>
-            <input type="file" name="file" accept=".xlsx, .xls" required
-                class="w-full cursor-pointer rounded-lg border-[1.5px] border-stroke bg-transparent font-medium outline-none transition file:mr-5 file:border-collapse file:cursor-pointer file:border-0 file:border-r file:border-solid file:border-stroke file:bg-whiter file:py-3 file:px-5 file:hover:bg-primary file:hover:bg-opacity-10 focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter" />
+    <!-- Upload Peminjaman -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 text-center">
+        <div class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10 text-success">
+            <i class="fa-solid fa-users text-3xl"></i>
         </div>
+        <h2 class="text-xl font-bold text-black mb-2">2. Sinkronisasi Peminjaman</h2>
+        <p class="text-sm text-slate-600 mb-6">Wajib dilakukan untuk <strong>Dashboard</strong>, <strong>Turnover Rate</strong>, dan memantau <strong>Buku Dorman</strong>. Ekspor riwayat peminjaman SLiMS Anda sebagai Excel (.xlsx).</p>
         
-        <button type="submit" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary py-3 px-6 text-center font-medium text-white hover:bg-opacity-90 transition">
-            <i class="fa-solid fa-upload"></i> Unggah & Sinkronisasi Sekarang
-        </button>
-    </form>
+        <form action="/import_slims_loan" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4 text-left h-full">
+            <div>
+                <label class="mb-2 block text-sm font-medium text-black">File Laporan Peminjaman (.xlsx)</label>
+                <input type="file" name="file" accept=".xlsx, .xls" required
+                    class="w-full cursor-pointer rounded border-[1.5px] border-stroke bg-transparent font-medium outline-none transition file:mr-4 file:border-0 file:bg-gray-2 file:py-2 file:px-4 file:hover:bg-success file:hover:text-white focus:border-success active:border-success" />
+            </div>
+            
+            <div class="flex-grow"></div>
+            
+            <button type="submit" class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded bg-success py-2.5 px-6 font-medium text-white hover:bg-opacity-90 transition">
+                <i class="fa-solid fa-upload"></i> Unggah & Proses
+            </button>
+        </form>
+    </div>
+    
 </div>
 {% endblock %}
