@@ -487,6 +487,12 @@ def analisis_lanjutan():
         
     conn = database.get_db_connection()
     
+    # Pastikan tabel peminjaman ada agar tidak 500 error
+    try:
+        conn.execute('SELECT 1 FROM peminjaman LIMIT 1')
+    except:
+        return redirect(url_for('import_slims'))
+
     # 1. Turnover Rate per DDC Class
     turnover_query = """
         SELECT 
@@ -556,10 +562,10 @@ def import_slims():
             
         if file:
             filename = secure_filename(file.filename)
-            filepath = os.path.join('static', filename)
-            file.save(filepath)
+            filepath = os.path.join('/tmp', filename) if os.name != 'nt' else filename
             
             try:
+                file.save(filepath)
                 df = pd.read_excel(filepath)
                 conn = database.get_db_connection()
                 
