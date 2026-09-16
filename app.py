@@ -1006,10 +1006,10 @@ def submit_kunjungan():
         member_name = None
         if tipe_pengunjung == 'Member':
             # Verifikasi ID di tabel anggota
-            member = conn.execute("SELECT member_name, instansi FROM anggota WHERE member_id = ?", (identitas,)).fetchone()
+            member = conn.execute("SELECT nama, institusi FROM anggota WHERE member_id = ?", (identitas,)).fetchone()
             if member:
-                member_name = member['member_name']
-                asal_instansi = member['instansi'] or 'Internal'
+                member_name = member['nama']
+                asal_instansi = member['institusi'] or 'Internal'
             else:
                 return jsonify({"status": "error", "message": f"Member dengan ID {identitas} tidak ditemukan."}), 404
         
