@@ -272,10 +272,17 @@
             
             const nama = document.getElementById('tamuNama').value;
             const instansi = document.getElementById('tamuInstansi').value;
-            const tujuan = document.getElementById('tamuTujuan').value;
+            const peran = document.getElementById('tamuPeran').value;
+            const fakultas = document.getElementById('tamuFakultas').value;
             
-            if(!instansi) {
-                err.innerText = "Silakan pilih Asal Instansi.";
+            if(!instansi || !peran) {
+                err.innerText = "Silakan lengkapi form.";
+                err.classList.remove('hidden');
+                return;
+            }
+            
+            if(peran === 'Mahasiswa' && !fakultas.trim()) {
+                err.innerText = "Mahasiswa wajib mengisi kolom Fakultas.";
                 err.classList.remove('hidden');
                 return;
             }
@@ -288,7 +295,8 @@
                         tipe_pengunjung: 'Non-Member',
                         identitas: nama,
                         asal_instansi: instansi,
-                        tujuan_kunjungan: tujuan
+                        peran_jabatan: peran,
+                        fakultas: fakultas
                     })
                 });
                 const data = await res.json();
