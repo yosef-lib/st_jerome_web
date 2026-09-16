@@ -1,0 +1,155 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-title-md2 font-bold text-black dark:text-white">
+            Analitik Kunjungan
+        </h2>
+        <nav>
+            <ol class="flex items-center gap-2">
+                <li><a class="font-medium" href="/">Beranda /</a></li>
+                <li class="font-medium text-primary">Analitik Kunjungan</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Metrik Utama -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5 mb-6">
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
+            <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2">
+                <i class="fa-solid fa-users text-primary text-xl"></i>
+            </div>
+            <div class="mt-4 flex items-end justify-between">
+                <div>
+                    <h4 class="text-title-md font-bold text-black">
+                        {{ kunjungan_hari_ini }}
+                    </h4>
+                    <span class="text-sm font-medium">Kunjungan Hari Ini</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default md:col-span-1 xl:col-span-3">
+            <h4 class="font-bold text-black mb-4">Ekspor Data Borang Akreditasi</h4>
+            <form action="/export_kunjungan" method="POST" class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="w-full md:w-auto">
+                    <label class="mb-2 block text-sm font-medium text-black">Dari Tanggal</label>
+                    <input type="date" name="start_date" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 font-medium outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div class="w-full md:w-auto">
+                    <label class="mb-2 block text-sm font-medium text-black">Sampai Tanggal</label>
+                    <input type="date" name="end_date" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 font-medium outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <button type="submit" class="inline-flex items-center justify-center gap-2.5 rounded-md bg-success py-2.5 px-6 text-center font-medium text-white hover:bg-opacity-90 w-full md:w-auto">
+                    <i class="fa-solid fa-file-excel"></i> Ekspor Excel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 2xl:gap-7.5">
+        
+        <!-- Chart Demografi -->
+        <div class="rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default sm:px-7.5">
+            <h4 class="mb-4 text-xl font-bold text-black">Demografi Asal Instansi (Bulan Ini)</h4>
+            <div id="chartDemografi" class="mx-auto flex justify-center"></div>
+        </div>
+
+        <!-- Tabel Top Visitors -->
+        <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
+            <h4 class="mb-4 text-xl font-bold text-black">Top 10 Pengunjung Loyal (Bulan Ini)</h4>
+            
+            <div class="max-w-full overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-2 text-left">
+                            <th class="py-2 px-4 font-medium text-black">Peringkat</th>
+                            <th class="py-2 px-4 font-medium text-black">Identitas</th>
+                            <th class="py-2 px-4 font-medium text-black">Instansi</th>
+                            <th class="py-2 px-4 font-medium text-black">Total Kunjungan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in top_visitors %}
+                        <tr>
+                            <td class="border-b border-[#eee] py-3 px-4">
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full {% if loop.index == 1 %}bg-warning text-white{% elif loop.index == 2 %}bg-[#C0C0C0] text-white{% elif loop.index == 3 %}bg-[#CD7F32] text-white{% else %}bg-gray-2 text-black{% endif %} font-bold text-xs">
+                                    {{ loop.index }}
+                                </span>
+                            </td>
+                            <td class="border-b border-[#eee] py-3 px-4">
+                                <h5 class="font-medium text-black">{{ v.identitas }}</h5>
+                                <p class="text-xs text-slate-500">{{ v.tipe_pengunjung }} - {{ v.peran_jabatan }}</p>
+                            </td>
+                            <td class="border-b border-[#eee] py-3 px-4">
+                                <p class="text-sm text-black">{{ v.asal_instansi }}</p>
+                            </td>
+                            <td class="border-b border-[#eee] py-3 px-4 text-center">
+                                <span class="inline-block rounded bg-primary/10 py-1 px-2.5 text-sm font-medium text-primary">
+                                    {{ v.jumlah_kunjungan }}x
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="py-4 text-center text-slate-500">Belum ada data kunjungan bulan ini.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ApexCharts Setup -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Prepare data from backend
+        const rawDemografi = {{ demografi | tojson | safe }};
+        
+        let labels = [];
+        let series = [];
+        
+        if (rawDemografi.length > 0) {
+            rawDemografi.forEach(item => {
+                labels.push(item.asal_instansi || 'Tidak Diketahui');
+                series.push(item.jumlah);
+            });
+        } else {
+            labels = ['Belum ada data'];
+            series = [1];
+        }
+
+        const chartOptions = {
+            series: series,
+            chart: {
+                type: 'donut',
+                width: 380,
+            },
+            labels: labels,
+            colors: ['#6D4C41', '#8D6E63', '#A1887F', '#D7CCC8', '#EFEBE9'],
+            dataLabels: {
+                enabled: true
+            },
+            legend: {
+                position: 'bottom'
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    chart: {
+                        width: 300
+                    }
+                }
+            }]
+        };
+
+        const chart = new ApexCharts(document.querySelector("#chartDemografi"), chartOptions);
+        chart.render();
+    });
+</script>
+{% endblock %}
