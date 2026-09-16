@@ -156,18 +156,21 @@
 <!-- ADDITIONAL ANALYSIS TABLES -->
 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
     <!-- Top Read Books -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default">
-        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center">
+    <div class="rounded-sm border border-stroke bg-white shadow-default flex flex-col max-h-[500px]">
+        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center shrink-0">
             <h3 class="font-medium text-black">
-                <i class="fa-solid fa-book-reader text-primary mr-2"></i> Buku Paling Sering Dibaca
+                <i class="fa-solid fa-book-reader text-primary mr-2"></i> Buku Paling Sering Dibaca (Per Kelas)
             </h3>
+            <a href="/export_baca" class="text-xs font-medium bg-primary/10 text-primary py-1.5 px-3 rounded hover:bg-primary hover:text-white transition">
+                <i class="fa-solid fa-download"></i> Unduh CSV
+            </a>
         </div>
-        <div class="p-0">
+        <div class="p-0 overflow-y-auto grow">
             <table class="w-full table-auto">
-                <thead>
-                    <tr class="bg-slate-50 text-left border-b border-stroke">
+                <thead class="sticky top-0 z-10 bg-slate-50 border-b border-stroke shadow-sm">
+                    <tr class="text-left">
                         <th class="py-3 px-6 font-medium text-black text-sm">Judul & Pengarang</th>
-                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Kelas</th>
+                        <th class="py-3 px-6 font-medium text-black text-sm text-center">Kelas DDC</th>
                         <th class="py-3 px-6 font-medium text-black text-sm text-center">Total Baca</th>
                     </tr>
                 </thead>
@@ -198,16 +201,16 @@
     </div>
 
     <!-- Inputted Today -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default">
-        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center">
+    <div class="rounded-sm border border-stroke bg-white shadow-default flex flex-col max-h-[500px]">
+        <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center shrink-0">
             <h3 class="font-medium text-black">
                 <i class="fa-solid fa-clock-rotate-left text-primary mr-2"></i> Rekapan Input Hari Ini
             </h3>
         </div>
-        <div class="p-0">
+        <div class="p-0 overflow-y-auto grow">
             <table class="w-full table-auto">
-                <thead>
-                    <tr class="bg-slate-50 text-left border-b border-stroke">
+                <thead class="sticky top-0 z-10 bg-slate-50 border-b border-stroke shadow-sm">
+                    <tr class="text-left">
                         <th class="py-3 px-6 font-medium text-black text-sm">No Induk</th>
                         <th class="py-3 px-6 font-medium text-black text-sm">Judul Buku</th>
                         <th class="py-3 px-6 font-medium text-black text-sm text-center">DDC/Cutter</th>
@@ -246,13 +249,33 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    // GREETING DYNAMIC TIME
-    const hour = new Date().getHours();
-    let greeting = "Malam";
-    if (hour >= 4 && hour < 11) greeting = "Pagi";
-    else if (hour >= 11 && hour < 15) greeting = "Siang";
-    else if (hour >= 15 && hour < 18) greeting = "Sore";
-    document.getElementById('greetingText').innerText = `Halo Yosef, Selamat ${greeting}!`;
+    // GREETING & CLOCK DYNAMIC TIME
+    function updateClock() {
+        const now = new Date();
+        const hour = now.getHours();
+        
+        let greeting = "Malam";
+        if (hour >= 4 && hour < 11) greeting = "Pagi";
+        else if (hour >= 11 && hour < 15) greeting = "Siang";
+        else if (hour >= 15 && hour < 18) greeting = "Sore";
+        
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        
+        const dayName = days[now.getDay()];
+        const date = now.getDate();
+        const monthName = months[now.getMonth()];
+        const year = now.getFullYear();
+        
+        const h = String(hour).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        
+        document.getElementById('greetingText').innerHTML = `Halo Yosef, Selamat ${greeting}! <br><span class="text-sm font-normal text-slate-500 mt-1 block">${dayName}, ${date} ${monthName} ${year} | <i class="fa-regular fa-clock"></i> ${h}:${m}:${s} WIB</span>`;
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
     const ctx = document.getElementById('ddcChart').getContext('2d');
     
     // Ambil data dari Jinja

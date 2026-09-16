@@ -75,6 +75,23 @@
             background: rgba(0,0,0,0.5);
         }
     </style>
+    <!-- View Transitions API untuk Animasi Pindah Halaman Mulus -->
+    <meta name="view-transition" content="same-origin">
+    <style>
+        /* Animasi Fallback / Custom */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        main {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+        /* Menggunakan View Transitions API bawaan Chrome (smooth crossfade) */
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation-duration: 0.3s;
+        }
+    </style>
     <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/logo.jpg') }}">
 </head>
@@ -89,10 +106,18 @@
             <!-- Sidebar Header -->
             <div class="flex items-center justify-between gap-2 px-6 py-6 lg:py-8 border-b border-boxdark2">
                 <a href="/" class="flex items-center gap-3 text-white">
-                    <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo" class="w-12 h-12 rounded-full border-2 border-boxdark2 object-cover">
+                    {% set cur_lokasi = request.args.get('lokasi', '') %}
+                    {% if cur_lokasi == 'IMAVI' %}
+                        <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" alt="IMAVI Logo" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" class="w-12 h-12 rounded-full border-2 border-boxdark2 bg-white object-contain">
+                    {% elif cur_lokasi == 'STPD' %}
+                        <img src="{{ url_for('static', filename='img/logo_stpd.png') }}" alt="STPD Logo" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" class="w-12 h-12 rounded-full border-2 border-boxdark2 bg-white object-contain">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo" class="w-12 h-12 rounded-full border-2 border-boxdark2 object-cover">
+                    {% endif %}
+                    
                     <div>
                         <span class="block text-base font-bold">St. Jerome</span>
-                        <span class="block text-[11px] font-normal text-bodydark">Library Assistant</span>
+                        <span class="block text-[11px] font-normal text-bodydark">Library Assistant {% if cur_lokasi %}({{ cur_lokasi }}){% endif %}</span>
                     </div>
                 </a>
                 <button id="sidebar-close" class="lg:hidden text-bodydark hover:text-white">

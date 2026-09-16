@@ -126,6 +126,34 @@ def cetak_pdf():
         return send_file('stiker_output.pdf', as_attachment=True)
     return "Gagal membuat PDF atau antrean kosong.", 400
 
+@app.route('/export_baca')
+@login_required
+def export_baca():
+    conn = database.get_db_connection()
+    # Export by current month if needed, but for now we export all grouped by klasifikasi
+    data = conn.execute('''
+        SELECT b.klasifikasi, b.no_induk, b.judul, b.pengarang, COUNT(bd.id) as total_baca 
+        FROM buku_dibaca bd 
+        JOIN buku b ON bd.no_induk = b.no_induk 
+        GROUP BY b.no_induk 
+        ORDER BY b.klasifikasi ASC, total_baca DESC
+    ''').fetchall()
+    conn.close()
+    
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(['Klasifikasi DDC', 'No Induk', 'Judul Buku', 'Pengarang', 'Total Dibaca'])
+    
+    for row in data:
+        writer.writerow([row['klasifikasi'], row['no_induk'], row['judul'], row['pengarang'], row['total_baca']])
+        
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8-sig')),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="Laporan_Baca_Buku.csv"
+    )
+
 @app.route('/export_biblio')
 @login_required
 def export_biblio():
@@ -206,15 +234,15 @@ def dashboard():
     # Koleksi Terbaru
     recent_books = conn.execute('SELECT no_induk, judul, pengarang FROM buku WHERE lokasi = ? ORDER BY id DESC LIMIT 5', (lokasi,)).fetchall()
     
-    # Buku Sering Dibaca (Top Read)
+    # Buku Sering Dibaca (Top Read - Dikategorikan berdasar DDC)
     top_read_books = conn.execute('''
         SELECT b.no_induk, b.judul, b.pengarang, b.klasifikasi, COUNT(bd.id) as read_count 
         FROM buku_dibaca bd 
         JOIN buku b ON bd.no_induk = b.no_induk 
         WHERE b.lokasi = ? 
         GROUP BY b.no_induk 
-        ORDER BY read_count DESC 
-        LIMIT 5
+        ORDER BY b.klasifikasi ASC, read_count DESC 
+        LIMIT 20
     ''', (lokasi,)).fetchall()
 
     # Rekapan Hari Ini (Inputted Today)

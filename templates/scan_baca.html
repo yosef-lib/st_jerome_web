@@ -83,6 +83,25 @@
         }, 2000);
     }
 
+    function playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = 850; // Frekuensi nada tut
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.01);
+            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.2);
+        } catch (e) {
+            console.log("Audio not supported");
+        }
+    }
+
     function submitManual() {
         const no_induk = document.getElementById('manualInput').value.trim();
         if(!no_induk) return;
@@ -97,6 +116,7 @@
             body: JSON.stringify({no_induk: no_induk})
         }).then(r => r.json()).then(data => {
             if(data.status === 'success') {
+                playBeep(); // Mainkan suara TUT!
                 document.getElementById('bookTitle').innerText = data.judul;
                 document.getElementById('bookSubject').innerText = data.subjek || 'Tanpa subjek';
                 document.getElementById('resultBox').style.display = 'block';
