@@ -37,6 +37,11 @@ def logout():
     session.pop('logged_in', None)
     return redirect(url_for('login'))
 
+@app.route('/')
+@login_required
+def index():
+    return render_template('index.html')
+
 @app.route('/cetak_stiker')
 @login_required
 def cetak_stiker():
@@ -203,7 +208,7 @@ def api_scan():
         conn.close()
         return jsonify({'status': 'error', 'message': f'Buku dengan No Induk {no_induk} tidak ditemukan.'})
 
-@app.route('/')
+@app.route('/dashboard')
 @login_required
 def dashboard():
     lokasi = request.args.get('lokasi')

@@ -1,0 +1,80 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}Beranda Utama{% endblock %}
+{% block page_subtitle %}Selamat datang di sistem asisten perpustakaan St. Jerome{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-[60vh] text-center">
+    <!-- Waktu & Jam Digital -->
+    <div class="mb-8">
+        <h1 class="text-4xl md:text-5xl font-bold text-black mb-2" id="homeGreeting">Halo Yosef, Selamat Datang!</h1>
+        <p class="text-lg md:text-xl text-slate-500 font-medium mt-4" id="homeDateClock">
+            Memuat waktu...
+        </p>
+    </div>
+
+    <p class="text-base text-slate-600 mb-8 max-w-lg">
+        Ada yang bisa dibantu hari ini? Silakan pilih menu di panel sebelah kiri untuk mulai mengelola koleksi, mencetak stiker, atau memindai bacaan pengunjung.
+    </p>
+
+    <!-- Quick Links -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-4xl mt-4">
+        <a href="/dashboard" class="flex flex-col items-center p-6 bg-white rounded-lg border border-stroke shadow-sm hover:shadow-md transition hover:border-primary group">
+            <div class="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition">
+                <i class="fa-solid fa-chart-pie text-2xl"></i>
+            </div>
+            <span class="font-semibold text-black">Analisis & Laporan</span>
+        </a>
+        <a href="/scan" class="flex flex-col items-center p-6 bg-white rounded-lg border border-stroke shadow-sm hover:shadow-md transition hover:border-primary group">
+            <div class="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition">
+                <i class="fa-solid fa-barcode text-2xl"></i>
+            </div>
+            <span class="font-semibold text-black">Scanner Meja Baca</span>
+        </a>
+        <a href="/cetak_stiker" class="flex flex-col items-center p-6 bg-white rounded-lg border border-stroke shadow-sm hover:shadow-md transition hover:border-primary group">
+            <div class="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition">
+                <i class="fa-solid fa-print text-2xl"></i>
+            </div>
+            <span class="font-semibold text-black">Cetak Stiker</span>
+        </a>
+        <a href="/koleksi" class="flex flex-col items-center p-6 bg-white rounded-lg border border-stroke shadow-sm hover:shadow-md transition hover:border-primary group">
+            <div class="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition">
+                <i class="fa-solid fa-book text-2xl"></i>
+            </div>
+            <span class="font-semibold text-black">Daftar Koleksi</span>
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updateClock() {
+        const now = new Date();
+        const hour = now.getHours();
+        
+        let greeting = "Malam";
+        if (hour >= 4 && hour < 11) greeting = "Pagi";
+        else if (hour >= 11 && hour < 15) greeting = "Siang";
+        else if (hour >= 15 && hour < 18) greeting = "Sore";
+        
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        
+        const dayName = days[now.getDay()];
+        const date = now.getDate();
+        const monthName = months[now.getMonth()];
+        const year = now.getFullYear();
+        
+        const h = String(hour).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        
+        document.getElementById('homeGreeting').innerText = "Halo Yosef, Selamat " + greeting + "!";
+        document.getElementById('homeDateClock').innerHTML = dayName + ", " + date + " " + monthName + " " + year + " <br><span class=\"inline-block mt-3 text-3xl md:text-4xl font-bold text-primary tracking-widest\"><i class=\"fa-regular fa-clock mr-2\"></i>" + h + ":" + m + ":" + s + " WIB</span>";
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
+});
+</script>
+{% endblock %}

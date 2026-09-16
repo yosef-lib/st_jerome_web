@@ -133,6 +133,11 @@
                         <h3 class="mb-4 ml-4 text-sm font-semibold text-bodydark2 uppercase tracking-wider">Utama</h3>
                         <ul class="mb-6 flex flex-col gap-1.5">
                             <li>
+                                <a href="/" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/' %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                    <i class="fa-solid fa-home w-5 text-center"></i> Beranda Utama
+                                </a>
+                            </li>
+                            <li>
                                 <a href="/anggota" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path.startswith('/anggota') %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
                                     <i class="fa-solid fa-users w-5 text-center"></i> Keanggotaan
                                 </a>
@@ -175,7 +180,7 @@
                         <h3 class="mb-4 ml-4 text-sm font-semibold text-bodydark2 uppercase tracking-wider">Lainnya</h3>
                         <ul class="flex flex-col gap-1.5">
                             <li>
-                                <a href="/" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/' %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                <a href="/dashboard" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/dashboard' %}bg-boxdark2 text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
                                     <i class="fa-solid fa-chart-pie w-5 text-center"></i> Analisis
                                 </a>
                             </li>
