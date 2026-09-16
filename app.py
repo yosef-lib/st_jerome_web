@@ -601,7 +601,26 @@ def analisis_lanjutan():
         GROUP BY tahun ORDER BY tahun DESC LIMIT 3
     """, (lokasi,)).fetchall()
 
+    
+    # 1.5. Dead Stock (Koleksi Dorman)
+    dead_stock = conn.execute("""
+        SELECT b.judul, b.pengarang, b.klasifikasi
+        FROM buku b
+        LEFT JOIN buku_dibaca bd ON b.no_induk = bd.no_induk
+        LEFT JOIN peminjaman p ON b.no_induk = p.no_induk
+        WHERE b.lokasi = ? AND bd.id IS NULL AND p.id IS NULL
+        LIMIT 10
+    """, (lokasi,)).fetchall()
+
+    # 1.6. In-House vs External
+    total_in_house = conn.execute("SELECT COUNT(*) FROM buku_dibaca bd JOIN buku b ON bd.no_induk = b.no_induk WHERE b.lokasi = ?", (lokasi,)).fetchone()[0]
+    total_external = conn.execute("SELECT COUNT(*) FROM peminjaman p JOIN buku b ON p.no_induk = b.no_induk WHERE b.lokasi = ?", (lokasi,)).fetchone()[0]
+
     return render_template('analisis_lanjutan.html', 
+                          dead_stock=dead_stock,
+                          total_in_house=total_in_house,
+                          total_external=total_external,
+                          
                           lokasi=lokasi, 
                           turnover_data=turnover_data,
                           smart_procurement=smart_procurement,
