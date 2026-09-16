@@ -1,67 +1,12 @@
-{% extends 'layout.html' %}
+import codecs
+import re
 
-{% block content %}
-<div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-title-md2 font-bold text-black dark:text-white">
-            Kualitas Data & Anomali
-        </h2>
-        <nav>
-            <ol class="flex items-center gap-2">
-                <li><a class="font-medium" href="/">Beranda /</a></li>
-                <li class="font-medium text-primary">Anomali: {{ lokasi }}</li>
-            </ol>
-        </nav>
-    </div>
+with codecs.open('templates/anomali.html', 'r', 'utf-8') as f:
+    html = f.read()
 
-    <!-- TABS MOCKUP -->
-    <div class="mb-6 flex flex-wrap gap-3">
-        <a href="/anomali?lokasi=STPD" class="inline-flex items-center justify-center rounded-md {% if lokasi == 'STPD' %}bg-primary text-white{% else %}border border-primary text-primary hover:bg-gray-2{% endif %} py-2 px-6 text-center font-medium">
-            Perpustakaan STPD
-        </a>
-        <a href="/anomali?lokasi=IMAVI" class="inline-flex items-center justify-center rounded-md {% if lokasi == 'IMAVI' %}bg-primary text-white{% else %}border border-primary text-primary hover:bg-gray-2{% endif %} py-2 px-6 text-center font-medium">
-            Perpustakaan IMAVI
-        </a>
-    </div>
-
-    <div class="grid grid-cols-1 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-        
-        <!-- Tabel 1: Metadata Tidak Lengkap -->
-        <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
-            <h4 class="mb-4 text-xl font-semibold text-black">
-                Buku dengan Metadata Tidak Lengkap (Maks 50 data)
-            </h4>
-            <p class="text-sm text-slate-500 mb-6">Buku di bawah ini kehilangan informasi penting seperti Judul, Pengarang, atau Klasifikasi DDC.</p>
-            
-            <div class="max-w-full overflow-x-auto">
-                <table class="w-full table-auto text-sm">
-                    <thead>
-                        <tr class="bg-gray-2 text-left">
-                            <th class="py-2 px-4 font-medium text-black">No Induk</th>
-                            <th class="py-2 px-4 font-medium text-black">Judul</th>
-                            <th class="py-2 px-4 font-medium text-black">Pengarang</th>
-                            <th class="py-2 px-4 font-medium text-black">DDC</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for b in metadata_cacat %}
-                        <tr>
-                            <td class="border-b border-[#eee] py-3 px-4 font-bold">{{ b.no_induk }}</td>
-                            <td class="border-b border-[#eee] py-3 px-4 {% if not b.judul %}bg-danger/20 text-danger font-bold{% endif %}">{{ b.judul or '[KOSONG]' }}</td>
-                            <td class="border-b border-[#eee] py-3 px-4 {% if not b.pengarang %}bg-danger/20 text-danger font-bold{% endif %}">{{ b.pengarang or '[KOSONG]' }}</td>
-                            <td class="border-b border-[#eee] py-3 px-4 {% if not b.klasifikasi %}bg-danger/20 text-danger font-bold{% endif %}">{{ b.klasifikasi or '[KOSONG]' }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="text-center py-4 text-slate-500">Hebat! Tidak ada metadata yang cacat di perpustakaan ini.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Tabel 2: Inkonsistensi Klasifikasi -->
+# I will just regex replace the whole div for the second table
+pattern = r'(<!-- Tabel 2: Inkonsistensi Klasifikasi -->.*?)(</div>\s*</div>\s*</div>)'
+replacement = '''<!-- Tabel 2: Inkonsistensi Klasifikasi -->
         <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-6 mb-6">
             <h4 class="mb-4 text-xl font-semibold text-black">
                 Inkonsistensi Klasifikasi (Judul Sama, DDC Beda)
@@ -127,6 +72,11 @@
             {% endif %}
         </div>
     </div>
-</div>
-</div>
-{% endblock %}
+</div>'''
+
+html = re.sub(pattern, replacement, html, flags=re.DOTALL)
+
+with codecs.open('templates/anomali.html', 'w', 'utf-8') as f:
+    f.write(html)
+
+print("HTML anomali replaced successfully")
