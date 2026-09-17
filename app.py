@@ -413,7 +413,7 @@ def api_scan():
 def dashboard():
     lokasi = request.args.get('lokasi')
     if not lokasi:
-        return redirect(url_for('dashboard', lokasi='IMAVI'))
+        return redirect(url_for('index', lokasi='IMAVI'))
         
     conn = database.get_db_connection()
     
@@ -492,7 +492,7 @@ def daftar_koleksi():
     lokasi = request.args.get('lokasi')
     if not lokasi:
         # Jika belum milih lokasi, tampilkan halaman pilih lokasi
-        return redirect(url_for('koleksi', lokasi='IMAVI'))
+        return redirect(url_for('daftar_koleksi', lokasi='IMAVI'))
         
     conn = database.get_db_connection()
     page = int(request.args.get('page', 1))
