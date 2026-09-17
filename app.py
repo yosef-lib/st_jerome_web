@@ -281,10 +281,11 @@ def api_cetak_sirkulasi():
     options = data.get('options', {})
     
     conn = database.get_db_connection()
+    placeholders = ','.join('?' for _ in ids)
     buku_list = []
-    for no_induk in ids:
-        b = conn.execute('SELECT * FROM buku WHERE no_induk = ?', (no_induk,)).fetchone()
-        if b: buku_list.append(dict(b))
+    if ids:
+        buku_list_raw = conn.execute(f'SELECT * FROM buku WHERE id IN ({placeholders})', ids).fetchall()
+        buku_list = [dict(row) for row in buku_list_raw]
     conn.close()
     
     if not buku_list:
