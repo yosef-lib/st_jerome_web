@@ -972,14 +972,15 @@ def kunjungan_autocomplete():
         
     conn = database.get_db_connection()
     try:
-        # Cari nama tamu yang mirip dari riwayat kunjungan (case-insensitive)
         results = conn.execute("""
-            SELECT DISTINCT identitas FROM sjla_visitor_logs 
+            SELECT identitas, asal_instansi, peran_jabatan, fakultas 
+            FROM sjla_visitor_logs 
             WHERE tipe_pengunjung = 'Non-Member' AND identitas LIKE ?
+            GROUP BY identitas
             LIMIT 10
         """, ('%' + q + '%',)).fetchall()
         
-        suggestions = [row['identitas'] for row in results]
+        suggestions = [dict(row) for row in results]
         return jsonify(suggestions)
     finally:
         conn.close()
@@ -1052,12 +1053,29 @@ def analitik_kunjungan():
     try:
         # Metrik 1: Kunjungan Hari Ini
         hari_ini_row = conn.execute("""
-            SELECT COUNT(id) as total FROM sjla_visitor_logs 
+            SELECT 
+                COUNT(id) as total,
+                SUM(CASE WHEN tipe_pengunjung = 'Member' THEN 1 ELSE 0 END) as member_count,
+                SUM(CASE WHEN tipe_pengunjung = 'Non-Member' THEN 1 ELSE 0 END) as non_member_count
+            FROM sjla_visitor_logs 
             WHERE date(waktu_kunjungan) = date('now', 'localtime')
         """).fetchone()
         kunjungan_hari_ini = hari_ini_row['total'] if hari_ini_row else 0
+        member_hari_ini = hari_ini_row['member_count'] if hari_ini_row and hari_ini_row['member_count'] else 0
+        non_member_hari_ini = hari_ini_row['non_member_count'] if hari_ini_row and hari_ini_row['non_member_count'] else 0
         
-        # Metrik 2: Demografi Instansi (Bulan Ini)
+        # Metrik 2: Fakultas Hari Ini
+        fakultas_today_rows = conn.execute("""
+            SELECT fakultas, COUNT(id) as jumlah
+            FROM sjla_visitor_logs
+            WHERE date(waktu_kunjungan) = date('now', 'localtime') 
+              AND fakultas IS NOT NULL AND fakultas != ''
+            GROUP BY fakultas
+            ORDER BY jumlah DESC
+        """).fetchall()
+        fakultas_hari_ini = [dict(row) for row in fakultas_today_rows]
+        
+        # Metrik 3: Demografi Instansi (Bulan Ini)
         demografi_rows = conn.execute("""
             SELECT asal_instansi, COUNT(id) as jumlah 
             FROM sjla_visitor_logs 
@@ -1082,6 +1100,9 @@ def analitik_kunjungan():
         
     return render_template('analitik_kunjungan.html', 
                           kunjungan_hari_ini=kunjungan_hari_ini, 
+                          member_hari_ini=member_hari_ini,
+                          non_member_hari_ini=non_member_hari_ini,
+                          fakultas_hari_ini=fakultas_hari_ini,
                           demografi=demografi, 
                           top_visitors=top_visitors)
 

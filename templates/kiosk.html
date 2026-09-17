@@ -120,7 +120,7 @@
                         <input type="text" id="tamuNama" required autocomplete="off" placeholder="Ketik nama Anda..." class="w-full rounded-lg border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
                         
                         <!-- Autocomplete Suggestions -->
-                        <div id="autocompleteList" class="absolute z-40 w-full bg-white border border-stroke rounded-lg mt-1 shadow-lg hidden max-h-48 overflow-y-auto no-scrollbar">
+                        <div id="autocompleteList" class="absolute z-40 w-full bg-white border border-stroke rounded-lg mt-1 shadow-lg hidden max-h-60 overflow-y-auto no-scrollbar">
                             <!-- Items injected via JS -->
                         </div>
                     </div>
@@ -330,12 +330,16 @@
                     const data = await res.json();
                     autocompleteList.innerHTML = '';
                     if(data.length > 0) {
-                        data.forEach(name => {
+                        data.forEach(item => {
                             const div = document.createElement('div');
-                            div.className = "p-3 hover:bg-gray-2 cursor-pointer border-b border-[#eee] text-sm font-medium text-black last:border-b-0";
-                            div.innerHTML = name;
+                            div.className = 'px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-stroke last:border-b-0';
+                            div.innerHTML = '<p class="font-bold text-black">' + item.identitas + '</p><p class="text-xs text-slate-500">' + item.asal_instansi + ' - ' + item.peran_jabatan + '</p>';
                             div.addEventListener('click', () => {
-                                tamuNama.value = name;
+                                tamuNama.value = item.identitas;
+                                document.getElementById('tamuInstansi').value = item.asal_instansi || '';
+                                document.getElementById('tamuPeran').value = item.peran_jabatan || '';
+                                document.getElementById('tamuFakultas').value = item.fakultas || '';
+                                checkPeran();
                                 autocompleteList.classList.add('hidden');
                             });
                             autocompleteList.appendChild(div);

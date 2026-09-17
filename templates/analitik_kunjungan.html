@@ -16,6 +16,7 @@
 
     <!-- Metrik Utama -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5 mb-6">
+        <!-- Card 1: Total Hari Ini -->
         <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default">
             <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2">
                 <i class="fa-solid fa-users text-primary text-xl"></i>
@@ -28,9 +29,31 @@
                     <span class="text-sm font-medium">Kunjungan Hari Ini</span>
                 </div>
             </div>
+            <div class="mt-4 pt-4 border-t border-stroke">
+                <p class="text-sm flex justify-between"><span class="text-slate-500">Anggota:</span> <span class="font-bold text-black">{{ member_hari_ini }}</span></p>
+                <p class="text-sm flex justify-between mt-1"><span class="text-slate-500">Non-Member:</span> <span class="font-bold text-black">{{ non_member_hari_ini }}</span></p>
+            </div>
         </div>
         
-        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default md:col-span-1 xl:col-span-3">
+        <!-- Card 2: Sebaran Fakultas -->
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default xl:col-span-1 max-h-48 overflow-y-auto no-scrollbar">
+            <h4 class="font-bold text-black mb-4">Fakultas Hari Ini</h4>
+            {% if fakultas_hari_ini %}
+                <div class="space-y-2">
+                    {% for f in fakultas_hari_ini %}
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-600 truncate mr-2">{{ f.fakultas }}</span>
+                        <span class="font-bold bg-primary/10 text-primary py-0.5 px-2 rounded">{{ f.jumlah }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-sm text-slate-500">Kosong.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Card 3: Export -->
+        <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default md:col-span-2 xl:col-span-2">
             <h4 class="font-bold text-black mb-4">Ekspor Data Borang Akreditasi</h4>
             <form action="/export_kunjungan" method="POST" class="flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full md:w-auto">
