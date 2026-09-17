@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+F4 = (21.5 * cm, 33.0 * cm)
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.graphics.barcode import code128
@@ -311,8 +312,8 @@ def generate_stiker_pdf(antrean_file, output_file, options=None):
         print("Tidak ada opsi cetak yang dipilih.")
         return
 
-    c = canvas.Canvas(output_file, pagesize=A4)
-    width, height = A4
+    c = canvas.Canvas(output_file, pagesize=F4)
+    width, height = F4
     
     gap_x = 0.5 * cm
     gap_y = 0.6 * cm
