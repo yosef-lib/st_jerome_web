@@ -100,11 +100,17 @@ def draw_punggung(c, x_spine, y_base, item_h, buku):
     huruf_judul = buku.get('huruf_judul', '')
     if not huruf_judul and judul: huruf_judul = judul[0].lower()
     
-    c.setFont("Helvetica-Bold", 14)
-    c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 0.9*cm, klasifikasi)
-    c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 1.8*cm, cutter)
-    c.setFont("Helvetica", 14)
-    c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 2.7*cm, huruf_judul)
+    if not klasifikasi or not cutter:
+        c.setFont("Helvetica-Bold", 11)
+        c.setFillColor(colors.red)
+        c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 1.2*cm, "TIDAK")
+        c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 1.8*cm, "LENGKAP")
+    else:
+        c.setFont("Helvetica-Bold", 14)
+        c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 0.9*cm, klasifikasi)
+        c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 1.8*cm, cutter)
+        c.setFont("Helvetica", 14)
+        c.drawCentredString(x_spine + (spine_w/2), y_spine + spine_h - header_h_spine - 2.7*cm, huruf_judul)
 
 
 def draw_barcode(c, x_barcode, y_base, item_h, buku):
@@ -142,7 +148,7 @@ def draw_barcode(c, x_barcode, y_base, item_h, buku):
     if line2:
         c.drawCentredString(x_barcode + barcode_w/2, y_barcode + barcode_h - 1.25*cm, line2)
     
-    barcode_val = buku.get('no_induk', '')
+    barcode_val = str(buku.get('no_induk', ''))
     c.setFont("Helvetica-Bold", 7.5)
     c.drawCentredString(x_barcode + barcode_w/2, y_barcode + 0.15*cm, barcode_val)
     

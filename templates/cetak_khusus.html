@@ -82,7 +82,13 @@
                             <p class="text-slate-500">{{ buku.pengarang }}</p>
                         </td>
                         <td class="border-b border-[#eee] py-4 px-4">
+                            {% if buku.klasifikasi and buku.cutter %}
                             <p class="text-slate-500">{{ buku.klasifikasi }} {{ buku.cutter }} {{ buku.huruf_judul }}</p>
+                            {% else %}
+                            <span class="inline-flex rounded-full bg-danger bg-opacity-10 py-1 px-3 text-xs font-medium text-danger" title="Buku ini tidak memiliki nomor panggil yang lengkap">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Tidak Lengkap
+                            </span>
+                            {% endif %}
                         </td>
                         <td class="border-b border-[#eee] py-4 px-4">
                             <p class="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success">
