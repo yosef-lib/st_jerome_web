@@ -189,8 +189,7 @@ def draw_kartu_buku(c, x, y, buku):
                 series_part = series_part.replace("Seri Dokumen Gerejawi", "SDG")
                 judul = f"{title_part} ({series_part})"
             
-    if len(judul) > 50:
-        judul = judul[:47] + '...'
+
 
         
     no_induk = str(buku.get('no_induk', ''))
@@ -203,11 +202,21 @@ def draw_kartu_buku(c, x, y, buku):
     
     # Text
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(x + 0.3*cm, y + card_h - 0.7*cm, f"JUDUL     : {judul}")
+    c.drawString(x + 0.3*cm, y + card_h - 0.6*cm, "JUDUL     :")
     
+    import textwrap
+    wrapped = textwrap.wrap(judul, width=32)
+    
+    if len(wrapped) >= 1:
+        c.drawString(x + 1.8*cm, y + card_h - 0.6*cm, wrapped[0])
+    if len(wrapped) >= 2:
+        line2 = wrapped[1]
+        if len(wrapped) > 2:
+            line2 = line2[:29] + '...'
+        c.drawString(x + 1.8*cm, y + card_h - 0.95*cm, line2)
+        
     c.setFont("Helvetica-Bold", 8)
-    # Gunakan hanya nomor ID buku seperti yang diminta user (no_induk)
-    c.drawString(x + 0.3*cm, y + card_h - 1.2*cm, f"NO BUKU : {no_induk}")
+    c.drawString(x + 0.3*cm, y + card_h - 1.4*cm, f"NO BUKU : {no_induk}")
     
     # Table
     table_y = y + card_h - 1.8*cm
