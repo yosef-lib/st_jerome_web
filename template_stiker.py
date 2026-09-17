@@ -200,13 +200,16 @@ def draw_kartu_buku(c, x, y, buku):
     if not huruf_judul and judul: huruf_judul = judul[0].lower()
     no_buku = f"{klasifikasi} {cutter} {huruf_judul} / {no_induk}".strip()
     
+    c.setFillColorRGB(0, 0, 0)
+    c.setStrokeColorRGB(0, 0, 0)
     # Text
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(x + 0.3*cm, y + card_h - 0.6*cm, "JUDUL     :")
+    c.drawString(x + 0.3*cm, y + card_h - 0.6*cm, "JUDUL     : ")
     
     import textwrap
-    wrapped = textwrap.wrap(judul, width=32)
+    wrapped = textwrap.wrap(judul, width=33)
     
+    c.setFont("Courier-Bold", 8)
     if len(wrapped) >= 1:
         c.drawString(x + 1.8*cm, y + card_h - 0.6*cm, wrapped[0])
     if len(wrapped) >= 2:
@@ -216,7 +219,9 @@ def draw_kartu_buku(c, x, y, buku):
         c.drawString(x + 1.8*cm, y + card_h - 0.95*cm, line2)
         
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(x + 0.3*cm, y + card_h - 1.4*cm, f"NO BUKU : {no_induk}")
+    c.drawString(x + 0.3*cm, y + card_h - 1.4*cm, "NO BUKU : ")
+    c.setFont("Courier-Bold", 8)
+    c.drawString(x + 1.8*cm, y + card_h - 1.4*cm, no_induk)
     
     # Table
     table_y = y + card_h - 1.8*cm
@@ -276,19 +281,29 @@ def draw_kantong_buku(c, x, y, buku):
     c.line(main_x + 0.5*cm, main_y + main_h - 1.5*cm, main_x + main_w - 0.5*cm, main_y + main_h - 1.5*cm)
     
     judul = buku.get('judul', '')
+    import re
+    if "Seri Dokumen Gerejawi" in judul and (";" in judul or ":" in judul or "-" in judul):
+        parts = re.split(r'[;:\-]', judul, maxsplit=1)
+        if len(parts) >= 2:
+            series_part = parts[0].strip()
+            title_part = parts[1].strip()
+            if "Seri Dokumen" in series_part:
+                series_part = series_part.replace("Seri Dokumen Gerejawi", "SDG")
+                judul = f"{title_part} ({series_part})"
+                
     no_induk = str(buku.get('no_induk', ''))
     
     import textwrap
-    wrapped = textwrap.wrap(judul, width=32)
+    wrapped = textwrap.wrap(judul, width=34)
     
-    c.setFont("Helvetica-Bold", 9)
+    c.setFont("Courier-Bold", 9)
     text_y = main_y + main_h - 2.5*cm
     for line in wrapped[:3]:
         c.drawCentredString(main_x + main_w/2, text_y, line)
         text_y -= 0.5*cm
         
-    c.setFont("Helvetica-Bold", 10)
-    c.drawCentredString(main_x + main_w/2, text_y - 0.3*cm, f"ID: {no_induk}")
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString(main_x + main_w/2, text_y - 0.3*cm, no_induk)
 
 def generate_stiker_pdf(antrean_file, output_file, options=None):
     if not os.path.exists(antrean_file):
