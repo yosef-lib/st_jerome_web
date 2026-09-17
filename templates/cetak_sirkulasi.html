@@ -208,7 +208,7 @@ async function cetakTerpilih() {
     };
     
     try {
-        const res = await fetch('/api/cetak_kartu', {
+        const res = await fetch('/api/cetak_sirkulasi', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)

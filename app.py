@@ -243,9 +243,9 @@ def add_antrean_existing():
     return jsonify({'status': 'success', 'data': buku_dict})
 
 
-@app.route('/cetak_kartu')
+@app.route('/cetak_sirkulasi')
 @login_required
-def cetak_kartu():
+def cetak_sirkulasi():
     search = request.args.get('search', '')
     page = int(request.args.get('page', 1))
     per_page = 15
@@ -270,9 +270,9 @@ def cetak_kartu():
     total_pages = (total_books + per_page - 1) // per_page
     return render_template('cetak_kartu.html', buku_list=buku_list, page=page, total_pages=total_pages, search=search)
 
-@app.route('/api/cetak_kartu', methods=['POST'])
+@app.route('/api/cetak_sirkulasi', methods=['POST'])
 @login_required
-def api_cetak_kartu():
+def api_cetak_sirkulasi():
     import json, os, tempfile
     from template_stiker import generate_stiker_pdf
     
