@@ -245,11 +245,26 @@ def add_antrean_existing():
 @app.route('/cetak_pdf')
 @login_required
 def cetak_pdf():
-    import template_stiker
-    success = template_stiker.generate_stiker_pdf()
-    if success:
-        return send_file('stiker_output.pdf', as_attachment=True)
-    return "Gagal membuat PDF atau antrean kosong.", 400
+    from template_stiker import generate_stiker_pdf
+    import os
+    output_pdf = 'stiker_output.pdf'
+    
+    if not os.path.exists(ANTREAN_FILE):
+        return "Antrean kosong. Tambahkan buku ke antrean terlebih dahulu."
+        
+    if os.path.exists(output_pdf):
+        os.remove(output_pdf)
+        
+    try:
+        generate_stiker_pdf(ANTREAN_FILE, output_pdf)
+    except Exception as e:
+        print("Error generating PDF:", e)
+        return "Gagal menghasilkan PDF. Terjadi kesalahan internal.", 500
+    
+    if not os.path.exists(output_pdf):
+        return "Gagal menghasilkan PDF. Pastikan antrean tidak kosong dan format data benar."
+        
+    return send_file(output_pdf, as_attachment=True, download_name='stiker.pdf')
 
 @app.route('/export_baca')
 @login_required
