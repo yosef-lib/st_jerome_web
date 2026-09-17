@@ -1046,63 +1046,78 @@ def submit_kunjungan():
 # ANALITIK KUNJUNGAN (FASE 2)
 # ==========================================
 
+from datetime import datetime
+
 @app.route('/analitik_kunjungan')
 @login_required
 def analitik_kunjungan():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    # Default: hari ini untuk rentang default jika tidak ada filter
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    if not start_date:
+        start_date = today_str
+    if not end_date:
+        end_date = today_str
+        
+    # Jika memfilter rentang bulan, kita bisa memilih tanggal awal bulan hingga akhir bulan.
+    # Untuk query kita gunakan: date(waktu_kunjungan) >= start_date AND date(waktu_kunjungan) <= end_date
+    
     conn = database.get_db_connection()
     try:
-        # Metrik 1: Kunjungan Hari Ini
+        # Metrik 1: Kunjungan (Filter)
         hari_ini_row = conn.execute("""
             SELECT 
                 COUNT(id) as total,
                 SUM(CASE WHEN tipe_pengunjung = 'Member' THEN 1 ELSE 0 END) as member_count,
                 SUM(CASE WHEN tipe_pengunjung = 'Non-Member' THEN 1 ELSE 0 END) as non_member_count
             FROM sjla_visitor_logs 
-            WHERE date(waktu_kunjungan) = date('now', 'localtime')
-        """).fetchone()
+            WHERE date(waktu_kunjungan) >= ? AND date(waktu_kunjungan) <= ?
+        """, (start_date, end_date)).fetchone()
         kunjungan_hari_ini = hari_ini_row['total'] if hari_ini_row else 0
         member_hari_ini = hari_ini_row['member_count'] if hari_ini_row and hari_ini_row['member_count'] else 0
         non_member_hari_ini = hari_ini_row['non_member_count'] if hari_ini_row and hari_ini_row['non_member_count'] else 0
         
-        # Metrik 2: Fakultas Hari Ini
+        # Metrik 2: Fakultas (Filter)
         fakultas_today_rows = conn.execute("""
             SELECT fakultas, COUNT(id) as jumlah
             FROM sjla_visitor_logs
-            WHERE date(waktu_kunjungan) = date('now', 'localtime') 
+            WHERE date(waktu_kunjungan) >= ? AND date(waktu_kunjungan) <= ? 
               AND fakultas IS NOT NULL AND fakultas != ''
             GROUP BY fakultas
             ORDER BY jumlah DESC
-        """).fetchall()
+        """, (start_date, end_date)).fetchall()
         fakultas_hari_ini = [dict(row) for row in fakultas_today_rows]
         
-        # Log Kunjungan Hari Ini
+        # Log Kunjungan (Filter)
         log_hari_ini_rows = conn.execute("""
             SELECT waktu_kunjungan, identitas, tipe_pengunjung, asal_instansi, peran_jabatan, fakultas
             FROM sjla_visitor_logs
-            WHERE date(waktu_kunjungan) = date('now', 'localtime')
+            WHERE date(waktu_kunjungan) >= ? AND date(waktu_kunjungan) <= ?
             ORDER BY waktu_kunjungan DESC
-        """).fetchall()
+        """, (start_date, end_date)).fetchall()
         log_hari_ini = [dict(row) for row in log_hari_ini_rows]
         
-        # Metrik 3: Demografi Instansi (Bulan Ini)
+        # Metrik 3: Demografi Instansi (Filter)
         demografi_rows = conn.execute("""
             SELECT asal_instansi, COUNT(id) as jumlah 
             FROM sjla_visitor_logs 
-            WHERE strftime('%Y-%m', waktu_kunjungan) = strftime('%Y-%m', 'now', 'localtime')
+            WHERE date(waktu_kunjungan) >= ? AND date(waktu_kunjungan) <= ?
             GROUP BY asal_instansi
             ORDER BY jumlah DESC
-        """).fetchall()
+        """, (start_date, end_date)).fetchall()
         demografi = [dict(row) for row in demografi_rows]
         
-        # Metrik 3: Top 10 Pengunjung (Bulan Ini)
+        # Metrik 3: Top 10 Pengunjung (Filter)
         top_visitors = conn.execute("""
             SELECT identitas, tipe_pengunjung, asal_instansi, peran_jabatan, fakultas, COUNT(id) as jumlah_kunjungan
             FROM sjla_visitor_logs 
-            WHERE strftime('%Y-%m', waktu_kunjungan) = strftime('%Y-%m', 'now', 'localtime')
+            WHERE date(waktu_kunjungan) >= ? AND date(waktu_kunjungan) <= ?
             GROUP BY identitas
             ORDER BY jumlah_kunjungan DESC
             LIMIT 10
-        """).fetchall()
+        """, (start_date, end_date)).fetchall()
         
     finally:
         conn.close()
@@ -1114,7 +1129,9 @@ def analitik_kunjungan():
                           fakultas_hari_ini=fakultas_hari_ini,
                           demografi=demografi, 
                           top_visitors=top_visitors,
-                          log_hari_ini=log_hari_ini)
+                          log_hari_ini=log_hari_ini,
+                          start_date=start_date,
+                          end_date=end_date)
 
 @app.route('/export_kunjungan', methods=['POST'])
 @login_required

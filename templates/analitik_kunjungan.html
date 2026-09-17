@@ -3,15 +3,18 @@
 {% block content %}
 <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-title-md2 font-bold text-black dark:text-white">
-            Analitik Kunjungan
-        </h2>
-        <nav>
-            <ol class="flex items-center gap-2">
-                <li><a class="font-medium" href="/">Beranda /</a></li>
-                <li class="font-medium text-primary">Analitik Kunjungan</li>
-            </ol>
-        </nav>
+        <div>
+            <h2 class="text-title-md2 font-bold text-black dark:text-white">
+                Analitik Kunjungan
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">{% if start_date == end_date %}{{ start_date }}{% else %}{{ start_date }} s/d {{ end_date }}{% endif %}</p>
+        </div>
+        <form method="GET" action="/analitik_kunjungan" class="flex items-center gap-2 bg-white border border-stroke rounded-lg p-2 shadow-sm">
+            <input type="date" name="start_date" value="{{ start_date }}" class="text-sm rounded outline-none border border-stroke px-2 py-1 focus:border-primary">
+            <span class="text-sm text-slate-400">s/d</span>
+            <input type="date" name="end_date" value="{{ end_date }}" class="text-sm rounded outline-none border border-stroke px-2 py-1 focus:border-primary">
+            <button type="submit" class="bg-primary text-white text-sm px-3 py-1 rounded hover:bg-opacity-90 transition"><i class="fa-solid fa-filter"></i> Filter</button>
+        </form>
     </div>
 
     <!-- Metrik Utama -->
@@ -26,7 +29,7 @@
                     <h4 class="text-title-md font-bold text-black">
                         {{ kunjungan_hari_ini }}
                     </h4>
-                    <span class="text-sm font-medium">Kunjungan Hari Ini</span>
+                    <span class="text-sm font-medium">Total Kunjungan</span>
                 </div>
             </div>
             <div class="mt-4 pt-4 border-t border-stroke">
@@ -37,7 +40,7 @@
         
         <!-- Card 2: Sebaran Fakultas -->
         <div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default xl:col-span-1 max-h-48 overflow-y-auto no-scrollbar">
-            <h4 class="font-bold text-black mb-4">Fakultas Hari Ini</h4>
+            <h4 class="font-bold text-black mb-4">Sebaran Fakultas</h4>
             {% if fakultas_hari_ini %}
                 <div class="space-y-2">
                     {% for f in fakultas_hari_ini %}
@@ -75,13 +78,13 @@
         
         <!-- Chart Demografi -->
         <div class="rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default sm:px-7.5">
-            <h4 class="mb-4 text-xl font-bold text-black">Demografi Asal Instansi (Bulan Ini)</h4>
+            <h4 class="mb-4 text-xl font-bold text-black">Demografi Asal Instansi</h4>
             <div id="chartDemografi" class="mx-auto flex justify-center"></div>
         </div>
 
         <!-- Tabel Top Visitors -->
         <div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
-            <h4 class="mb-4 text-xl font-bold text-black">Top 10 Pengunjung Loyal (Bulan Ini)</h4>
+            <h4 class="mb-4 text-xl font-bold text-black">Top 10 Pengunjung Loyal</h4>
             
             <div class="max-w-full overflow-x-auto">
                 <table class="w-full table-auto">
@@ -131,9 +134,9 @@
     </div>
 </div>
 
-    <!-- Log Kunjungan Hari Ini -->
+    <!-- Log Total Kunjungan -->
     <div class="mt-4 md:mt-6 2xl:mt-7.5 rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
-        <h4 class="mb-4 text-xl font-bold text-black">Rincian Kunjungan Hari Ini</h4>
+        <h4 class="mb-4 text-xl font-bold text-black">Rincian Total Kunjungan</h4>
         <div class="max-w-full overflow-x-auto max-h-96 overflow-y-auto">
             <table class="w-full table-auto">
                 <thead>
@@ -170,7 +173,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="py-4 text-center text-slate-500">Belum ada kunjungan hari ini.</td>
+                        <td colspan="4" class="py-4 text-center text-slate-500">Tidak ada kunjungan pada rentang tanggal ini.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
