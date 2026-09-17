@@ -1382,6 +1382,7 @@ def manajemen_data():
 @login_required
 def eksport_stpd():
     import csv, io
+    from flask import Response
     conn = database.get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM buku WHERE lokasi = 'STPD'")
