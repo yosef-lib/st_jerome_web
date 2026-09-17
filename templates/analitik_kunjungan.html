@@ -131,6 +131,55 @@
     </div>
 </div>
 
+    <!-- Log Kunjungan Hari Ini -->
+    <div class="mt-4 md:mt-6 2xl:mt-7.5 rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 xl:pb-1">
+        <h4 class="mb-4 text-xl font-bold text-black">Rincian Kunjungan Hari Ini</h4>
+        <div class="max-w-full overflow-x-auto max-h-96 overflow-y-auto">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-2 text-left">
+                        <th class="py-2 px-4 font-medium text-black">Waktu</th>
+                        <th class="py-2 px-4 font-medium text-black">Identitas</th>
+                        <th class="py-2 px-4 font-medium text-black">Status</th>
+                        <th class="py-2 px-4 font-medium text-black">Instansi & Peran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in log_hari_ini %}
+                    <tr>
+                        <td class="border-b border-[#eee] py-3 px-4 text-sm text-slate-500 whitespace-nowrap">
+                            {{ log.waktu_kunjungan[11:16] }} WIB
+                        </td>
+                        <td class="border-b border-[#eee] py-3 px-4">
+                            <h5 class="font-medium text-black">{{ log.identitas }}</h5>
+                        </td>
+                        <td class="border-b border-[#eee] py-3 px-4">
+                            {% if log.tipe_pengunjung == 'Member' %}
+                            <span class="inline-block rounded bg-success/10 py-1 px-2.5 text-xs font-medium text-success">Member</span>
+                            {% else %}
+                            <span class="inline-block rounded bg-warning/10 py-1 px-2.5 text-xs font-medium text-warning">Non-Member</span>
+                            {% endif %}
+                        </td>
+                        <td class="border-b border-[#eee] py-3 px-4">
+                            <p class="text-sm text-black">{{ log.asal_instansi }}</p>
+                            <p class="text-xs text-slate-500">
+                                {% if log.peran_jabatan %}{{ log.peran_jabatan }}{% endif %}
+                                {% if log.fakultas %} ({{ log.fakultas }}){% endif %}
+                            </p>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="py-4 text-center text-slate-500">Belum ada kunjungan hari ini.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
 <!-- ApexCharts Setup -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>

@@ -1075,6 +1075,15 @@ def analitik_kunjungan():
         """).fetchall()
         fakultas_hari_ini = [dict(row) for row in fakultas_today_rows]
         
+        # Log Kunjungan Hari Ini
+        log_hari_ini_rows = conn.execute("""
+            SELECT waktu_kunjungan, identitas, tipe_pengunjung, asal_instansi, peran_jabatan, fakultas
+            FROM sjla_visitor_logs
+            WHERE date(waktu_kunjungan) = date('now', 'localtime')
+            ORDER BY waktu_kunjungan DESC
+        """).fetchall()
+        log_hari_ini = [dict(row) for row in log_hari_ini_rows]
+        
         # Metrik 3: Demografi Instansi (Bulan Ini)
         demografi_rows = conn.execute("""
             SELECT asal_instansi, COUNT(id) as jumlah 
@@ -1104,7 +1113,8 @@ def analitik_kunjungan():
                           non_member_hari_ini=non_member_hari_ini,
                           fakultas_hari_ini=fakultas_hari_ini,
                           demografi=demografi, 
-                          top_visitors=top_visitors)
+                          top_visitors=top_visitors,
+                          log_hari_ini=log_hari_ini)
 
 @app.route('/export_kunjungan', methods=['POST'])
 @login_required
