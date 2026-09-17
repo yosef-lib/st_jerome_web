@@ -1,10 +1,14 @@
-import os
+import codecs
+
+with codecs.open('template_stiker.py', 'r', 'utf-8') as f:
+    code = f.read()
+
+new_code = '''import os
 import json
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib import colors
-from reportlab.graphics.barcode import code128
 from datetime import datetime
 
 def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_output.pdf'):
@@ -35,11 +39,7 @@ def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_
     spine_h = 5.0 * cm
     spine_gap = 0.5 * cm
     
-    # Barcode label specs
-    barcode_w = 4.0 * cm
-    barcode_h = 3.0 * cm
-    
-    item_w = spine_w + spine_gap + stiker_w + spine_gap + barcode_w
+    item_w = spine_w + spine_gap + stiker_w
     item_h = max(spine_h, stiker_h)
     
     # User requested margin to be shifted to the left
@@ -66,19 +66,17 @@ def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_
                 x_spine = x_base
                 y_spine = y_base + (item_h - spine_h) # Top-aligned
                 
-                # Draw header background (DRAW FIRST SO IT DOES NOT COVER BORDERS)
+                # Draw main border
+                c.setStrokeColor(colors.black)
+                c.rect(x_spine, y_spine, spine_w, spine_h)
+                
+                # Draw header background
                 header_h = 1.7 * cm
-                c.setFillColorRGB(0.7, 0.7, 0.7) # Abu-abu agak tua
+                c.setFillColorRGB(0.85, 0.85, 0.85) # Abu-abu terang
                 c.rect(x_spine, y_spine + spine_h - header_h, spine_w, header_h, fill=1, stroke=0)
                 
-                # Draw main border and lines
-                c.setLineWidth(1.5) # Garis agak tebal
+                # Header border line
                 c.setStrokeColor(colors.black)
-                
-                # Kotak luar
-                c.rect(x_spine, y_spine, spine_w, spine_h, fill=0, stroke=1)
-                
-                # Garis pemisah header
                 c.line(x_spine, y_spine + spine_h - header_h, x_spine + spine_w, y_spine + spine_h - header_h)
                 
                 # Header Text
@@ -106,8 +104,6 @@ def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_
                 
                 
                 # --- DRAW EXISTING STICKER ---
-                c.setLineWidth(1.0) # Kembalikan tebal garis ke normal untuk stiker
-                
                 x_stiker = x_base + spine_w + spine_gap
                 y_stiker = y_base + (item_h - stiker_h) # Top-aligned with spine
                 
@@ -184,47 +180,6 @@ def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_
                 c.setFont("Helvetica-Bold", 7)
                 c.drawString(x_stiker + col_kiri_w + 0.2*cm, y_stiker + 0.1*cm, buku.get('copy_ke', '1'))
                 
-                # --- DRAW BARCODE LABEL ---
-                x_barcode = x_stiker + stiker_w + spine_gap
-                y_barcode = y_base + (item_h - barcode_h) # Top-aligned
-                
-                # Draw outer border
-                c.setStrokeColor(colors.black)
-                c.setLineWidth(1.0)
-                c.rect(x_barcode, y_barcode, barcode_w, barcode_h)
-                
-                # Header "PERPUSTAKAAN IMAVI"
-                c.setFillColor(colors.black)
-                c.setFont("Helvetica-Bold", 7)
-                c.drawCentredString(x_barcode + barcode_w/2, y_barcode + barcode_h - 0.4*cm, "PERPUSTAKAAN IMAVI")
-                
-                # Title (Truncated to 50 chars max)
-                full_title = buku.get('judul', '')
-                if len(full_title) > 50:
-                    trunc_title = full_title[:47] + "..."
-                else:
-                    trunc_title = full_title
-                c.setFont("Helvetica", 6.5)
-                c.drawCentredString(x_barcode + barcode_w/2, y_barcode + barcode_h - 0.8*cm, trunc_title)
-                
-                # Barcode Number
-                barcode_val = buku.get('no_induk', '')
-                c.setFont("Helvetica-Bold", 7.5)
-                c.drawCentredString(x_barcode + barcode_w/2, y_barcode + 0.2*cm, barcode_val)
-                
-                # Barcode Graphic
-                if barcode_val:
-                    bw = 1.2
-                    max_width = barcode_w - 0.4*cm
-                    bc = code128.Code128(barcode_val, barHeight=1.1*cm, barWidth=bw)
-                    while bc.width > max_width and bw > 0.2:
-                        bw -= 0.05
-                        bc = code128.Code128(barcode_val, barHeight=1.1*cm, barWidth=bw)
-                    
-                    bc_x = x_barcode + (barcode_w - bc.width)/2
-                    bc_y = y_barcode + 0.6*cm
-                    bc.drawOn(c, bc_x, bc_y)
-                
                 idx += 1
             if idx >= len(buku_list):
                 break
@@ -236,3 +191,9 @@ def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_
 
 if __name__ == "__main__":
     generate_stiker_pdf()
+'''
+
+with codecs.open('template_stiker.py', 'w', 'utf-8') as f:
+    f.write(new_code)
+
+print("updated")
