@@ -95,6 +95,33 @@
     </style>
     <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/logo.jpg') }}">
+
+    <style>
+        @media print {
+            aside, header, nav, .print\:hidden {
+                display: none !important;
+            }
+            .max-h-96 {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            .max-h-48 {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            body {
+                background-color: white !important;
+            }
+            .bg-white {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-600 text-sm font-sans antialiased overflow-hidden">
     <!-- Flash Messages (Silent in background, or show as toasts later) -->
