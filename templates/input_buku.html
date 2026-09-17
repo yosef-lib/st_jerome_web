@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
-{% block page_title %}Katalog & Cetak Stiker{% endblock %}
-{% block page_subtitle %}Input bibliografi buku baru dan kelola antrean cetak stiker{% endblock %}
+{% block page_title %}Input Buku Baru{% endblock %}
+{% block page_subtitle %}Input bibliografi buku baru sebelum masuk antrean cetak{% endblock %}
 
 {% block content %}
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
@@ -166,7 +166,7 @@
         
         <div class="p-6 pt-0 flex flex-col gap-3 border-t border-stroke mt-4">
             <button onclick="cetakPDF()" class="mt-4 flex w-full justify-center rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 transition gap-2">
-                <i class="fa-solid fa-file-pdf mt-1"></i> Unduh PDF Stiker A4
+                <i class="fa-solid fa-file-pdf mt-1"></i> Cetak Lengkap (A4)
             </button>
             <button onclick="kosongkanAntrean()" class="flex w-full justify-center rounded border border-danger text-danger py-2 px-4 font-medium hover:bg-danger hover:text-white transition gap-2">
                 <i class="fa-solid fa-trash mt-1"></i> Bersihkan Antrean

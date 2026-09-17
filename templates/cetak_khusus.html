@@ -1,0 +1,185 @@
+{% extends 'layout.html' %}
+
+{% block page_title %}Cetak Stiker Khusus{% endblock %}
+{% block page_subtitle %}Pilih buku dan jenis stiker yang ingin dicetak{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <!-- Opsi Cetak -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default">
+        <div class="border-b border-stroke py-4 px-6.5">
+            <h3 class="font-medium text-black">
+                <i class="fa-solid fa-gear mr-2 text-primary"></i> Pengaturan Cetak
+            </h3>
+        </div>
+        <div class="p-6.5">
+            <p class="mb-4 text-sm text-slate-500">Pilih komponen stiker yang ingin dicetak. Sistem otomatis akan merapatkan tata letak PDF untuk menghemat kertas jika Anda hanya memilih sebagian.</p>
+            
+            <div class="flex flex-wrap gap-6 mb-6">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="opt_identitas" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <span class="text-black font-medium">Stiker Identitas</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="opt_punggung" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <span class="text-black font-medium">Label Punggung</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="opt_barcode" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <span class="text-black font-medium">Stiker Barcode</span>
+                </label>
+            </div>
+            
+            <button onclick="cetakTerpilih()" class="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90 transition gap-2">
+                <i class="fa-solid fa-print mt-1"></i> Cetak PDF Terpilih
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabel Koleksi -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default">
+        <div class="py-4 px-6 md:px-6.5 flex flex-wrap gap-4 justify-between items-center border-b border-stroke">
+            <h4 class="text-xl font-semibold text-black">Pilih Buku</h4>
+            <form method="GET" action="/cetak_khusus" class="flex gap-2 w-full md:w-auto">
+                <input type="text" name="search" class="w-full rounded border border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary" placeholder="Cari Judul / Pengarang" value="{{ search }}">
+                <button type="submit" class="flex justify-center rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="max-w-full overflow-x-auto">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-2 text-left">
+                        <th class="py-4 px-4 font-medium text-black">
+                            <input type="checkbox" id="selectAll" class="w-4 h-4 accent-primary cursor-pointer">
+                        </th>
+                        <th class="py-4 px-4 font-medium text-black">No Induk</th>
+                        <th class="py-4 px-4 font-medium text-black min-w-[200px]">Judul</th>
+                        <th class="py-4 px-4 font-medium text-black">Pengarang</th>
+                        <th class="py-4 px-4 font-medium text-black">Klasifikasi</th>
+                        <th class="py-4 px-4 font-medium text-black">Lokasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for buku in koleksi_list %}
+                    <tr>
+                        <td class="border-b border-[#eee] py-4 px-4">
+                            <input type="checkbox" class="chk-buku w-4 h-4 accent-primary cursor-pointer" value="{{ buku.id }}">
+                        </td>
+                        <td class="border-b border-[#eee] py-4 px-4">
+                            <p class="text-black font-medium">{{ buku.no_induk }}</p>
+                        </td>
+                        <td class="border-b border-[#eee] py-4 px-4">
+                            <p class="text-black">{{ buku.judul }}</p>
+                        </td>
+                        <td class="border-b border-[#eee] py-4 px-4">
+                            <p class="text-slate-500">{{ buku.pengarang }}</p>
+                        </td>
+                        <td class="border-b border-[#eee] py-4 px-4">
+                            <p class="text-slate-500">{{ buku.klasifikasi }} {{ buku.cutter }} {{ buku.huruf_judul }}</p>
+                        </td>
+                        <td class="border-b border-[#eee] py-4 px-4">
+                            <p class="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success">
+                                {{ buku.lokasi }}
+                            </p>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-slate-500">
+                            {% if search %}
+                            Tidak ditemukan buku dengan kata kunci "{{ search }}".
+                            {% else %}
+                            Belum ada koleksi buku di database.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="border-t border-stroke py-4 px-6 flex justify-between items-center">
+            <p class="text-sm text-slate-500">Halaman {{ page }} dari {{ total_pages }}</p>
+            <div class="flex gap-2">
+                {% if page > 1 %}
+                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}" class="rounded border border-stroke py-1 px-3 text-sm font-medium hover:bg-gray-2 transition">Sebelummya</a>
+                {% endif %}
+                {% if page < total_pages %}
+                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}" class="rounded border border-stroke py-1 px-3 text-sm font-medium hover:bg-gray-2 transition">Selanjutnya</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.chk-buku');
+    
+    selectAll.addEventListener('change', (e) => {
+        checkboxes.forEach(chk => chk.checked = e.target.checked);
+    });
+});
+
+async function cetakTerpilih() {
+    const checkboxes = document.querySelectorAll('.chk-buku:checked');
+    const selectedIds = Array.from(checkboxes).map(chk => chk.value);
+    
+    if (selectedIds.length === 0) {
+        alert("Pilih setidaknya satu buku untuk dicetak!");
+        return;
+    }
+    
+    const opt_identitas = document.getElementById('opt_identitas').checked;
+    const opt_punggung = document.getElementById('opt_punggung').checked;
+    const opt_barcode = document.getElementById('opt_barcode').checked;
+    
+    if (!opt_identitas && !opt_punggung && !opt_barcode) {
+        alert("Pilih setidaknya satu jenis komponen stiker (Identitas/Punggung/Barcode)!");
+        return;
+    }
+    
+    const payload = {
+        ids: selectedIds,
+        options: {
+            identitas: opt_identitas,
+            punggung: opt_punggung,
+            barcode: opt_barcode
+        }
+    };
+    
+    try {
+        const res = await fetch('/api/cetak_khusus', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+            // Trigger download
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stiker_khusus.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } else {
+            const data = await res.json();
+            alert(data.message || 'Gagal memproses cetak khusus.');
+        }
+    } catch(e) {
+        alert('Terjadi kesalahan jaringan.');
+    }
+}
+</script>
+{% endblock %}

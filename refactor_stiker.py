@@ -1,4 +1,9 @@
-import json
+import codecs
+
+with codecs.open('template_stiker.py', 'r', 'utf-8') as f:
+    code = f.read()
+
+new_code = '''import json
 import os
 from datetime import datetime
 from reportlab.pdfgen import canvas
@@ -249,3 +254,8 @@ def generate_stiker_pdf(antrean_file, output_file, options=None):
             c.showPage()
             
     c.save()
+'''
+
+with codecs.open('template_stiker.py', 'w', 'utf-8') as f:
+    f.write(new_code)
+print("refactored")
