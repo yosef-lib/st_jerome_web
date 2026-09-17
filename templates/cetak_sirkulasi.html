@@ -17,16 +17,12 @@
             
             <div class="flex flex-wrap gap-6 mb-6">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="opt_identitas" checked class="w-5 h-5 accent-primary cursor-pointer">
-                    <span class="text-black font-medium">Stiker Identitas</span>
+                    <input type="checkbox" id="chkKartu" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <span class="text-black font-medium">Kartu Buku (7.5x12 cm)</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="opt_punggung" checked class="w-5 h-5 accent-primary cursor-pointer">
-                    <span class="text-black font-medium">Label Punggung</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="opt_barcode" checked class="w-5 h-5 accent-primary cursor-pointer">
-                    <span class="text-black font-medium">Stiker Barcode</span>
+                    <input type="checkbox" id="chkKantong" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <span class="text-black font-medium">Kantong Buku (Lipat)</span>
                 </label>
             </div>
             
@@ -189,22 +185,23 @@ async function cetakTerpilih() {
         return;
     }
     
-    const opt_identitas = document.getElementById('opt_identitas').checked;
-    const opt_punggung = document.getElementById('opt_punggung').checked;
-    const opt_barcode = document.getElementById('opt_barcode').checked;
-    
-    if (!opt_identitas && !opt_punggung && !opt_barcode) {
-        alert("Pilih setidaknya satu jenis komponen stiker (Identitas/Punggung/Barcode)!");
-        return;
-    }
-    
-    const payload = {
-        ids: selectedIds,
-        options: {
-            identitas: opt_identitas,
-            punggung: opt_punggung,
-            barcode: opt_barcode
-        }
+    const opt_kartu = document.getElementById('chkKartu').checked;
+      const opt_kantong = document.getElementById('chkKantong').checked;
+      
+      if (!opt_kartu && !opt_kantong) {
+          alert("Pilih setidaknya satu komponen (Kartu atau Kantong)!");
+          return;
+      }
+      
+      const payload = {
+          ids: selectedIds,
+          options: {
+              identitas: false,
+              punggung: false,
+              barcode: false,
+              kartu: opt_kartu,
+              kantong: opt_kantong
+          }
     };
     
     try {
@@ -220,7 +217,7 @@ async function cetakTerpilih() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'stiker_khusus.pdf';
+            a.download = 'kartu_kantong.pdf';
             document.body.appendChild(a);
             a.click();
             a.remove();
