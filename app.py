@@ -268,7 +268,7 @@ def cetak_sirkulasi():
     conn.close()
     
     total_pages = (total_books + per_page - 1) // per_page
-    return render_template('cetak_kartu.html', buku_list=buku_list, page=page, total_pages=total_pages, search=search)
+    return render_template('cetak_sirkulasi.html', buku_list=buku_list, page=page, total_pages=total_pages, search=search)
 
 @app.route('/api/cetak_sirkulasi', methods=['POST'])
 @login_required
