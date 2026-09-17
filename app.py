@@ -123,6 +123,18 @@ def api_cetak_khusus():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+
+@app.route('/api/buku/<path:no_induk>', methods=['GET'])
+@login_required
+def get_buku(no_induk):
+    conn = database.get_db_connection()
+    buku = conn.execute("SELECT * FROM buku WHERE no_induk = ?", (no_induk,)).fetchone()
+    conn.close()
+    
+    if buku:
+        return jsonify({'status': 'success', 'data': dict(buku)})
+    return jsonify({'status': 'error', 'message': 'Not found'}), 404
+
 @app.route('/api/antrean', methods=['POST'])
 @login_required
 def add_antrean():
