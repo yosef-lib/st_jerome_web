@@ -1,6 +1,48 @@
 {% extends 'layout.html' %}
-{% block page_title %}Daftar Koleksi{% endblock %}
-{% block page_subtitle %}Melihat, mengubah, dan menghapus data koleksi perpustakaan{% endblock %}
+{% block page_title %}Daftar Koleksi
+<script>
+async function addToPrintQueue(no_induk) {
+    try {
+        const res = await fetch('/api/antrean/existing', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({no_induk: no_induk})
+        });
+        const data = await res.json();
+        if(data.status === 'success') {
+            alert('Buku berhasil ditambahkan ke Antrean Cetak Stiker!');
+        } else {
+            alert(data.message || 'Gagal menambahkan.');
+        }
+    } catch(e) {
+        alert('Terjadi kesalahan jaringan.');
+    }
+}
+</script>
+
+{% endblock %}
+{% block page_subtitle %}Melihat, mengubah, dan menghapus data koleksi perpustakaan
+<script>
+async function addToPrintQueue(no_induk) {
+    try {
+        const res = await fetch('/api/antrean/existing', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({no_induk: no_induk})
+        });
+        const data = await res.json();
+        if(data.status === 'success') {
+            alert('Buku berhasil ditambahkan ke Antrean Cetak Stiker!');
+        } else {
+            alert(data.message || 'Gagal menambahkan.');
+        }
+    } catch(e) {
+        alert('Terjadi kesalahan jaringan.');
+    }
+}
+</script>
+
+{% endblock %}
 
 {% block content %}
 <div class="rounded-sm border border-stroke bg-white shadow-default">
@@ -99,4 +141,25 @@
         </div>
     </div>
 </div>
+
+<script>
+async function addToPrintQueue(no_induk) {
+    try {
+        const res = await fetch('/api/antrean/existing', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({no_induk: no_induk})
+        });
+        const data = await res.json();
+        if(data.status === 'success') {
+            alert('Buku berhasil ditambahkan ke Antrean Cetak Stiker!');
+        } else {
+            alert(data.message || 'Gagal menambahkan.');
+        }
+    } catch(e) {
+        alert('Terjadi kesalahan jaringan.');
+    }
+}
+</script>
+
 {% endblock %}

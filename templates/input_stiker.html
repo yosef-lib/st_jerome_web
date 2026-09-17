@@ -293,6 +293,30 @@
     }
 
     // Kosongkan semua antrean
+    
+    async function tambahBukuLama() {
+        const input = document.getElementById('inputNoIndukLama');
+        const no_induk = input.value.trim();
+        if(!no_induk) return;
+        
+        try {
+            const res = await fetch('/api/antrean/existing', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({no_induk: no_induk})
+            });
+            const data = await res.json();
+            if(data.status === 'success') {
+                input.value = '';
+                muatAntrean();
+            } else {
+                alert(data.message || 'Gagal menambahkan buku lama.');
+            }
+        } catch(e) {
+            alert('Terjadi kesalahan jaringan.');
+        }
+    }
+
     function kosongkanAntrean() {
         if(!confirm('Yakin ingin mengosongkan seluruh antrean?')) return;
         fetch('/api/antrean/hapus_semua', { method: 'POST' })

@@ -1,29 +1,15 @@
-import os
-import json
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.lib import colors
-from reportlab.graphics.barcode import code128
-from datetime import datetime
+import codecs
 
-def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_output.pdf'):
-    if not os.path.exists(antrean_file):
-        return False
+with codecs.open('template_stiker.py', 'r', 'utf-8') as f:
+    code = f.read()
 
-    with open(antrean_file, 'r') as f:
-        try:
-            buku_list = json.load(f)
-        except:
-            buku_list = []
+# Replace the layout configuration and drawing order
+# We will use Regex or manual replacement for the whole logic inside the loop
 
-    if not buku_list:
-        return False
+start_marker = "    # Grid settings"
+end_marker = "    c.save()"
 
-    c = canvas.Canvas(output_file, pagesize=A4)
-    width, height = A4
-
-    # Grid settings
+new_layout = '''    # Grid settings
     cols = 1
     rows = 5
     
@@ -215,8 +201,14 @@ def generate_stiker_pdf(antrean_file='antrian_stiker.json', output_file='stiker_
         if idx < len(buku_list):
             c.showPage()
             
-    c.save()
-    return True
+    c.save()'''
 
-if __name__ == "__main__":
-    generate_stiker_pdf()
+# Splice the new logic in
+pre = code[:code.find(start_marker)]
+post = code[code.find(end_marker) + len(end_marker):]
+new_full_code = pre + new_layout + post
+
+with codecs.open('template_stiker.py', 'w', 'utf-8') as f:
+    f.write(new_full_code)
+
+print("done reordering layout")
