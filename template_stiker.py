@@ -246,7 +246,7 @@ def draw_kartu_buku(c, x, y, buku):
         c.line(x + 0.3*cm + col1_w, cur_y + row_h, x + 0.3*cm + col1_w, cur_y)
         c.line(x + 0.3*cm + col1_w + col2_w, cur_y + row_h, x + 0.3*cm + col1_w + col2_w, cur_y)
 
-def draw_kantong_buku(c, x, y):
+def draw_kantong_buku(c, x, y, buku):
     # Total space: 10.5cm x 9cm
     # y is bottom left
     # Flaps
@@ -271,11 +271,24 @@ def draw_kantong_buku(c, x, y):
     
     c.setFont("Helvetica-Bold", 10)
     c.drawCentredString(main_x + main_w/2, main_y + main_h - 1.0*cm, "PERPUSTAKAAN IMAVI")
-    c.setFont("Helvetica", 9)
-    c.drawCentredString(main_x + main_w/2, main_y + main_h - 1.6*cm, "Kantong Buku")
     
     # Line
-    c.line(main_x + 0.5*cm, main_y + main_h - 1.9*cm, main_x + main_w - 0.5*cm, main_y + main_h - 1.9*cm)
+    c.line(main_x + 0.5*cm, main_y + main_h - 1.5*cm, main_x + main_w - 0.5*cm, main_y + main_h - 1.5*cm)
+    
+    judul = buku.get('judul', '')
+    no_induk = str(buku.get('no_induk', ''))
+    
+    import textwrap
+    wrapped = textwrap.wrap(judul, width=32)
+    
+    c.setFont("Helvetica-Bold", 9)
+    text_y = main_y + main_h - 2.5*cm
+    for line in wrapped[:3]:
+        c.drawCentredString(main_x + main_w/2, text_y, line)
+        text_y -= 0.5*cm
+        
+    c.setFont("Helvetica-Bold", 10)
+    c.drawCentredString(main_x + main_w/2, text_y - 0.3*cm, f"ID: {no_induk}")
 
 def generate_stiker_pdf(antrean_file, output_file, options=None):
     if not os.path.exists(antrean_file):
@@ -362,7 +375,7 @@ def generate_stiker_pdf(antrean_file, output_file, options=None):
                     elif comp['type'] == 'kartu':
                         draw_kartu_buku(c, current_x, y_base + item_h - comp['h'], buku)
                     elif comp['type'] == 'kantong':
-                        draw_kantong_buku(c, current_x, y_base + item_h - comp['h'])
+                        draw_kantong_buku(c, current_x, y_base + item_h - comp['h'], buku)
                     
                     current_x += comp['w'] + gap_x
                 
