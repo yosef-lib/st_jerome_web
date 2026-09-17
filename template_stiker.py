@@ -3,8 +3,8 @@ import os
 from datetime import datetime
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-F4 = (21.5 * cm, 33.0 * cm)
 from reportlab.lib.units import cm
+F4 = (21.5 * cm, 33.0 * cm)
 from reportlab.lib import colors
 from reportlab.graphics.barcode import code128
 
