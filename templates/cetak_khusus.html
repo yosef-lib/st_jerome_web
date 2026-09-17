@@ -30,9 +30,13 @@
                 </label>
             </div>
             
-            <button onclick="cetakTerpilih()" class="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90 transition gap-2">
-                <i class="fa-solid fa-print mt-1"></i> Cetak PDF Terpilih
-            </button>
+            <div class="flex items-center gap-4">
+                <button onclick="cetakTerpilih()" class="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90 transition gap-2">
+                    <i class="fa-solid fa-print mt-1"></i> Cetak PDF Terpilih
+                </button>
+                <span id="selectedBadge" class="inline-flex rounded-full bg-warning bg-opacity-20 py-1 px-3 text-sm font-medium text-warning">0 Buku Terpilih</span>
+                <button onclick="resetSelection()" class="text-sm text-danger hover:underline">Reset Pilihan</button>
+            </div>
         </div>
     </div>
 
@@ -41,7 +45,7 @@
         <div class="py-4 px-6 md:px-6.5 flex flex-wrap gap-4 justify-between items-center border-b border-stroke">
             <h4 class="text-xl font-semibold text-black">Pilih Buku</h4>
             <form method="GET" action="/cetak_khusus" class="flex gap-2 w-full md:w-auto">
-                <input type="text" name="search" class="w-full rounded border border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary" placeholder="Cari Judul / Pengarang" value="{{ search }}">
+                <input type="text" name="search" class="w-full rounded border border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary" placeholder="Cari Judul / Pengarang / No Induk" value="{{ search }}">
                 <button type="submit" class="flex justify-center rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90">
                     <i class="fa-solid fa-search"></i>
                 </button>
@@ -119,18 +123,60 @@
 </div>
 
 <script>
+let selectedBooks = JSON.parse(sessionStorage.getItem('selectedBooks_khusus') || '[]');
+
+function updateBadge() {
+    const badge = document.getElementById('selectedBadge');
+    if(badge) {
+        badge.innerText = selectedBooks.length + " Buku Terpilih";
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    updateBadge();
     const selectAll = document.getElementById('selectAll');
     const checkboxes = document.querySelectorAll('.chk-buku');
     
+    // Restore state from session storage
+    checkboxes.forEach(chk => {
+        if(selectedBooks.includes(chk.value)) {
+            chk.checked = true;
+        }
+        
+        // Listen to individual changes
+        chk.addEventListener('change', (e) => {
+            if(e.target.checked) {
+                if(!selectedBooks.includes(chk.value)) selectedBooks.push(chk.value);
+            } else {
+                selectedBooks = selectedBooks.filter(id => id !== chk.value);
+            }
+            sessionStorage.setItem('selectedBooks_khusus', JSON.stringify(selectedBooks));
+            updateBadge();
+        });
+    });
+    
+    // Select all on current page
     selectAll.addEventListener('change', (e) => {
-        checkboxes.forEach(chk => chk.checked = e.target.checked);
+        checkboxes.forEach(chk => {
+            chk.checked = e.target.checked;
+            // Dispatch event to trigger array update
+            chk.dispatchEvent(new Event('change'));
+        });
     });
 });
 
+
+function resetSelection() {
+    if(!confirm("Kosongkan semua pilihan buku?")) return;
+    selectedBooks = [];
+    sessionStorage.setItem('selectedBooks_khusus', JSON.stringify(selectedBooks));
+    document.querySelectorAll('.chk-buku').forEach(chk => chk.checked = false);
+    document.getElementById('selectAll').checked = false;
+    updateBadge();
+}
+
 async function cetakTerpilih() {
-    const checkboxes = document.querySelectorAll('.chk-buku:checked');
-    const selectedIds = Array.from(checkboxes).map(chk => chk.value);
+    const selectedIds = JSON.parse(sessionStorage.getItem('selectedBooks_khusus') || '[]');
     
     if (selectedIds.length === 0) {
         alert("Pilih setidaknya satu buku untuk dicetak!");
