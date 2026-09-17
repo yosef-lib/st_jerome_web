@@ -35,7 +35,7 @@ def init_db():
         pengarang TEXT,
         subjek TEXT,
         status_buku TEXT DEFAULT 'BELI',
-        lokasi TEXT DEFAULT 'STPD',
+        lokasi TEXT DEFAULT 'IMAVI',
         tgl_terima TEXT
     )
     ''')

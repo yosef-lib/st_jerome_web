@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-title-md2 font-bold text-black">Manajemen Data Ekstra</h2>
+</div>
+
+<div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+    <h3 class="text-xl font-bold text-black mb-4">Pemisahan Data STPD</h3>
+    <p class="mb-4">Data buku untuk lokasi STPD akan dipisahkan. Langkah-langkah:</p>
+    <ol class="list-decimal pl-6 mb-6 space-y-2">
+        <li>Klik tombol <strong>Download</strong> untuk mengunduh seluruh data STPD ke dalam format Excel/CSV. Simpan file ini ke Flashdisk Anda.</li>
+        <li>Setelah file berhasil di-download dan aman, klik tombol <strong>Hapus</strong> untuk menghapus data STPD dari aplikasi ini, sehingga aplikasi hanya akan menampilkan data IMAVI.</li>
+    </ol>
+    
+    <div class="flex gap-4">
+        <a href="/eksport_stpd" class="inline-flex items-center justify-center rounded-md bg-primary py-2 px-6 text-center font-medium text-white hover:bg-opacity-90">
+            <i class="fa-solid fa-download mr-2"></i> Download Data STPD (CSV)
+        </a>
+        <button onclick="hapusStpd()" class="inline-flex items-center justify-center rounded-md bg-danger py-2 px-6 text-center font-medium text-white hover:bg-opacity-90">
+            <i class="fa-solid fa-trash mr-2"></i> Hapus Data STPD (Permanen)
+        </button>
+    </div>
+</div>
+
+<script>
+async function hapusStpd() {
+    if (confirm("PERINGATAN: Apakah Anda YAKIN ingin menghapus permanen seluruh data STPD dari sistem? Pastikan Anda sudah men-download backup datanya terlebih dahulu!")) {
+        try {
+            const res = await fetch('/hapus_stpd', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert("Gagal menghapus data.");
+            }
+        } catch (e) {
+            alert("Terjadi kesalahan jaringan.");
+        }
+    }
+}
+</script>
+{% endblock %}

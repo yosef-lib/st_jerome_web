@@ -156,7 +156,7 @@ def add_antrean():
             data.get('penerbit'), data.get('tahun_terbit'), data.get('tempat_terbit'),
             data.get('deskripsi_fisik'), data.get('judul_seri'), data.get('bahasa'),
             data.get('klasifikasi'), data.get('cutter'), data.get('huruf_judul'),
-            data.get('copy_ke'), data.get('catatan'), data.get('lokasi', 'STPD')
+            data.get('copy_ke'), data.get('catatan'), data.get('lokasi', 'IMAVI')
         ))
         conn.commit()
     except Exception as e:
@@ -413,7 +413,7 @@ def api_scan():
 def dashboard():
     lokasi = request.args.get('lokasi')
     if not lokasi:
-        return render_template('pilih_lokasi.html', mode='dashboard')
+        return redirect(url_for('dashboard', lokasi='IMAVI'))
         
     conn = database.get_db_connection()
     
@@ -492,7 +492,7 @@ def daftar_koleksi():
     lokasi = request.args.get('lokasi')
     if not lokasi:
         # Jika belum milih lokasi, tampilkan halaman pilih lokasi
-        return render_template('pilih_lokasi.html', mode='koleksi')
+        return redirect(url_for('koleksi', lokasi='IMAVI'))
         
     conn = database.get_db_connection()
     page = int(request.args.get('page', 1))
@@ -686,7 +686,7 @@ def backup_db():
 def analisis_lanjutan():
     lokasi = request.args.get('lokasi')
     if not lokasi:
-        return render_template('pilih_lokasi.html', mode='analisis_lanjutan')
+        return redirect(url_for('analisis_lanjutan', lokasi='IMAVI'))
         
     conn = database.get_db_connection()
     
@@ -1008,7 +1008,7 @@ def import_slims_katalog():
 @app.route('/export_akreditasi')
 @login_required
 def export_akreditasi():
-    lokasi = request.args.get('lokasi', 'STPD')
+    lokasi = request.args.get('lokasi', 'IMAVI')
     conn = database.get_db_connection()
     
     # Gathering data
@@ -1053,7 +1053,7 @@ def export_akreditasi():
 @app.route('/anomali')
 @login_required
 def anomali():
-    lokasi = request.args.get('lokasi', 'STPD')
+    lokasi = request.args.get('lokasi', 'IMAVI')
     conn = database.get_db_connection()
     
     # 1. Metadata Tidak Lengkap
@@ -1372,6 +1372,45 @@ def export_kunjungan():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 
+
+@app.route('/manajemen_data')
+@login_required
+def manajemen_data():
+    return render_template('manajemen_data.html')
+
+@app.route('/eksport_stpd')
+@login_required
+def eksport_stpd():
+    import csv, io
+    conn = database.get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM buku WHERE lokasi = 'STPD'")
+    rows = cursor.fetchall()
+    
+    si = io.StringIO()
+    writer = csv.writer(si)
+    columns = [description[0] for description in cursor.description]
+    writer.writerow(columns)
+    writer.writerows(rows)
+    conn.close()
+    
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=Data_Buku_STPD.csv"}
+    )
+
+@app.route('/hapus_stpd', methods=['POST'])
+@login_required
+def hapus_stpd():
+    conn = database.get_db_connection()
+    conn.execute("DELETE FROM buku WHERE lokasi = 'STPD'")
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': 'Data STPD berhasil dihapus permanen.'})
+
+# END OF NEW ROUTES
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
