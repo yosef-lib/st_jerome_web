@@ -167,70 +167,48 @@ def draw_barcode(c, x_barcode, y_base, item_h, buku):
 
 
 def draw_kartu_buku(c, x, y, buku):
-    card_w = 7.5*cm
-    card_h = 12.0*cm
-    
-    # Border
-    c.setLineWidth(1)
-    c.rect(x, y, card_w, card_h)
+    card_w = 8.0 * cm
+    card_h = 13.1 * cm
     
     judul = buku.get('judul', '')
-    
-    # Reformat "Seri Dokumen Gerejawi" 
-    if "Seri Dokumen Gerejawi" in judul and (";" in judul or ":" in judul or "-" in judul):
-        # find the delimiter
-        import re
-        parts = re.split(r'[;:\-]', judul, maxsplit=1)
-        if len(parts) >= 2:
-            series_part = parts[0].strip()
-            title_part = parts[1].strip()
-            # If the series part is the one containing "Seri Dokumen"
-            if "Seri Dokumen" in series_part:
-                series_part = series_part.replace("Seri Dokumen Gerejawi", "SDG")
-                judul = f"{title_part} ({series_part})"
-            
-
-
-        
     no_induk = str(buku.get('no_induk', ''))
-    klasifikasi = buku.get('klasifikasi', '')
-    cutter = buku.get('cutter', '')
-    huruf_judul = buku.get('huruf_judul', '')
-    if not cutter and buku.get('pengarang'): cutter = buku.get('pengarang')[:3].upper()
-    if not huruf_judul and judul: huruf_judul = judul[0].lower()
-    no_buku = f"{klasifikasi} {cutter} {huruf_judul} / {no_induk}".strip()
+    
+    c.setStrokeColorRGB(0, 0, 0)
+    c.setLineWidth(1)
+    
+    # Draw Outer Border
+    c.rect(x, y, card_w, card_h)
     
     c.setFillColorRGB(0, 0, 0)
-    c.setStrokeColorRGB(0, 0, 0)
     # Text
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(x + 0.3*cm, y + card_h - 0.6*cm, "JUDUL     : ")
+    c.drawString(x + 0.3*cm, y + card_h - 0.7*cm, "JUDUL   : ")
     
     import textwrap
     wrapped = textwrap.wrap(judul, width=33)
     
     c.setFont("Courier-Bold", 8)
     if len(wrapped) >= 1:
-        c.drawString(x + 1.8*cm, y + card_h - 0.6*cm, wrapped[0])
+        c.drawString(x + 1.8*cm, y + card_h - 0.7*cm, wrapped[0])
     if len(wrapped) >= 2:
         line2 = wrapped[1]
         if len(wrapped) > 2:
             line2 = line2[:29] + '...'
-        c.drawString(x + 1.8*cm, y + card_h - 0.95*cm, line2)
+        c.drawString(x + 1.8*cm, y + card_h - 1.05*cm, line2)
         
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(x + 0.3*cm, y + card_h - 1.4*cm, "NO BUKU : ")
+    c.drawString(x + 0.3*cm, y + card_h - 1.5*cm, "NO BUKU : ")
     c.setFont("Courier-Bold", 8)
-    c.drawString(x + 1.8*cm, y + card_h - 1.4*cm, no_induk)
+    c.drawString(x + 1.8*cm, y + card_h - 1.5*cm, no_induk)
     
     # Table
-    table_y = y + card_h - 1.8*cm
+    table_y = y + card_h - 2.0*cm
     table_w = card_w - 0.6*cm
-    col1_w = table_w * 0.3
-    col2_w = table_w * 0.45
+    col1_w = table_w * 0.35
+    col2_w = table_w * 0.40
     col3_w = table_w * 0.25
     
-    row_h = 0.55*cm
+    row_h = 0.8*cm
     
     # Table Header
     c.rect(x + 0.3*cm, table_y - row_h, table_w, row_h)
@@ -238,14 +216,12 @@ def draw_kartu_buku(c, x, y, buku):
     c.line(x + 0.3*cm + col1_w + col2_w, table_y, x + 0.3*cm + col1_w + col2_w, table_y - row_h)
     
     c.setFont("Helvetica-Bold", 8)
-    c.drawCentredString(x + 0.3*cm + col1_w/2, table_y - 0.4*cm, "No Anggota")
-    c.drawCentredString(x + 0.3*cm + col1_w + col2_w/2, table_y - 0.4*cm, "Tanggal Kembali")
-    c.drawCentredString(x + 0.3*cm + col1_w + col2_w + col3_w/2, table_y - 0.4*cm, "Ket")
+    c.drawCentredString(x + 0.3*cm + col1_w/2, table_y - 0.5*cm, "No Anggota")
+    c.drawCentredString(x + 0.3*cm + col1_w + col2_w/2, table_y - 0.5*cm, "Tanggal Kembali")
+    c.drawCentredString(x + 0.3*cm + col1_w + col2_w + col3_w/2, table_y - 0.5*cm, "Ket")
     
-    # Fill almost full
-    # Height remaining: table_y - row_h - y - 0.3cm = card_h - 1.8 - 0.55 - 0.3 = 9.35 cm
-    # 9.35 / 0.55 = 17 rows
-    for i in range(17):
+    # Fill 13 rows to match physical card (which is 13.1cm tall with ~0.8cm rows)
+    for i in range(12):
         cur_y = table_y - row_h - (i+1)*row_h
         c.rect(x + 0.3*cm, cur_y, table_w, row_h)
         c.line(x + 0.3*cm + col1_w, cur_y + row_h, x + 0.3*cm + col1_w, cur_y)
@@ -328,7 +304,7 @@ def generate_stiker_pdf(antrean_file, output_file, options=None):
     if options.get('identitas'): components.append({'type': 'identitas', 'w': 7.5*cm, 'h': 4.0*cm})
     if options.get('punggung'): components.append({'type': 'punggung', 'w': 4.5*cm, 'h': 5.0*cm})
     if options.get('barcode'): components.append({'type': 'barcode', 'w': 4.0*cm, 'h': 3.0*cm})
-    if options.get('kartu'): components.append({'type': 'kartu', 'w': 7.5*cm, 'h': 12.0*cm})
+    if options.get('kartu'): components.append({'type': 'kartu', 'w': 8.0*cm, 'h': 13.1*cm})
     if options.get('kantong'): components.append({'type': 'kantong', 'w': 10.5*cm, 'h': 9.0*cm})
     
     if not components:
