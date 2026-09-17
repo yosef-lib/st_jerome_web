@@ -167,7 +167,7 @@ def draw_barcode(c, x_barcode, y_base, item_h, buku):
 
 
 def draw_kartu_buku(c, x, y, buku):
-    card_w = 8.0 * cm
+    card_w = 8.6 * cm
     card_h = 13.1 * cm
     
     judul = buku.get('judul', '')
@@ -234,20 +234,20 @@ def draw_kantong_buku(c, x, y, buku):
     c.setLineWidth(0.5)
     c.setFillColorRGB(0.98, 0.98, 0.98) # slightly gray for flaps to indicate glue
     c.rect(x, y + 1*cm, 1*cm, 8*cm, fill=1) # left flap
-    c.rect(x + 9.5*cm, y + 1*cm, 1*cm, 8*cm, fill=1) # right flap
-    c.rect(x + 1*cm, y, 8.5*cm, 1*cm, fill=1) # bottom flap
+    c.rect(x + 10.1*cm, y + 1*cm, 1*cm, 8*cm, fill=1) # right flap
+    c.rect(x + 1*cm, y, 9.1*cm, 1*cm, fill=1) # bottom flap
     
     c.setFillColorRGB(0, 0, 0)
     
     # Main pocket Dashed
     c.setDash(6, 3)
-    c.rect(x + 1*cm, y + 1*cm, 8.5*cm, 8*cm)
+    c.rect(x + 1*cm, y + 1*cm, 9.1*cm, 8*cm)
     c.setDash(1, 0) # reset
     
     # Header
     main_x = x + 1*cm
     main_y = y + 1*cm
-    main_w = 8.5*cm
+    main_w = 9.1*cm
     main_h = 8*cm
     
     c.setFont("Helvetica-Bold", 10)
@@ -304,8 +304,8 @@ def generate_stiker_pdf(antrean_file, output_file, options=None):
     if options.get('identitas'): components.append({'type': 'identitas', 'w': 7.5*cm, 'h': 4.0*cm})
     if options.get('punggung'): components.append({'type': 'punggung', 'w': 4.5*cm, 'h': 5.0*cm})
     if options.get('barcode'): components.append({'type': 'barcode', 'w': 4.0*cm, 'h': 3.0*cm})
-    if options.get('kartu'): components.append({'type': 'kartu', 'w': 8.0*cm, 'h': 13.1*cm})
-    if options.get('kantong'): components.append({'type': 'kantong', 'w': 10.5*cm, 'h': 9.0*cm})
+    if options.get('kartu'): components.append({'type': 'kartu', 'w': 8.6*cm, 'h': 13.1*cm})
+    if options.get('kantong'): components.append({'type': 'kantong', 'w': 11.1*cm, 'h': 9.0*cm})
     
     if not components:
         print("Tidak ada opsi cetak yang dipilih.")
