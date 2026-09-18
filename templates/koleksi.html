@@ -52,7 +52,15 @@
                         <tr x-show="expandedId === b.id" class="bg-slate-50 border-b border-stroke">
                             <td colspan="6" class="p-4">
                                 <div class="bg-white border border-stroke rounded shadow-sm p-4">
-                                    <h4 class="font-semibold text-sm mb-3 text-slate-700">Daftar Barcode (Salinan)</h4>
+                                    
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="font-semibold text-sm text-slate-700">Daftar Barcode (Salinan)</h4>
+                                        <div class="flex gap-2">
+                                            <a :href="'/input_buku?edit=' + b.id" class="px-3 py-1 bg-warning text-white text-xs rounded font-medium hover:bg-opacity-90 transition"><i class="fa-solid fa-pen-to-square"></i> Edit Bibliografi</a>
+                                            <button @click="deleteBiblio(b.id)" class="px-3 py-1 bg-danger text-white text-xs rounded font-medium hover:bg-opacity-90 transition"><i class="fa-solid fa-trash"></i> Hapus Buku</button>
+                                        </div>
+                                    </div>
+
                                     
                                     <div x-show="isLoadingEksemplar" class="text-slate-400 text-sm"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>
                                     
@@ -63,6 +71,7 @@
                                                 <th class="p-2 border-r">Lokasi</th>
                                                 <th class="p-2 border-r">Asal</th>
                                                 <th class="p-2">Status Peminjaman</th>
+<th class="p-2 text-center w-10">Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -75,10 +84,14 @@
                                                         <span x-show="e.status_buku === 'DIPINJAM'" class="text-danger font-bold text-xs"><i class="fa-solid fa-user-clock"></i> DIPINJAM</span>
                                                         <span x-show="e.status_buku !== 'DIPINJAM'" class="text-success font-bold text-xs"><i class="fa-solid fa-check"></i> TERSEDIA</span>
                                                     </td>
+
+                                                    <td class="p-2 text-center">
+                                                        <button @click="deleteEksemplar(e.id)" class="text-danger hover:text-opacity-70" title="Hapus Salinan"><i class="fa-solid fa-trash-can"></i></button>
+                                                    </td>
                                                 </tr>
                                             </template>
                                             <tr x-show="eksemplarList.length === 0">
-                                                <td colspan="4" class="p-3 text-center text-slate-500 text-xs">Belum ada salinan untuk buku ini.</td>
+                                                <td colspan="5" class="p-3 text-center text-slate-500 text-xs">Belum ada salinan untuk buku ini.</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -124,6 +137,33 @@ document.addEventListener('alpine:init', () => {
         eksemplarList: [],
         isLoadingEksemplar: false,
         
+        
+        async deleteBiblio(id) {
+            if (!confirm("Peringatan: Anda akan menghapus judul buku ini BESERTA seluruh salinannya! Lanjutkan?")) return;
+            try {
+                const res = await fetch('/api/bibliografi/' + id, { method: 'DELETE' });
+                if (res.ok) {
+                    this.loadData(this.currentPage);
+                }
+            } catch (e) {
+                console.error(e); alert("Error");
+            }
+        },
+        async deleteEksemplar(id) {
+            if (!confirm("Hapus barcode ini?")) return;
+            try {
+                const res = await fetch('/api/eksemplar/' + id, { method: 'DELETE' });
+                if (res.ok) {
+                    // refresh eksemplar list
+                    this.toggleEksemplar(this.expandedId); 
+                    this.toggleEksemplar(this.expandedId); // double toggle to refresh
+                    this.loadData(this.currentPage);
+                }
+            } catch (e) {
+                console.error(e); alert("Error");
+            }
+        },
+
         async loadData(page = 1) {
             this.isLoading = true;
             this.currentPage = page;

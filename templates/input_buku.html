@@ -41,46 +41,46 @@
                     
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium mb-1">Pengarang</label>
-                        <input type="text" x-model="form.pengarang" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''" placeholder="Nama, Depan">
+                        <input type="text" x-model="form.pengarang"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black"  placeholder="Nama, Depan">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Subjek</label>
-                        <input type="text" x-model="form.subjek" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''" placeholder="Topik utama">
+                        <input type="text" x-model="form.subjek"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black"  placeholder="Topik utama">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium mb-1">Penerbit</label>
-                        <input type="text" x-model="form.penerbit" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.penerbit"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Tempat Terbit</label>
-                        <input type="text" x-model="form.tempat_terbit" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.tempat_terbit"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Tahun Terbit</label>
-                        <input type="text" x-model="form.tahun_terbit" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.tahun_terbit"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium mb-1">ISBN / ISSN</label>
-                        <input type="text" x-model="form.isbn" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.isbn"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Edisi</label>
-                        <input type="text" x-model="form.edisi" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''" placeholder="Cth: Cet. 1">
+                        <input type="text" x-model="form.edisi"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black"  placeholder="Cth: Cet. 1">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">GMD</label>
-                        <input type="text" x-model="form.gmd" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.gmd"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
 
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium mb-1">Deskripsi Fisik</label>
-                        <input type="text" x-model="form.deskripsi_fisik" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''" placeholder="Cth: xiv, 200 hlm. ; 21 cm">
+                        <input type="text" x-model="form.deskripsi_fisik"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black"  placeholder="Cth: xiv, 200 hlm. ; 21 cm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Judul Seri</label>
-                        <input type="text" x-model="form.judul_seri" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.judul_seri"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
 
                     <div class="relative md:col-span-1">
@@ -88,7 +88,7 @@
                             <span>Klasifikasi DDC *</span>
                             <button type="button" @click="cariDdc()" class="text-xs text-primary font-semibold hover:underline"><i class="fa-solid fa-magnifying-glass"></i> Cari Kamus</button>
                         </label>
-                        <input type="text" x-model="form.klasifikasi" :disabled="form.biblio_id" required class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.klasifikasi"  required class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                         
                         <!-- Autocomplete DDC -->
                         <div x-show="ddcResults.length > 0" @click.away="ddcResults = []" class="absolute z-10 w-full bg-white border border-stroke mt-1 rounded shadow-lg max-h-48 overflow-y-auto">
@@ -103,11 +103,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">No. Panggil (Cutter)</label>
-                        <input type="text" x-model="form.cutter" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.cutter"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Huruf Judul</label>
-                        <input type="text" x-model="form.huruf_judul" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        <input type="text" x-model="form.huruf_judul"  class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" >
                     </div>
 
                 </div>
@@ -191,6 +191,30 @@ document.addEventListener('alpine:init', () => {
         ddcResults: [],
         isSubmitting: false,
         notif: { show: false, type: 'success', title: '', message: '' },
+
+        init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const editId = urlParams.get('edit');
+            if (editId) {
+                this.loadEditData(editId);
+            }
+        },
+        async loadEditData(id) {
+            try {
+                // We can use the biblio search API or a new one to get data.
+                // Wait, I can just use fetch('/api/bibliografi/search') with ID?
+                // Actually I don't have a single GET API. Let's create one in app.py.
+                const res = await fetch('/api/bibliografi/get/' + id);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.selectBiblio(data);
+                    // Force biblio_id to enable edit mode properly
+                    this.form.biblio_id = data.id;
+                    this.form.jumlah = 0; // default 0 for edit mode
+                }
+            } catch (e) { console.error(e); }
+        },
+
         
         async searchBiblio() {
             if (this.form.biblio_id) return;

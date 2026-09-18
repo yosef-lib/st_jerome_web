@@ -1851,37 +1851,54 @@ def api_input_batch():
             data.get('cutter'), data.get('huruf_judul'), data.get('subjek'), image_filename
         ))
         biblio_id = cursor.lastrowid
-    elif image_filename:
-        # Update existing bibliografi image if they upload a new one
-        conn.execute("UPDATE bibliografi SET image = ? WHERE id = ?", (image_filename, biblio_id))
+    else:
+        # Update existing bibliografi
+        update_query = """
+            UPDATE bibliografi SET 
+                judul=?, pengarang=?, penerbit=?, isbn=?, klasifikasi=?, tempat_terbit=?, 
+                tahun_terbit=?, edisi=?, bahasa=?, gmd=?, deskripsi_fisik=?, judul_seri=?, 
+                cutter=?, huruf_judul=?, subjek=?
+            WHERE id=?
+        """
+        conn.execute(update_query, (
+            data.get('judul'), data.get('pengarang'), data.get('penerbit'), data.get('isbn'),
+            data.get('klasifikasi'), data.get('tempat_terbit'), data.get('tahun_terbit'),
+            data.get('edisi'), data.get('bahasa', 'Indonesia'),
+            data.get('gmd', 'Text'), data.get('deskripsi_fisik'), data.get('judul_seri'),
+            data.get('cutter'), data.get('huruf_judul'), data.get('subjek'), biblio_id
+        ))
+        if image_filename:
+            conn.execute("UPDATE bibliografi SET image = ? WHERE id = ?", (image_filename, biblio_id))
 
     
-    # 2. Generate Barcodes (No Induk)
-    import datetime
-    current_year = datetime.datetime.now().strftime('%y') # e.g. '26'
+    if jumlah_eksemplar > 0:
+
+        import datetime
+        current_year = datetime.datetime.now().strftime('%y') # e.g. '26'
     
-    # Find max sequence for this year in eksemplar
-    max_seq_row = conn.execute("SELECT no_induk FROM eksemplar WHERE no_induk LIKE ? ORDER BY no_induk DESC LIMIT 1", (f'%/{current_year}',)).fetchone()
+        # Find max sequence for this year in eksemplar
+        max_seq_row = conn.execute("SELECT no_induk FROM eksemplar WHERE no_induk LIKE ? ORDER BY no_induk DESC LIMIT 1", (f'%/{current_year}',)).fetchone()
     
-    start_num = 1
-    if max_seq_row:
-        try:
-            start_num = int(max_seq_row[0].split('/')[0]) + 1
-        except:
-            start_num = 1
+        start_num = 1
+        if max_seq_row:
+            try:
+                start_num = int(max_seq_row[0].split('/')[0]) + 1
+            except:
+                start_num = 1
             
-    generated_barcodes = []
-    for i in range(jumlah_eksemplar):
-        new_barcode = f"{(start_num + i):04d}/{current_year}"
-        conn.execute("""
-            INSERT INTO eksemplar (biblio_id, no_induk, status_buku, lokasi, tgl_terima, copy_ke)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            biblio_id, new_barcode, data.get('status_buku', 'BELI'), data.get('lokasi', 'IMAVI'),
-            datetime.datetime.now().strftime('%Y-%m-%d'), (i+1)
-        ))
-        generated_barcodes.append(new_barcode)
+        generated_barcodes = []
+        for i in range(jumlah_eksemplar):
+            new_barcode = f"{(start_num + i):04d}/{current_year}"
+            conn.execute("""
+                INSERT INTO eksemplar (biblio_id, no_induk, status_buku, lokasi, tgl_terima, copy_ke)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                biblio_id, new_barcode, data.get('status_buku', 'BELI'), data.get('lokasi', 'IMAVI'),
+                datetime.datetime.now().strftime('%Y-%m-%d'), (i+1)
+            ))
+            generated_barcodes.append(new_barcode)
         
+    
     conn.commit()
     conn.close()
     
@@ -1992,3 +2009,37 @@ def api_debug_files():
             files_found.append({'path': p, 'error': str(e)})
             
     return jsonify(files_found)
+
+@app.route('/api/bibliografi/<int:id>', methods=['DELETE'])
+@login_required
+def api_delete_biblio(id):
+    import database
+    conn = database.get_db_connection()
+    # Delete eksemplar first
+    conn.execute("DELETE FROM eksemplar WHERE biblio_id = ?", (id,))
+    # Delete bibliografi
+    conn.execute("DELETE FROM bibliografi WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success'})
+
+@app.route('/api/eksemplar/<int:id>', methods=['DELETE'])
+@login_required
+def api_delete_eksemplar(id):
+    import database
+    conn = database.get_db_connection()
+    conn.execute("DELETE FROM eksemplar WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success'})
+
+@app.route('/api/bibliografi/get/<int:id>', methods=['GET'])
+@login_required
+def api_get_biblio(id):
+    import database
+    conn = database.get_db_connection()
+    row = conn.execute("SELECT * FROM bibliografi WHERE id = ?", (id,)).fetchone()
+    conn.close()
+    if row:
+        return jsonify(dict(row))
+    return jsonify({}), 404
