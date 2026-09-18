@@ -1435,6 +1435,17 @@ def api_get_member(member_id):
     """, (member_id,))
     loans = [dict(row) for row in loans_cursor.fetchall()]
 
+    # Fetch history loans (already returned)
+    history_cursor = conn.execute("""
+        SELECT s.*, e.no_induk, b.judul 
+        FROM sirkulasi s
+        JOIN eksemplar e ON s.no_induk = e.no_induk
+        JOIN bibliografi b ON e.biblio_id = b.id
+        WHERE s.member_id = ? AND s.return_date IS NOT NULL
+        ORDER BY s.return_date DESC
+    """, (member_id,))
+    history_loans = [dict(row) for row in history_cursor.fetchall()]
+
     conn.close()
     return jsonify({
         'status': 'success',
@@ -1448,7 +1459,8 @@ def api_get_member(member_id):
             'suspended_until': m.get('suspended_until', '-'),
             'active_loans': active_loans,
             'max_loans': max_loans,
-            'loans': loans
+            'loans': loans,
+            'history_loans': history_loans
         }
     })
 
@@ -1498,6 +1510,47 @@ def calculate_working_days(start_date, end_date, conn):
         if day.weekday() < 5 and day.strftime('%Y-%m-%d') not in libur_set:
             working_days += 1
     return working_days
+
+
+@app.route('/api/sirkulasi/renew', methods=['POST'])
+@login_required
+def api_renew():
+    data = request.json
+    book_id = data.get('book_id')
+    
+    conn = database.get_db_connection()
+    loan = conn.execute("""
+        SELECT s.*, e.member_id as e_member_id, a.tipe_anggota 
+        FROM sirkulasi s 
+        JOIN eksemplar e ON s.no_induk = e.no_induk 
+        LEFT JOIN anggota a ON s.member_id = a.member_id 
+        WHERE s.no_induk = ? AND s.return_date IS NULL
+    """, (book_id,)).fetchone()
+    
+    if not loan:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Tidak ada peminjaman aktif untuk buku ini.'})
+        
+    loan = dict(loan)
+    tipe = loan.get('tipe_anggota', 'Reguler')
+    if tipe is None:
+        tipe = 'Reguler'
+        
+    # Check max renewals (Reguler = 2, Skripsi = unlimited)
+    if 'Skripsi' not in tipe and loan['renewal_count'] >= 2:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Batas maksimal perpanjangan (2 kali) telah tercapai.'})
+        
+    import datetime
+    # Perpanjang 14 hari dari HARI INI
+    new_due_date = datetime.datetime.now() + datetime.timedelta(days=14)
+    new_count = loan['renewal_count'] + 1
+    
+    conn.execute("UPDATE sirkulasi SET due_date = ?, renewal_count = ? WHERE id = ?", (new_due_date.strftime('%Y-%m-%d %H:%M:%S'), new_count, loan['id']))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'status': 'success', 'message': 'Berhasil diperpanjang 14 hari.', 'new_due_date': new_due_date.strftime('%Y-%m-%d')})
 
 @app.route('/api/sirkulasi/return', methods=['POST'])
 @login_required
