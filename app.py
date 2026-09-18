@@ -1971,6 +1971,21 @@ def api_koleksi_list():
         cursor = conn.execute(query, (f'%{search}%', f'%{search}%', f'%{search}%', per_page, offset))
         results = [dict(row) for row in cursor.fetchall()]
         
+        import re
+        for row in results:
+            if row.get('image'):
+                row['cover_url'] = f"/static/uploads/{row['image']}"
+            elif row.get('isbn'):
+                # Extract first clean ISBN (remove hyphens, non-alphanumeric except X)
+                raw_isbn = str(row['isbn']).split(',')[0].split(' ')[0].upper()
+                cleaned = re.sub(r'[^0-9X]', '', raw_isbn)
+                if cleaned:
+                    row['cover_url'] = f"https://covers.openlibrary.org/b/isbn/{cleaned}-M.jpg?default=false"
+                else:
+                    row['cover_url'] = None
+            else:
+                row['cover_url'] = None
+        
         total = conn.execute("SELECT COUNT(*) FROM bibliografi WHERE judul LIKE ? OR pengarang LIKE ?", (f'%{search}%', f'%{search}%')).fetchone()[0]
         conn.close()
         return jsonify({
