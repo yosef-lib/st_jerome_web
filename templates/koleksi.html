@@ -57,7 +57,7 @@
                                         <h4 class="font-semibold text-sm text-slate-700">Daftar Barcode (Salinan)</h4>
                                         <div class="flex gap-2">
                                             <a :href="'/input_buku?edit=' + b.id" class="px-3 py-1 bg-warning text-white text-xs rounded font-medium hover:bg-opacity-90 transition"><i class="fa-solid fa-pen-to-square"></i> Edit Bibliografi</a>
-                                            <button @click="deleteBiblio(b.id)" class="px-3 py-1 bg-danger text-white text-xs rounded font-medium hover:bg-opacity-90 transition"><i class="fa-solid fa-trash"></i> Hapus Buku</button>
+                                            <button @click.stop="deleteBiblio(b.id)" class="px-3 py-1 bg-danger text-white text-xs rounded font-medium hover:bg-opacity-90 transition"><i class="fa-solid fa-trash"></i> Hapus Buku</button>
                                         </div>
                                     </div>
 
@@ -86,7 +86,7 @@
                                                     </td>
 
                                                     <td class="p-2 text-center">
-                                                        <button @click="deleteEksemplar(e.no_induk)" class="text-danger hover:text-opacity-70" title="Hapus Salinan"><i class="fa-solid fa-trash-can"></i></button>
+                                                        <button @click.stop="deleteEksemplar(e.no_induk)" class="text-danger hover:text-opacity-70" title="Hapus Salinan"><i class="fa-solid fa-trash-can"></i></button>
                                                     </td>
                                                 </tr>
                                             </template>
