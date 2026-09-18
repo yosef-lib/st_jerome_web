@@ -1,0 +1,169 @@
+import codecs
+
+new_html = '''{% extends "layout.html" %}
+{% block content %}
+<div x-data="koleksiManager()" x-init="loadData()" class="bg-white rounded-lg shadow-sm border border-stroke overflow-hidden">
+    <div class="bg-primary px-6 py-4 border-b border-stroke flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-list mr-2"></i> Daftar Koleksi (Bibliografi)</h2>
+        <div>
+            <a href="/input_buku" class="bg-success hover:bg-opacity-90 text-white px-4 py-2 rounded text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i> Tambah Buku Baru</a>
+        </div>
+    </div>
+    
+    <div class="p-4 border-b border-stroke bg-slate-50 flex gap-2">
+        <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" x-model="searchQuery" @input.debounce.500ms="loadData(1)" class="w-full border border-stroke rounded pl-10 pr-3 py-2 outline-none focus:border-primary text-black" placeholder="Cari Judul, Pengarang, atau DDC...">
+        </div>
+    </div>
+
+    <div class="overflow-x-auto relative">
+        <!-- Loader -->
+        <div x-show="isLoading" class="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+            <div class="text-primary text-xl"><i class="fa-solid fa-spinner fa-spin"></i></div>
+        </div>
+
+        <table class="w-full text-left text-sm border-collapse">
+            <thead>
+                <tr class="bg-slate-100 border-b border-stroke text-black">
+                    <th class="p-3">Judul Buku</th>
+                    <th class="p-3 w-48">Pengarang</th>
+                    <th class="p-3 w-32">Penerbit</th>
+                    <th class="p-3 w-24">DDC</th>
+                    <th class="p-3 w-32 text-center">Jml Salinan</th>
+                    <th class="p-3 w-16"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="b in bibliografi" :key="b.id">
+                    <React.Fragment>
+                        <tr class="border-b border-stroke hover:bg-slate-50 transition cursor-pointer" @click="toggleEksemplar(b.id)">
+                            <td class="p-3 font-semibold text-primary" x-text="b.judul"></td>
+                            <td class="p-3 text-slate-600" x-text="b.pengarang || '-'"></td>
+                            <td class="p-3 text-slate-600" x-text="b.penerbit || '-'"></td>
+                            <td class="p-3 font-mono text-slate-600" x-text="b.klasifikasi || '-'"></td>
+                            <td class="p-3 text-center">
+                                <span class="bg-slate-200 text-black px-2 py-0.5 rounded-full text-xs font-bold" x-text="b.jumlah_eksemplar"></span>
+                            </td>
+                            <td class="p-3 text-center text-slate-400">
+                                <i class="fa-solid" :class="expandedId === b.id ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                            </td>
+                        </tr>
+                        <!-- Eksemplar Row -->
+                        <tr x-show="expandedId === b.id" class="bg-slate-50 border-b border-stroke">
+                            <td colspan="6" class="p-4">
+                                <div class="bg-white border border-stroke rounded shadow-sm p-4">
+                                    <h4 class="font-semibold text-sm mb-3 text-slate-700">Daftar Barcode (Salinan)</h4>
+                                    
+                                    <div x-show="isLoadingEksemplar" class="text-slate-400 text-sm"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>
+                                    
+                                    <table x-show="!isLoadingEksemplar" class="w-full text-left text-sm border">
+                                        <thead>
+                                            <tr class="bg-slate-100 border-b text-black">
+                                                <th class="p-2 border-r">No Induk (Barcode)</th>
+                                                <th class="p-2 border-r">Lokasi</th>
+                                                <th class="p-2 border-r">Asal</th>
+                                                <th class="p-2">Status Peminjaman</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template x-for="e in eksemplarList">
+                                                <tr class="border-b hover:bg-slate-50">
+                                                    <td class="p-2 border-r font-mono font-bold" x-text="e.no_induk"></td>
+                                                    <td class="p-2 border-r" x-text="e.lokasi"></td>
+                                                    <td class="p-2 border-r" x-text="e.status_buku"></td>
+                                                    <td class="p-2">
+                                                        <span x-show="e.status_buku === 'DIPINJAM'" class="text-danger font-bold text-xs"><i class="fa-solid fa-user-clock"></i> DIPINJAM</span>
+                                                        <span x-show="e.status_buku !== 'DIPINJAM'" class="text-success font-bold text-xs"><i class="fa-solid fa-check"></i> TERSEDIA</span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                            <tr x-show="eksemplarList.length === 0">
+                                                <td colspan="4" class="p-3 text-center text-slate-500 text-xs">Belum ada salinan untuk buku ini.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </React.Fragment>
+                </template>
+                <tr x-show="bibliografi.length === 0 && !isLoading">
+                    <td colspan="6" class="p-8 text-center text-slate-500">
+                        Tidak ada koleksi buku yang ditemukan.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="p-4 border-t border-stroke flex justify-between items-center bg-slate-50">
+        <div class="text-sm text-slate-500">
+            Total <strong x-text="totalData"></strong> judul buku
+        </div>
+        <div class="flex gap-1">
+            <button @click="loadData(currentPage - 1)" :disabled="currentPage === 1" class="px-3 py-1 border border-stroke rounded bg-white hover:bg-slate-100 disabled:opacity-50">Prev</button>
+            <span class="px-3 py-1 text-sm pt-1.5" x-text="'Hal ' + currentPage + ' dari ' + totalPages"></span>
+            <button @click="loadData(currentPage + 1)" :disabled="currentPage === totalPages || totalPages === 0" class="px-3 py-1 border border-stroke rounded bg-white hover:bg-slate-100 disabled:opacity-50">Next</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('koleksiManager', () => ({
+        searchQuery: '',
+        bibliografi: [],
+        totalData: 0,
+        currentPage: 1,
+        totalPages: 1,
+        isLoading: false,
+        
+        expandedId: null,
+        eksemplarList: [],
+        isLoadingEksemplar: false,
+        
+        async loadData(page = 1) {
+            this.isLoading = true;
+            this.currentPage = page;
+            this.expandedId = null;
+            try {
+                const res = await fetch(/api/koleksi/list?search=\&page=\);
+                const data = await res.json();
+                this.bibliografi = data.data;
+                this.totalData = data.total;
+                this.totalPages = data.total_pages;
+            } catch (e) {
+                console.error(e);
+            }
+            this.isLoading = false;
+        },
+        
+        async toggleEksemplar(id) {
+            if (this.expandedId === id) {
+                this.expandedId = null;
+                return;
+            }
+            this.expandedId = id;
+            this.eksemplarList = [];
+            this.isLoadingEksemplar = true;
+            try {
+                const res = await fetch('/api/koleksi/eksemplar/' + id);
+                this.eksemplarList = await res.json();
+            } catch (e) {
+                console.error(e);
+            }
+            this.isLoadingEksemplar = false;
+        }
+    }));
+});
+</script>
+{% endblock %}
+'''
+
+with codecs.open('templates/koleksi.html', 'w', 'utf-8') as f:
+    f.write(new_html)
+print("koleksi.html rewritten.")

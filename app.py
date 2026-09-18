@@ -1654,6 +1654,29 @@ def api_return():
         }
     })
 
+
+@app.route('/api/buku/missing_covers', methods=['GET'])
+def api_missing_covers():
+    conn = database.get_db_connection()
+    # Get up to 100 books that lack both ISBN and image
+    cursor = conn.execute("SELECT id, judul, pengarang FROM bibliografi WHERE (isbn IS NULL OR isbn = '') AND (image IS NULL OR image = '') LIMIT 100")
+    results = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(results)
+
+@app.route('/api/buku/save_cover', methods=['POST'])
+def api_save_cover():
+    data = request.json
+    biblio_id = data.get('id')
+    url = data.get('url')
+    if biblio_id and url:
+        conn = database.get_db_connection()
+        conn.execute("UPDATE bibliografi SET image = ? WHERE id = ?", (url, biblio_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error'})
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
@@ -1974,7 +1997,10 @@ def api_koleksi_list():
         import re
         for row in results:
             if row.get('image'):
-                row['cover_url'] = f"/static/uploads/{row['image']}"
+                if row['image'].startswith('http'):
+                    row['cover_url'] = row['image']
+                else:
+                    row['cover_url'] = f"/static/uploads/{row['image']}"
             elif row.get('isbn'):
                 # Extract first clean ISBN (remove hyphens, non-alphanumeric except X)
                 raw_isbn = str(row['isbn']).split(',')[0].split(' ')[0].upper()

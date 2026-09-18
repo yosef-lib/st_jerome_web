@@ -152,6 +152,71 @@ document.addEventListener('alpine:init', () => {
         eksemplarList: [],
         isLoadingEksemplar: false,
         
+        autoCover: {
+            active: false,
+            processed: 0,
+            total: 0,
+            currentTitle: '',
+        },
+        
+        async startRobot() {
+            if(!confirm("Robot ini akan mencari sampul buku di internet satu-per-satu. Proses ini membutuhkan waktu (sekitar 1 detik per buku). Biarkan halaman ini tetap terbuka selama robot bekerja.\n\nJalankan robot sekarang?")) return;
+            
+            this.autoCover.active = true;
+            this.autoCover.processed = 0;
+            
+            while(this.autoCover.active) {
+                // Get batch of 50
+                const res = await fetch('/api/buku/missing_covers');
+                const books = await res.json();
+                if(books.length === 0) {
+                    alert("Hore! Semua buku (yang bisa dicari) sudah diproses!");
+                    this.autoCover.active = false;
+                    break;
+                }
+                
+                this.autoCover.total = books.length;
+                this.autoCover.processed = 0;
+                
+                for(let b of books) {
+                    if(!this.autoCover.active) break;
+                    this.autoCover.currentTitle = b.judul;
+                    
+                    try {
+                        const q = "intitle:" + b.judul + (b.pengarang ? "+inauthor:" + b.pengarang : "");
+                        const gRes = await fetch("https://www.googleapis.com/books/v1/volumes?q=" + encodeURIComponent(q));
+                        if(gRes.ok) {
+                            const gData = await gRes.json();
+                            if(gData.items && gData.items.length > 0) {
+                                let img = gData.items[0].volumeInfo?.imageLinks?.thumbnail;
+                                if(img) {
+                                    // replace http with https
+                                    img = img.replace("http:", "https:");
+                                    await fetch('/api/buku/save_cover', {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({id: b.id, url: img})
+                                    });
+                                }
+                            }
+                        }
+                    } catch(e) {
+                        console.error(e);
+                    }
+                    this.autoCover.processed++;
+                    // sleep 1 second
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                
+                // Refresh list if robot finished a batch
+                this.loadBibliografi();
+            }
+        },
+        
+        stopRobot() {
+            this.autoCover.active = false;
+        },
+        
         
         async deleteBiblio(id) {
             if (!confirm("Peringatan: Anda akan menghapus judul buku ini BESERTA seluruh salinannya! Lanjutkan?")) return;

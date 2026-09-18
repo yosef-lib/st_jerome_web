@@ -1,7 +1,8 @@
 import sqlite3
 
 def force_migration():
-    conn = sqlite3.connect('katalog.db')
+    import os
+    conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'katalog.db'))
     cursor = conn.cursor()
     
     # 1. Create bibliografi

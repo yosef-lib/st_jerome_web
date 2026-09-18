@@ -1,0 +1,406 @@
+import codecs
+
+html_content = '''{% extends 'layout.html' %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row gap-0 h-full border border-stroke bg-white shadow-default" x-data="sirkulasiApp()" @keydown.escape.window="endSession()" @keydown.f2.window.prevent="activeTab = 'peminjaman'" @keydown.f3.window.prevent="activeTab = 'saat_ini'">
+    
+    <!-- Toast Alert Global -->
+    <div class="fixed top-4 right-4 z-50 w-80 shadow-lg rounded" style="display: none;" x-show="alert.show" x-transition>
+        <div class="p-4 border-l-4" :class="alert.type === 'error' ? 'bg-red-100 border-danger text-danger' : 'bg-green-100 border-success text-success'">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h4 class="font-bold text-sm" x-text="alert.title"></h4>
+                    <p class="text-sm mt-1" x-html="alert.message"></p>
+                </div>
+                <button @click="alert.show = false" class="text-slate-400 hover:text-black">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inner Sidebar (SLiMS style) -->
+    <div class="w-full md:w-56 flex-shrink-0 bg-slate-50 border-r border-stroke">
+       <ul class="text-sm font-medium text-slate-600">
+          <li>
+            <a href="#" @click.prevent="switchMode('peminjaman')" :class="mode === 'peminjaman' ? 'bg-white text-primary border-l-4 border-primary font-bold shadow-sm' : 'hover:bg-slate-100 border-l-4 border-transparent'" class="block py-3 px-5 transition">
+                Mulai Transaksi
+            </a>
+          </li>
+          <li>
+            <a href="#" @click.prevent="switchMode('pengembalian')" :class="mode === 'pengembalian' ? 'bg-white text-primary border-l-4 border-primary font-bold shadow-sm' : 'hover:bg-slate-100 border-l-4 border-transparent'" class="block py-3 px-5 transition">
+                Pengembalian Kilat
+            </a>
+          </li>
+       </ul>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="flex-grow p-6 bg-white min-h-[600px]">
+        
+        <!-- MODE PEMINJAMAN (Mulai Transaksi) -->
+        <div x-show="mode === 'peminjaman'">
+            <h2 class="text-2xl font-semibold text-black mb-4 border-b border-stroke pb-2">Sirkulasi</h2>
+            
+            <!-- STEP 1: Jika belum ada sesi member aktif -->
+            <div x-show="!sessionActive">
+                <div class="bg-blue-50 text-blue-800 px-4 py-3 rounded mb-6 text-sm border border-blue-200">
+                    SIRKULASI - Masukkan nomor anggota untuk mulai transaksi dengan papan kunci atau pemindai
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <label class="font-medium text-black">ID Anggota</label>
+                    <input type="text" id="memberIdInput" x-model="memberId" @keydown.enter="startSession()" :disabled="isLoadingMember" class="border border-stroke rounded px-3 py-1.5 w-64 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-black">
+                    <button @click="startSession()" :disabled="isLoadingMember" class="bg-slate-500 hover:bg-slate-600 text-white px-4 py-1.5 rounded shadow transition font-medium text-sm">Mulai Transaksi</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Jika sesi member aktif -->
+            <div x-show="sessionActive" style="display: none;">
+                <div class="bg-yellow-50 text-yellow-800 px-4 py-3 rounded mb-6 text-sm border border-yellow-200 flex gap-2 items-center">
+                    Remember to click <strong>Selesai Transaksi</strong> once all loans/returns are complete.
+                </div>
+                
+                <div class="flex gap-3 mb-6">
+                    <button @click="endSession()" class="bg-danger hover:bg-red-600 text-white px-4 py-1.5 rounded shadow flex items-center gap-2 transition text-sm font-medium">
+                        <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i> Selesai Transaksi (Esc)
+                    </button>
+                    <button class="bg-slate-500 hover:bg-slate-600 text-white px-4 py-1.5 rounded shadow flex items-center gap-2 transition text-sm font-medium">
+                        <i class="fa-regular fa-user"></i> Detail Keanggotaan
+                    </button>
+                </div>
+                
+                <!-- Member Info Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-12 mb-6 text-sm">
+                    <div class="flex justify-between border-b border-stroke pb-1">
+                        <span class="font-semibold text-black">Nama Anggota</span>
+                        <span x-text="member ? member.nama : ''" class="text-black"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-stroke pb-1">
+                        <span class="font-semibold text-black">ID Anggota</span>
+                        <span x-text="member ? member.id : ''" class="text-black"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-stroke pb-1">
+                        <span class="font-semibold text-black">Surel Anggota</span>
+                        <span x-text="member ? member.email : ''" class="text-black"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-stroke pb-1">
+                        <span class="font-semibold text-black">Tipe Keanggotaan</span>
+                        <span x-text="member ? member.tipe : ''" class="text-black"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-stroke pb-1">
+                        <span class="font-semibold text-black">Tanggal Registrasi</span>
+                        <span class="text-black">-</span>
+                    </div>
+                    <div class="flex justify-between border-b border-stroke pb-1">
+                        <span class="font-semibold text-black">Berlaku Hingga</span>
+                        <span x-text="member ? member.masa_berlaku : ''" class="text-black"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-stroke pb-1">
+                        <span class="font-semibold text-black text-danger">Status Peminjaman</span>
+                        <span class="text-black font-bold">
+                            <span :class="member && member.status === 'AKTIF' ? 'text-success' : 'text-danger'" x-text="member ? member.status : ''"></span> 
+                            (Pinjam <span x-text="member ? member.active_loans : 0"></span>/<span x-text="member ? member.max_loans : 0"></span>)
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Tabs -->
+                <div class="flex border-b border-stroke mb-6 text-sm font-medium flex-wrap">
+                    <a href="#" @click.prevent="activeTab = 'peminjaman'" :class="activeTab === 'peminjaman' ? 'text-primary border-b-2 border-primary bg-slate-50' : 'text-slate-500 hover:text-black'" class="px-5 py-2 transition">Peminjaman (F2)</a>
+                    <a href="#" @click.prevent="activeTab = 'saat_ini'" :class="activeTab === 'saat_ini' ? 'text-primary border-b-2 border-primary bg-slate-50' : 'text-slate-500 hover:text-black'" class="px-5 py-2 transition flex gap-2 items-center">
+                        Pinjaman Saat Ini (F3)
+                        <span class="bg-primary text-white text-xs px-2 py-0.5 rounded-full" x-show="member && member.loans && member.loans.length > 0" x-text="member.loans.length"></span>
+                    </a>
+                    <a href="#" class="px-5 py-2 text-slate-400 cursor-not-allowed">Reservasi (F4)</a>
+                    <a href="#" class="px-5 py-2 text-slate-400 cursor-not-allowed">Denda (F9)</a>
+                    <a href="#" class="px-5 py-2 text-slate-400 cursor-not-allowed">Sejarah Peminjaman (F10)</a>
+                </div>
+                
+                <!-- Tab Content: Peminjaman -->
+                <div x-show="activeTab === 'peminjaman'">
+                    <div class="flex items-center gap-3">
+                        <label class="font-medium text-black">Masukkan Kode Eksemplar/Barkod</label>
+                        <input type="text" id="borrowBookIdInput" x-model="borrowBookId" @keydown.enter="processBorrow()" :disabled="!canBorrow || isBorrowing" class="border border-stroke rounded px-3 py-1.5 w-72 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-black disabled:bg-slate-100">
+                        <button @click="processBorrow()" :disabled="!canBorrow || isBorrowing" class="bg-slate-500 hover:bg-slate-600 text-white px-6 py-1.5 rounded shadow transition disabled:opacity-50 font-medium text-sm">Pinjam</button>
+                    </div>
+                    <p x-show="!canBorrow && member && member.status === 'AKTIF'" class="text-danger mt-3 text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Anggota sudah mencapai batas maksimal peminjaman.</p>
+                    <p x-show="member && member.status === 'DIBLOKIR'" class="text-danger mt-3 text-sm"><i class="fa-solid fa-ban"></i> Anggota sedang DIBLOKIR. Tidak dapat meminjam buku.</p>
+                </div>
+                
+                <!-- Tab Content: Pinjaman Saat Ini -->
+                <div x-show="activeTab === 'saat_ini'" style="display: none;">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm border-collapse border border-stroke mt-1">
+                            <thead>
+                                <tr class="bg-slate-100 border-b border-stroke text-black">
+                                    <th class="p-2 border-r border-stroke">Kode Eksemplar</th>
+                                    <th class="p-2 border-r border-stroke">Judul</th>
+                                    <th class="p-2 border-r border-stroke">Tanggal Pinjam</th>
+                                    <th class="p-2 border-r border-stroke">Tgl. Jatuh Tempo</th>
+                                    <th class="p-2 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="loan in (member?.loans || [])" :key="loan.id">
+                                    <tr class="border-b border-stroke hover:bg-slate-50">
+                                        <td class="p-2 border-r border-stroke text-black" x-text="loan.no_induk"></td>
+                                        <td class="p-2 border-r border-stroke font-medium text-black" x-text="loan.judul"></td>
+                                        <td class="p-2 border-r border-stroke text-black" x-text="loan.loan_date.substring(0,10)"></td>
+                                        <td class="p-2 border-r border-stroke text-danger font-semibold" x-text="loan.due_date.substring(0,10)"></td>
+                                        <td class="p-2 text-center">
+                                            <button @click="processReturnFromList(loan.no_induk)" class="text-xs bg-slate-200 hover:bg-success hover:text-white px-3 py-1.5 rounded font-medium transition shadow-sm">Kembalikan</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr x-show="!member || !member.loans || member.loans.length === 0">
+                                    <td colspan="5" class="p-6 text-center text-slate-500 bg-slate-50 border border-dashed border-stroke">
+                                        Anggota ini tidak memiliki pinjaman aktif saat ini.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODE PENGEMBALIAN KILAT -->
+        <div x-show="mode === 'pengembalian'" style="display: none;">
+            <h2 class="text-2xl font-semibold text-black mb-4 border-b border-stroke pb-2">Pengembalian Kilat</h2>
+            
+            <div class="bg-blue-50 text-blue-800 px-4 py-3 rounded mb-6 text-sm border border-blue-200">
+                PENGEMBALIAN - Pindai barkod eksemplar atau ketikkan kode eksemplar lalu tekan Enter.
+            </div>
+            
+            <div class="flex items-center gap-3 mb-8">
+                <label class="font-medium text-black">ID Eksemplar / Barkod</label>
+                <input type="text" id="returnBookIdInput" x-model="returnBookId" @keydown.enter="processReturnFast()" :disabled="isLoadingReturn" class="border border-stroke rounded px-3 py-1.5 w-72 focus:border-success focus:ring-1 focus:ring-success outline-none text-black">
+                <button @click="processReturnFast()" :disabled="isLoadingReturn" class="bg-success hover:bg-opacity-90 text-white px-6 py-1.5 rounded shadow transition font-medium text-sm">Kembalikan</button>
+            </div>
+            
+            <!-- Log Pengembalian Kilat -->
+            <div class="border border-stroke rounded shadow-sm overflow-hidden">
+                <div class="bg-slate-100 px-4 py-3 border-b border-stroke font-semibold text-black text-sm">
+                    Sejarah Pengembalian Sesi Ini
+                </div>
+                <ul class="max-h-72 overflow-y-auto">
+                    <template x-for="log in fastReturnLogs.slice().reverse()">
+                        <li class="p-3 border-b border-stroke text-sm flex justify-between items-center hover:bg-slate-50" :class="log.denda > 0 ? 'bg-red-50/50' : ''">
+                            <div>
+                                <span class="bg-slate-200 text-black px-2 py-0.5 rounded text-xs font-bold mr-2" x-text="log.buku_id"></span>
+                                <span class="font-medium text-black" x-text="log.buku_judul"></span>
+                                <span class="block text-xs text-slate-500 mt-1" x-text="'Dikembalikan oleh ' + log.anggota_nama + ' pada ' + log.time"></span>
+                            </div>
+                            <div class="text-right">
+                                <span x-show="log.denda > 0" class="text-danger font-bold block" x-text="'Denda: Rp ' + log.denda"></span>
+                                <span x-show="log.denda > 0" class="text-danger text-xs block mt-0.5" x-text="'Telat ' + log.terlambat_hari + ' hari'"></span>
+                                <span x-show="log.denda === 0" class="text-success font-semibold text-xs"><i class="fa-solid fa-check"></i> Tepat Waktu</span>
+                            </div>
+                        </li>
+                    </template>
+                    <li x-show="fastReturnLogs.length === 0" class="p-6 text-center text-slate-500 text-sm">
+                        Belum ada buku yang dikembalikan pada sesi ini.
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+function sirkulasiApp() {
+    return {
+        mode: 'peminjaman', // 'peminjaman' | 'pengembalian'
+        sessionActive: false,
+        activeTab: 'peminjaman',
+        
+        memberId: '',
+        member: null,
+        isLoadingMember: false,
+        
+        borrowBookId: '',
+        isBorrowing: false,
+        
+        returnBookId: '',
+        isLoadingReturn: false,
+        
+        fastReturnLogs: [],
+        
+        alert: { show: false, type: '', title: '', message: '' },
+        
+        init() {
+            // Auto focus on init
+            setTimeout(() => {
+                const el = document.getElementById('memberIdInput');
+                if(el) el.focus();
+            }, 100);
+        },
+        
+        get canBorrow() {
+            if (!this.member) return false;
+            if (this.member.status !== 'AKTIF') return false;
+            if (this.member.active_loans >= this.member.max_loans) return false;
+            return true;
+        },
+
+        showAlert(type, title, message) {
+            this.alert = { show: true, type, title, message };
+            setTimeout(() => { this.alert.show = false; }, 4000);
+        },
+        
+        switchMode(newMode) {
+            this.mode = newMode;
+            if (newMode === 'peminjaman' && !this.sessionActive) {
+                setTimeout(() => document.getElementById('memberIdInput')?.focus(), 50);
+            } else if (newMode === 'pengembalian') {
+                setTimeout(() => document.getElementById('returnBookIdInput')?.focus(), 50);
+            }
+        },
+
+        async startSession() {
+            if (!this.memberId.trim()) return;
+            this.isLoadingMember = true;
+            
+            try {
+                const response = await fetch('/api/sirkulasi/member/' + encodeURIComponent(this.memberId));
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    this.member = result.data;
+                    this.sessionActive = true;
+                    this.activeTab = 'peminjaman';
+                    this.borrowBookId = '';
+                    setTimeout(() => document.getElementById('borrowBookIdInput')?.focus(), 100);
+                } else {
+                    this.showAlert('error', 'Pencarian Gagal', result.message);
+                }
+            } catch (err) {
+                this.showAlert('error', 'Error Jaringan', 'Gagal terhubung ke server.');
+            } finally {
+                this.isLoadingMember = false;
+            }
+        },
+        
+        endSession() {
+            this.sessionActive = false;
+            this.member = null;
+            this.memberId = '';
+            setTimeout(() => document.getElementById('memberIdInput')?.focus(), 100);
+        },
+        
+        // Refresh member data to update loan lists silently
+        async refreshMemberData() {
+            if (!this.member) return;
+            try {
+                const response = await fetch('/api/sirkulasi/member/' + encodeURIComponent(this.member.id));
+                const result = await response.json();
+                if (result.status === 'success') {
+                    this.member = result.data;
+                }
+            } catch (err) {}
+        },
+
+        async processBorrow() {
+            if (!this.borrowBookId.trim() || !this.canBorrow) return;
+            this.isBorrowing = true;
+            
+            try {
+                const response = await fetch('/api/sirkulasi/borrow', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        member_id: this.member.id,
+                        book_id: this.borrowBookId
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    this.showAlert('success', 'Pinjam Sukses', 'Buku <b>' + this.borrowBookId + '</b> berhasil dipinjamkan.');
+                    this.borrowBookId = '';
+                    await this.refreshMemberData(); // Refresh list pinjaman
+                } else {
+                    this.showAlert('error', 'Peminjaman Ditolak', result.message);
+                }
+            } catch (err) {
+                this.showAlert('error', 'Error', 'Gagal memproses peminjaman.');
+            } finally {
+                this.isBorrowing = false;
+                setTimeout(() => document.getElementById('borrowBookIdInput')?.focus(), 50);
+            }
+        },
+
+        async processReturnFast() {
+            if (!this.returnBookId.trim()) return;
+            this.isLoadingReturn = true;
+            let idToReturn = this.returnBookId;
+            
+            try {
+                const response = await fetch('/api/sirkulasi/return', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ book_id: idToReturn })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    this.fastReturnLogs.push({
+                        id: Date.now(),
+                        time: new Date().toLocaleTimeString('id-ID'),
+                        buku_judul: result.data.buku_judul,
+                        buku_id: idToReturn,
+                        anggota_nama: result.data.anggota_nama || '-',
+                        denda: result.data.denda,
+                        terlambat_hari: result.data.terlambat_hari
+                    });
+                    
+                    if (result.data.denda > 0) {
+                        this.showAlert('error', 'Terlambat!', 'Denda Rp ' + result.data.denda + '. Akun peminjam dibekukan sementara.');
+                    } else {
+                        this.showAlert('success', 'Kembali Sukses', 'Buku berhasil dikembalikan.');
+                    }
+                    this.returnBookId = '';
+                } else {
+                    this.showAlert('error', 'Gagal', result.message);
+                }
+            } catch (err) {
+                this.showAlert('error', 'Error', 'Gagal memproses pengembalian.');
+            } finally {
+                this.isLoadingReturn = false;
+                setTimeout(() => document.getElementById('returnBookIdInput')?.focus(), 50);
+            }
+        },
+        
+        async processReturnFromList(bookId) {
+            try {
+                const response = await fetch('/api/sirkulasi/return', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ book_id: bookId })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    if (result.data.denda > 0) {
+                        this.showAlert('error', 'Terlambat!', 'Buku kembali terlambat. Denda Rp ' + result.data.denda);
+                    } else {
+                        this.showAlert('success', 'Kembali Sukses', 'Buku ' + bookId + ' berhasil dikembalikan.');
+                    }
+                    await this.refreshMemberData(); // update list
+                } else {
+                    this.showAlert('error', 'Gagal', result.message);
+                }
+            } catch (err) {
+                this.showAlert('error', 'Error', 'Gagal mengembalikan buku.');
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
+'''
+
+with codecs.open('templates/sirkulasi.html', 'w', 'utf-8') as f:
+    f.write(html_content)
+print("Rewrote sirkulasi.html to match SLiMS UI.")
