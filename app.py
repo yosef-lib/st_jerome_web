@@ -1818,12 +1818,18 @@ def api_input_batch():
     if not biblio_id:
         # Create new bibliografi
         cursor = conn.execute("""
-            INSERT INTO bibliografi (judul, pengarang, penerbit, isbn, klasifikasi, tempat_terbit, tahun_terbit, edisi, bahasa)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO bibliografi (
+                judul, pengarang, penerbit, isbn, klasifikasi, tempat_terbit, 
+                tahun_terbit, edisi, bahasa, gmd, deskripsi_fisik, judul_seri, 
+                cutter, huruf_judul, subjek
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             data.get('judul'), data.get('pengarang'), data.get('penerbit'), data.get('isbn'),
             data.get('klasifikasi'), data.get('tempat_terbit'), data.get('tahun_terbit'),
-            data.get('edisi'), data.get('bahasa', 'Indonesia')
+            data.get('edisi'), data.get('bahasa', 'Indonesia'),
+            data.get('gmd', 'Text'), data.get('deskripsi_fisik'), data.get('judul_seri'),
+            data.get('cutter'), data.get('huruf_judul'), data.get('subjek')
         ))
         biblio_id = cursor.lastrowid
     
