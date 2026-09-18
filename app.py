@@ -1500,8 +1500,11 @@ def api_borrow():
 
 def calculate_working_days(start_date, end_date, conn):
     import datetime
-    libur_rows = conn.execute("SELECT tanggal FROM hari_libur").fetchall()
-    libur_set = set(row[0] for row in libur_rows)
+    try:
+        libur_rows = conn.execute("SELECT tanggal FROM hari_libur").fetchall()
+        libur_set = set(row[0] for row in libur_rows)
+    except:
+        libur_set = set()
     
     days = (end_date - start_date).days
     working_days = 0
@@ -1520,7 +1523,7 @@ def api_renew():
     
     conn = database.get_db_connection()
     loan = conn.execute("""
-        SELECT s.*, e.member_id as e_member_id, a.tipe_anggota 
+        SELECT s.*, s.member_id as e_member_id, a.tipe_anggota 
         FROM sirkulasi s 
         JOIN eksemplar e ON s.no_induk = e.no_induk 
         LEFT JOIN anggota a ON s.member_id = a.member_id 
@@ -1559,7 +1562,7 @@ def api_return():
     book_id = data.get('book_id')
     
     conn = database.get_db_connection()
-    loan = conn.execute("SELECT s.*, e.member_id as e_member_id, a.nama as anggota_nama, b.judul FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id LEFT JOIN anggota a ON s.member_id = a.member_id WHERE s.no_induk = ? AND s.return_date IS NULL", (book_id,)).fetchone()
+    loan = conn.execute("SELECT s.*, s.member_id as e_member_id, a.nama as anggota_nama, b.judul FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id LEFT JOIN anggota a ON s.member_id = a.member_id WHERE s.no_induk = ? AND s.return_date IS NULL", (book_id,)).fetchone()
     
     if not loan:
         conn.close()
