@@ -1395,7 +1395,6 @@ def sirkulasi():
 # ==============================================================
 
 @app.route('/api/sirkulasi/member/<member_id>', methods=['GET'])
-@login_required
 def api_get_member(member_id):
     conn = database.get_db_connection()
     member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
@@ -1463,6 +1462,34 @@ def api_get_member(member_id):
             'history_loans': history_loans
         }
     })
+
+
+@app.route('/api/sirkulasi/pay_fine', methods=['POST'])
+@login_required
+def api_pay_fine():
+    data = request.json
+    loan_id = data.get('loan_id')
+    
+    conn = database.get_db_connection()
+    loan = conn.execute("SELECT * FROM sirkulasi WHERE id = ?", (loan_id,)).fetchone()
+    
+    if not loan:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Data peminjaman tidak ditemukan.'})
+        
+    conn.execute("UPDATE sirkulasi SET fine_status = 'LUNAS' WHERE id = ?", (loan_id,))
+    
+    # Check if user has any OTHER unpaid fines
+    unpaid = conn.execute("SELECT COUNT(*) FROM sirkulasi WHERE member_id = ? AND fine_amount > 0 AND fine_status = 'BELUM_LUNAS'", (loan['member_id'],)).fetchone()[0]
+    
+    if unpaid == 0:
+        # Unblock user
+        conn.execute("UPDATE anggota SET status = 'AKTIF', suspended_until = NULL WHERE member_id = ?", (loan['member_id'],))
+        
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'status': 'success', 'message': 'Denda lunas.'})
 
 @app.route('/api/sirkulasi/borrow', methods=['POST'])
 @login_required
