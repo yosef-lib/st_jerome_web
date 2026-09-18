@@ -2048,7 +2048,7 @@ def api_delete_biblio(id):
     conn.close()
     return jsonify({'status': 'success'})
 
-@app.route('/api/eksemplar/<string:no_induk>', methods=['DELETE'])
+@app.route('/api/eksemplar/<path:no_induk>', methods=['DELETE'])
 @api_login_required
 def api_delete_eksemplar(no_induk):
     import database
