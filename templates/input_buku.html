@@ -372,13 +372,13 @@
                 inputKlasifikasi.classList.add('bg-success', 'bg-opacity-20');
                 setTimeout(() => inputKlasifikasi.classList.remove('bg-success', 'bg-opacity-20'), 1000);
             };
-            li.innerHTML = 
+            li.innerHTML = `
                 <div>
-                    <span class="font-bold text-primary inline-block w-16"></span>
-                    <span class="text-black"></span>
+                    <span class="font-bold text-primary inline-block w-16">${item.code}</span>
+                    <span class="text-black">${item.desc}</span>
                 </div>
                 <button type="button" class="text-xs bg-slate-200 hover:bg-primary hover:text-white px-3 py-1 rounded transition">Pilih</button>
-            ;
+            `;
             ddcList.appendChild(li);
         });
     }
