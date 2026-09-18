@@ -1,180 +1,135 @@
-{% extends 'layout.html' %}
-
+{% extends "layout.html" %}
 {% block content %}
-<div class="mx-auto max-w-5xl">
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-title-md2 font-semibold text-black">Tambah Bibliografi Baru</h2>
+<div x-data="inputBuku()" class="max-w-4xl mx-auto bg-white rounded-lg shadow-sm border border-stroke overflow-hidden">
+    <div class="bg-primary px-6 py-4 border-b border-stroke flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-book-medical mr-2"></i> Input Buku Baru</h2>
     </div>
-
-    <div class="rounded-sm border border-stroke bg-white shadow-default">
-        <div class="border-b border-stroke py-4 px-6.5">
-            <h3 class="font-medium text-black">Formulir Bibliografi (Standar SLiMS)</h3>
+    
+    <div class="p-6">
+        <!-- Notifikasi -->
+        <div x-show="notif.show" :class="notif.type === 'success' ? 'bg-success/10 text-success border-success' : 'bg-danger/10 text-danger border-danger'" class="border px-4 py-3 rounded mb-6 flex justify-between items-center">
+            <div>
+                <strong class="font-bold" x-text="notif.title"></strong>
+                <span class="block text-sm" x-text="notif.message"></span>
+            </div>
+            <button @click="notif.show = false"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        
-        <form id="formInputBiblio" class="p-6.5" enctype="multipart/form-data">
-            
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                <div class="w-full">
-                    <label class="mb-2.5 block text-black font-medium">Judul <span class="text-meta-1">*</span></label>
-                    <input type="text" name="judul" required class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
-                </div>
-            </div>
 
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                <div class="w-full">
-                    <label class="mb-2.5 block text-black font-medium">Pengarang</label>
-                    <input type="text" name="pengarang" placeholder="Nama pengarang (pisahkan dengan koma jika lebih dari satu)" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
-                </div>
-            </div>
-
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                <div class="w-full xl:w-1/2">
-                    <label class="mb-2.5 block text-black font-medium">Pernyataan Tanggungjawab</label>
-                    <input type="text" name="pernyataan_tanggungjawab" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
-                </div>
-                <div class="w-full xl:w-1/2">
-                    <label class="mb-2.5 block text-black font-medium">Edisi</label>
-                    <input type="text" name="edisi" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
-                </div>
-            </div>
-            
-            <div class="mb-6">
-                <label class="mb-2.5 block text-black font-medium">Info Detail Spesifik</label>
-                <input type="text" name="info_detail_spesifik" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
-            </div>
-
-            <!-- GENERATOR EKSEMPLAR -->
-            <div class="p-5 mb-6 rounded bg-slate-50 border border-stroke">
-                <h4 class="font-semibold text-black mb-4"><i class="fa-solid fa-barcode text-primary mr-2"></i> Nomor Induk (Barcode) Otomatis</h4>
+        <form @submit.prevent="submitForm">
+            <!-- SECTION 1: Bibliografi -->
+            <div class="mb-8">
+                <h3 class="text-md font-semibold border-b border-stroke pb-2 mb-4 text-slate-700">1. Data Bibliografi (Judul)</h3>
                 
-                <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                    <div class="w-full xl:w-1/2">
-                        <div class="rounded-md border border-primary bg-blue-50 px-4 py-3 mb-2">
-                            <p class="text-sm text-primary font-medium">Sistem akan secara otomatis memberikan Nomor Induk berurutan dengan format <strong>XXXX/26</strong> (Misal: 0001/26) saat Anda menyimpan data.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2 relative">
+                        <label class="block text-sm font-medium mb-1">Judul Buku *</label>
+                        <input type="text" x-model="form.judul" @input.debounce.500ms="searchBiblio()" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" required placeholder="Ketik judul buku...">
+                        
+                        <!-- Autocomplete Judul -->
+                        <div x-show="biblioResults.length > 0" @click.away="biblioResults = []" class="absolute z-10 w-full bg-white border border-stroke mt-1 rounded shadow-lg max-h-60 overflow-y-auto">
+                            <template x-for="b in biblioResults">
+                                <div @click="selectBiblio(b)" class="p-3 border-b border-stroke hover:bg-slate-50 cursor-pointer">
+                                    <div class="font-semibold text-black text-sm" x-text="b.judul"></div>
+                                    <div class="text-xs text-slate-500" x-text="(b.pengarang || '-') + ' | ' + (b.penerbit || '-')"></div>
+                                </div>
+                            </template>
                         </div>
                     </div>
                     
-                    <div class="w-full xl:w-1/2">
-                        <label class="mb-2.5 block text-black font-medium text-sm">Jumlah Copy (Item)</label>
-                        <input type="number" name="total_item" id="total_item" min="1" value="1" required class="w-full rounded border-[1.5px] border-stroke bg-white py-3 px-5 outline-none transition focus:border-primary active:border-primary">
-                        <p class="text-xs text-slate-500 mt-2">Jika Anda memasukkan 3, sistem akan meng-generate 3 nomor seri sekaligus.</p>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Pengarang</label>
+                        <input type="text" x-model="form.pengarang" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Penerbit</label>
+                        <input type="text" x-model="form.penerbit" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Tahun Terbit</label>
+                        <input type="text" x-model="form.tahun_terbit" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">ISBN / ISSN</label>
+                        <input type="text" x-model="form.isbn" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-1 flex justify-between">
+                            <span>Klasifikasi DDC</span>
+                            <button type="button" @click="cariDdc()" class="text-xs text-primary font-semibold hover:underline"><i class="fa-solid fa-magnifying-glass"></i> Cari Kamus</button>
+                        </label>
+                        <input type="text" x-model="form.klasifikasi" :disabled="form.biblio_id" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" :class="form.biblio_id ? 'bg-slate-100' : ''">
+                        
+                        <!-- Autocomplete DDC -->
+                        <div x-show="ddcResults.length > 0" @click.away="ddcResults = []" class="absolute z-10 w-full bg-white border border-stroke mt-1 rounded shadow-lg max-h-48 overflow-y-auto">
+                            <template x-for="d in ddcResults">
+                                <div @click="selectDdc(d.kode)" class="p-2 border-b border-stroke hover:bg-slate-50 cursor-pointer flex gap-2">
+                                    <span class="font-bold text-primary w-12" x-text="d.kode"></span>
+                                    <span class="text-sm text-black" x-text="d.deskripsi"></span>
+                                </div>
+                            </template>
+                            <div x-show="ddcResults.length === 0" class="p-3 text-sm text-slate-500 text-center">Tidak ada kecocokan di Kamus lokal.</div>
+                        </div>
+                    </div>
+                    
+                    <div x-show="form.biblio_id" class="md:col-span-2 mt-2 bg-blue-50 text-blue-700 p-3 rounded text-sm flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                        <div>
+                            <strong>Judul Sudah Ada!</strong><br>
+                            Anda menambahkan eksemplar/salinan baru untuk judul yang sudah ada di database. Kolom bibliografi otomatis dikunci.
+                            <button type="button" @click="resetBiblio()" class="underline font-semibold ml-2">Batal & Buat Judul Baru</button>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="flex flex-col gap-6 xl:flex-row">
-                    <div class="w-full xl:w-1/2">
-                        <label class="mb-2.5 block text-black font-medium text-sm">Lokasi Perpustakaan</label>
-                        <select name="lokasi" class="w-full rounded border-[1.5px] border-stroke bg-white py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+            <!-- SECTION 2: Eksemplar -->
+            <div class="mb-6">
+                <h3 class="text-md font-semibold border-b border-stroke pb-2 mb-4 text-slate-700">2. Data Salinan Fisik (Eksemplar)</h3>
+                <div class="bg-slate-50 p-4 border border-stroke rounded grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Jumlah Eksemplar *</label>
+                        <input type="number" min="1" x-model="form.jumlah" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" required>
+                        <p class="text-xs text-slate-500 mt-1">Barcode akan di-generate berurutan.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Lokasi Rak</label>
+                        <select x-model="form.lokasi" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black">
                             <option value="IMAVI">IMAVI</option>
-                            <option value="STPD">STPD</option>
+                            <option value="Taman Baca">Taman Baca</option>
+                            <option value="Gudang">Gudang</option>
                         </select>
                     </div>
-                    <div class="w-full xl:w-1/2 flex items-end">
-                        <label class="flex items-center gap-3 cursor-pointer py-3">
-                            <input type="checkbox" name="is_reference_only" value="1" class="w-5 h-5 rounded border-stroke text-primary focus:ring-primary">
-                            <span class="text-black font-medium text-sm">Jadikan Buku Referensi (Tidak Bisa Dipinjam)</span>
-                        </label>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Asal Buku</label>
+                        <select x-model="form.status_buku" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black">
+                            <option value="BELI">BELI</option>
+                            <option value="HADIAH">HADIAH</option>
+                            <option value="HIBAH">HIBAH</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <!-- DETAIL FISIK & KLASIFIKASI -->
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">GMD</label>
-                    <input type="text" name="gmd" value="Text" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
+            <!-- HASIL BARCODE -->
+            <div x-show="generatedBarcodes.length > 0" class="mb-6 p-4 border border-success bg-success/5 rounded">
+                <h4 class="font-bold text-success mb-2"><i class="fa-solid fa-check-circle mr-1"></i> Berhasil Disimpan!</h4>
+                <p class="text-sm mb-2">Sistem telah membuatkan barcode berikut untuk dicetak:</p>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="bc in generatedBarcodes">
+                        <span class="bg-white border border-success text-black px-3 py-1 rounded font-mono font-bold shadow-sm" x-text="bc"></span>
+                    </template>
                 </div>
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Tipe Isi</label>
-                    <input type="text" name="tipe_isi" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Tipe Media</label>
-                    <input type="text" name="tipe_media" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Tipe Pembawa</label>
-                    <input type="text" name="tipe_pembawa" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
+                <div class="mt-4">
+                    <button type="button" @click="resetForm()" class="bg-primary text-white px-4 py-2 rounded text-sm hover:bg-opacity-90">Input Judul Berikutnya</button>
                 </div>
             </div>
 
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Kala Terbit</label>
-                    <input type="text" name="kala_terbit" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">ISBN/ISSN</label>
-                    <input type="text" name="isbn" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Penerbit</label>
-                    <input type="text" name="penerbit" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/4">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Tahun Terbit</label>
-                    <input type="text" name="tahun_terbit" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-            </div>
-
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                <div class="w-full xl:w-1/3">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Tempat Terbit</label>
-                    <input type="text" name="tempat_terbit" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/3">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Deskripsi Fisik</label>
-                    <input type="text" name="deskripsi_fisik" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/3">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Judul Seri</label>
-                    <input type="text" name="judul_seri" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-            </div>
-            
-            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                <div class="w-full xl:w-1/3">
-                    <label class="mb-2.5 block text-black font-medium text-sm flex justify-between">
-                        <span>Klasifikasi (DDC)</span>
-                        <button type="button" onclick="document.getElementById('ddcModal').showModal()" class="text-primary hover:underline"><i class="fa-solid fa-search"></i> Kamus DDC</button>
-                    </label>
-                    <input type="text" name="klasifikasi" id="input_klasifikasi" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/3">
-                    <label class="mb-2.5 block text-black font-medium text-sm">No. Panggil (Call Number)</label>
-                    <input type="text" name="no_panggil" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-                <div class="w-full xl:w-1/3">
-                    <label class="mb-2.5 block text-black font-medium text-sm">Bahasa</label>
-                    <input type="text" name="bahasa" value="Indonesia" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary text-sm">
-                </div>
-            </div>
-
-            <div class="mb-6">
-                <label class="mb-2.5 block text-black font-medium text-sm">Subjek</label>
-                <input type="text" name="subjek" placeholder="Pisahkan dengan koma" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
-            </div>
-
-            <div class="mb-6">
-                <label class="mb-2.5 block text-black font-medium text-sm">Abstrak / Catatan</label>
-                <textarea name="abstrak" rows="4" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary"></textarea>
-            </div>
-
-            <!-- UPLOAD GAMBAR -->
-            <div class="mb-6 p-5 border border-dashed border-primary bg-blue-50 rounded">
-                <label class="mb-2.5 block text-black font-semibold"><i class="fa-regular fa-image mr-2"></i> Gambar Sampul (Cover)</label>
-                <input type="file" name="gambar_sampul" accept="image/*" class="w-full rounded bg-white py-2 px-4 text-sm text-black">
-                <p class="text-xs text-slate-500 mt-2">Maksimal 500 KB (Format: JPG, PNG)</p>
-            </div>
-
-            <div id="alert-box" class="mb-6 hidden"></div>
-
-            <div class="flex justify-end gap-4.5 mt-8 border-t border-stroke pt-6">
-                <button type="reset" class="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black hover:shadow-1 transition">
-                    Batal
-                </button>
-                <button type="submit" class="flex justify-center items-center gap-2 rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90 transition">
-                    <i class="fa-solid fa-save"></i> Simpan Bibliografi
+            <!-- BUTTONS -->
+            <div class="flex justify-end gap-3 border-t border-stroke pt-4" x-show="generatedBarcodes.length === 0">
+                <button type="button" @click="resetForm()" class="px-5 py-2 rounded font-medium text-slate-600 bg-slate-100 hover:bg-slate-200">Reset</button>
+                <button type="submit" :disabled="isSubmitting" class="px-6 py-2 rounded font-bold text-white bg-primary hover:bg-opacity-90 shadow-sm disabled:opacity-50">
+                    <span x-show="!isSubmitting">Simpan & Buat Barcode</span>
+                    <span x-show="isSubmitting"><i class="fa-solid fa-spinner fa-spin"></i> Memproses...</span>
                 </button>
             </div>
         </form>
@@ -182,268 +137,122 @@
 </div>
 
 <script>
-
-
-    document.getElementById('formInputBiblio').addEventListener('submit', function(e) {
-        e.preventDefault();
+document.addEventListener('alpine:init', () => {
+    Alpine.data('inputBuku', () => ({
+        form: {
+            biblio_id: null,
+            judul: '',
+            pengarang: '',
+            penerbit: '',
+            tahun_terbit: '',
+            isbn: '',
+            klasifikasi: '',
+            jumlah: 1,
+            lokasi: 'IMAVI',
+            status_buku: 'BELI'
+        },
+        isSubmitting: false,
+        biblioResults: [],
+        ddcResults: [],
+        generatedBarcodes: [],
+        notif: { show: false, type: '', title: '', message: '' },
         
-        let formData = new FormData(this);
-        let alertBox = document.getElementById('alert-box');
-        let submitBtn = this.querySelector('button[type="submit"]');
-        
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
-        submitBtn.disabled = true;
-
-        fetch('/api/bibliografi', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            alertBox.classList.remove('hidden');
-            if (data.status === 'success') {
-                alertBox.className = 'mb-6 rounded-md bg-success bg-opacity-20 py-4 px-5 text-success border border-success';
-                alertBox.innerHTML = '<h4 class="font-semibold">Sukses!</h4><p>Bibliografi berhasil disimpan. ' + (data.eksemplar_count ? data.eksemplar_count + ' Eksemplar berhasil di-generate.' : '') + '</p>';
-                this.reset();
-                
-            } else {
-                alertBox.className = 'mb-6 rounded-md bg-danger bg-opacity-20 py-4 px-5 text-danger border border-danger';
-                alertBox.innerHTML = '<h4 class="font-semibold">Gagal!</h4><p>' + data.message + '</p>';
+        async searchBiblio() {
+            if (this.form.biblio_id) return; // don't search if already locked
+            if (this.form.judul.length < 3) {
+                this.biblioResults = [];
+                return;
             }
-        })
-        .catch(error => {
-            alertBox.classList.remove('hidden');
-            alertBox.className = 'mb-6 rounded-md bg-danger bg-opacity-20 py-4 px-5 text-danger border border-danger';
-            alertBox.innerHTML = '<h4 class="font-semibold">Error Server!</h4><p>Terjadi kesalahan internal.</p>';
-        })
-        .finally(() => {
-            submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan Bibliografi';
-            submitBtn.disabled = false;
-        });
-    });
-</script>
-
-<!-- Modal Kamus DDC -->
-<dialog id="ddcModal" class="rounded-sm border border-stroke bg-white p-6 shadow-default w-full max-w-2xl fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999]">
-    <div class="flex justify-between items-center mb-5">
-        <h3 class="text-xl font-semibold text-black"><i class="fa-solid fa-book-bookmark text-primary mr-2"></i> Kamus DDC & Referensi Cepat</h3>
-        <button type="button" onclick="document.getElementById('ddcModal').close()" class="text-slate-400 hover:text-slate-700 text-2xl">&times;</button>
-    </div>
-    
-    <div class="mb-4">
-        <input type="text" id="searchDDC" placeholder="Cari topik (misal: Liturgi, Moral, Komputer)..." class="w-full rounded border-[1.5px] border-stroke bg-slate-50 py-3 px-5 outline-none transition focus:border-primary">
-    </div>
-    
-    <div class="max-h-96 overflow-y-auto border border-stroke rounded-sm">
-        <ul id="ddcList" class="flex flex-col">
-            <!-- Diisi oleh JS -->
-        </ul>
-    </div>
-</dialog>
-
-
-
-
-<script>
-(function() {
-    const ddcData = [
-        { code: "000", desc: "Komputer, Informasi, & Karya Umum" },
-        { code: "100", desc: "Filsafat & Psikologi" },
-        { code: "150", desc: "Psikologi" },
-        { code: "180", desc: "Filsafat Kuno, Abad Pertengahan, Timur" },
-        { code: "190", desc: "Filsafat Barat Modern" },
+            try {
+                const res = await fetch('/api/bibliografi/search?q=' + encodeURIComponent(this.form.judul));
+                this.biblioResults = await res.json();
+            } catch (e) {
+                console.error(e);
+            }
+        },
         
-        { code: "200", desc: "Agama" },
-        { code: "210", desc: "Filsafat & Teori Agama" },
-        { code: "220", desc: "Alkitab (Bibel)" },
-        { code: "221", desc: "Perjanjian Lama (PL)" },
-        { code: "225", desc: "Perjanjian Baru (PB)" },
-        { code: "230", desc: "Kekristenan & Teologi Kristen" },
-        { code: "231", desc: "Allah (Tritunggal, Bapa, Roh Kudus)" },
-        { code: "232", desc: "Yesus Kristus (Kristologi)" },
-        { code: "233", desc: "Manusia (Antropologi Teologis)" },
-        { code: "234", desc: "Keselamatan (Soteriologi) & Rahmat" },
-        { code: "236", desc: "Eskatologi (Akhir Zaman)" },
-        { code: "240", desc: "Teologi Moral Kristiani & Spiritualitas" },
-        { code: "241", desc: "Etika Kristen (Moral)" },
-        { code: "248", desc: "Pengalaman & Praktik Kristen (Spiritualitas)" },
-        { code: "250", desc: "Gereja Lokal & Praktik Pastoral" },
-        { code: "253", desc: "Teologi Pastoral (Penggembalaan)" },
-        { code: "260", desc: "Teologi Sosial Kristen & Eklesiologi" },
-        { code: "261", desc: "Teologi Sosial (Gereja & Masyarakat)" },
-        { code: "262", desc: "Eklesiologi (Struktur Gereja, Paus, Uskup)" },
-        { code: "264", desc: "Liturgi & Ibadah Umum" },
-        { code: "265", desc: "Sakramen-Sakramen" },
-        { code: "266", desc: "Misi & Penginjilan (Misiologi)" },
-        { code: "270", desc: "Sejarah Gereja & Kekristenan" },
-        { code: "280", desc: "Denominasi & Sekte (Gereja Katolik, Ortodoks, dll)" },
-        { code: "282", desc: "Gereja Katolik Roma" },
-        { code: "290", desc: "Agama Lain & Perbandingan Agama" },
-        { code: "297", desc: "Islam" },
-
-        { code: "300", desc: "Ilmu Sosial, Sosiologi, & Antropologi" },
-        { code: "320", desc: "Ilmu Politik" },
-        { code: "330", desc: "Ekonomi" },
-        { code: "340", desc: "Hukum" },
-        { code: "348", desc: "Hukum Gereja (Hukum Kanonik)" },
-        { code: "370", desc: "Pendidikan" },
+        selectBiblio(b) {
+            this.form.biblio_id = b.id;
+            this.form.judul = b.judul;
+            this.form.pengarang = b.pengarang;
+            this.form.penerbit = b.penerbit;
+            this.form.tahun_terbit = b.tahun_terbit;
+            this.form.isbn = b.isbn;
+            this.form.klasifikasi = b.klasifikasi;
+            this.biblioResults = [];
+        },
         
-        { code: "400", desc: "Bahasa" },
-        { code: "470", desc: "Bahasa Latin" },
-        { code: "480", desc: "Bahasa Yunani Kuno & Klasik" },
-        { code: "492.4", desc: "Bahasa Ibrani" },
+        resetBiblio() {
+            this.form.biblio_id = null;
+            this.form.pengarang = '';
+            this.form.penerbit = '';
+            this.form.tahun_terbit = '';
+            this.form.isbn = '';
+            this.form.klasifikasi = '';
+        },
         
-        { code: "500", desc: "Sains & Ilmu Pengetahuan Alam" },
-        { code: "600", desc: "Teknologi & Ilmu Terapan" },
-        { code: "700", desc: "Kesenian & Rekreasi" },
-        { code: "726", desc: "Arsitektur Gereja / Tempat Ibadah" },
-        { code: "782.2", desc: "Musik Liturgi & Musik Gereja" },
-        { code: "800", desc: "Sastra & Literatur" },
-        { code: "900", desc: "Sejarah & Geografi" }
-    ];
-
-    const ddcKeywords = [
-        { keywords: ["komputer", "informasi", "sistem", "data", "software", "program", "internet"], code: "000" },
-        { keywords: ["filsafat", "logika", "metafisika", "epistemologi", "filosofi"], code: "100" },
-        { keywords: ["psikologi", "mental", "jiwa", "depresi", "karakter", "kepribadian"], code: "150" },
-        { keywords: ["agama", "iman", "kepercayaan", "teologi", "Tuhan"], code: "200" },
-        { keywords: ["alkitab", "bibel", "injil", "perjanjian", "mazmur", "taurat"], code: "220" },
-        { keywords: ["kristen", "kekristenan", "protestan"], code: "230" },
-        { keywords: ["allah", "tritunggal", "bapa", "roh kudus"], code: "231" },
-        { keywords: ["yesus", "kristus", "kristologi", "salib"], code: "232" },
-        { keywords: ["keselamatan", "soteriologi", "dosa", "rahmat", "penebusan"], code: "234" },
-        { keywords: ["eskatologi", "akhir zaman", "kiamat"], code: "236" },
-        { keywords: ["moral", "etika", "baik buruk", "hati nurani"], code: "240" },
-        { keywords: ["pastoral", "gembala", "umat", "paroki"], code: "253" },
-        { keywords: ["liturgi", "ibadah", "misa", "ekaristi", "nyanyian gereja"], code: "264" },
-        { keywords: ["sakramen", "baptis", "krisma", "imamat"], code: "265" },
-        { keywords: ["misi", "penginjilan", "misionaris"], code: "266" },
-        { keywords: ["sejarah gereja", "bapa gereja", "patristik", "konsili"], code: "270" },
-        { keywords: ["katolik", "roma", "paus", "uskup", "vatikan"], code: "282" },
-        { keywords: ["islam", "muslim", "quran", "muhammad"], code: "297" },
-        { keywords: ["sosial", "sosiologi", "masyarakat", "komunitas"], code: "300" },
-        { keywords: ["politik", "negara", "pemerintah", "demokrasi"], code: "320" },
-        { keywords: ["ekonomi", "bisnis", "uang", "manajemen", "keuangan"], code: "330" },
-        { keywords: ["hukum", "undang", "pidana", "perdata"], code: "340" },
-        { keywords: ["kanonik", "hukum gereja", "codex iuris canonici"], code: "348" },
-        { keywords: ["pendidikan", "sekolah", "guru", "belajar", "pedagogi"], code: "370" },
-        { keywords: ["bahasa", "linguistik", "tata bahasa", "kamus"], code: "400" },
-        { keywords: ["latin"], code: "470" },
-        { keywords: ["yunani"], code: "480" },
-        { keywords: ["ibrani"], code: "492.4" },
-        { keywords: ["sains", "ilmu pengetahuan", "biologi", "fisika", "kimia", "alam"], code: "500" },
-        { keywords: ["matematika", "kalkulus", "aljabar"], code: "510" },
-        { keywords: ["teknologi", "teknik", "mesin", "industri"], code: "600" },
-        { keywords: ["kedokteran", "medis", "kesehatan", "penyakit"], code: "610" },
-        { keywords: ["seni", "kesenian", "lukisan", "estetika"], code: "700" },
-        { keywords: ["arsitektur", "bangunan", "candi", "gereja (bangunan)"], code: "720" },
-        { keywords: ["musik", "lagu", "nyanyian", "not balok"], code: "780" },
-        { keywords: ["sastra", "novel", "puisi", "cerpen", "dongeng", "fiksi"], code: "800" },
-        { keywords: ["sejarah", "historis", "perang", "masalalu"], code: "900" },
-        { keywords: ["geografi", "peta", "bumi", "wilayah"], code: "910" },
-        { keywords: ["biografi", "riwayat", "tokoh", "otobiografi", "memoar"], code: "920" }
-    ];
-
-    const ddcList = document.getElementById('ddcList');
-    const searchDDC = document.getElementById('searchDDC');
-    const inputKlasifikasi = document.getElementById('input_klasifikasi');
-    const inputJudul = document.querySelector('input[name="judul"]');
-    
-    // --- FITUR 1: RENDER KAMUS DDC ---
-    function renderDDC(filterText = "") {
-        if(!ddcList) return;
-        ddcList.innerHTML = '';
-        const filtered = ddcData.filter(item => 
-            item.code.includes(filterText) || item.desc.toLowerCase().includes(filterText.toLowerCase())
-        );
+        async cariDdc() {
+            // search using title keywords
+            const q = this.form.judul || this.form.klasifikasi;
+            if (!q) {
+                alert('Ketik judul atau kata kunci DDC terlebih dahulu.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/ddc/search?q=' + encodeURIComponent(q));
+                this.ddcResults = await res.json();
+                if (this.ddcResults.length === 0) {
+                    this.ddcResults = [{kode: '---', deskripsi: 'Kata kunci tidak ditemukan di kamus lokal.'}];
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
         
-        if(filtered.length === 0) {
-            ddcList.innerHTML = '<li class="p-4 text-center text-slate-500">Tidak ada kategori yang cocok.</li>';
-            return;
-        }
-
-        filtered.forEach(item => {
-            const li = document.createElement('li');
-            li.className = "flex justify-between items-center p-3 border-b border-stroke hover:bg-slate-50 cursor-pointer transition";
-            li.onclick = () => {
-                inputKlasifikasi.value = item.code;
-                document.getElementById('ddcModal').close();
-                // Add a small success effect
-                inputKlasifikasi.classList.add('bg-success', 'bg-opacity-20');
-                setTimeout(() => inputKlasifikasi.classList.remove('bg-success', 'bg-opacity-20'), 1000);
+        selectDdc(kode) {
+            if(kode !== '---') {
+                this.form.klasifikasi = kode;
+            }
+            this.ddcResults = [];
+        },
+        
+        async submitForm() {
+            this.isSubmitting = true;
+            this.notif.show = false;
+            
+            try {
+                const res = await fetch('/api/buku/input_batch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(this.form)
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    this.generatedBarcodes = result.barcodes;
+                    this.notif = { show: true, type: 'success', title: 'Berhasil!', message: result.message };
+                    // scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.notif = { show: true, type: 'error', title: 'Gagal', message: result.message };
+                }
+            } catch (err) {
+                this.notif = { show: true, type: 'error', title: 'Error', message: 'Koneksi ke server terputus.' };
+            }
+            this.isSubmitting = false;
+        },
+        
+        resetForm() {
+            this.form = {
+                biblio_id: null, judul: '', pengarang: '', penerbit: '', tahun_terbit: '',
+                isbn: '', klasifikasi: '', jumlah: 1, lokasi: 'IMAVI', status_buku: 'BELI'
             };
-            li.innerHTML = `
-                <div>
-                    <span class="font-bold text-primary inline-block w-16">${item.code}</span>
-                    <span class="text-black">${item.desc}</span>
-                </div>
-                <button type="button" class="text-xs bg-slate-200 hover:bg-primary hover:text-white px-3 py-1 rounded transition">Pilih</button>
-            `;
-            ddcList.appendChild(li);
-        });
-    }
-
-    if(searchDDC) {
-        searchDDC.addEventListener('input', (e) => renderDDC(e.target.value));
-        renderDDC();
-    }
-    
-    // --- FITUR 2: AUTO-DETECT DDC DARI JUDUL BUKU ---
-    if(inputJudul) {
-        // Buat elemen label rekomendasi di bawah input klasifikasi
-        const recLabel = document.createElement('div');
-        recLabel.className = 'mt-2 text-xs text-primary font-medium hidden';
-        recLabel.innerHTML = '<i class="fa-solid fa-sparkles"></i> Rekomendasi AI: <span id="recDDCValue" class="font-bold cursor-pointer hover:underline"></span> (<span id="recDDCDesc"></span>)';
-        inputKlasifikasi.parentNode.appendChild(recLabel);
-
-        const recDDCValue = recLabel.querySelector('#recDDCValue');
-        const recDDCDesc = recLabel.querySelector('#recDDCDesc');
-        
-        // Kalau diklik rekomendasinya, langsung masuk
-        recDDCValue.addEventListener('click', function() {
-            inputKlasifikasi.value = this.innerText;
-            inputKlasifikasi.classList.add('bg-success', 'bg-opacity-20');
-            setTimeout(() => inputKlasifikasi.classList.remove('bg-success', 'bg-opacity-20'), 1000);
-        });
-
-        inputJudul.addEventListener('input', function(e) {
-            const judul = e.target.value.toLowerCase();
-            let matchedCode = null;
-            let matchedDesc = null;
-            
-            if (judul.trim().length > 3) {
-                for (let category of ddcKeywords) {
-                    for (let keyword of category.keywords) {
-                        if (judul.includes(keyword)) {
-                            matchedCode = category.code;
-                            break;
-                        }
-                    }
-                    if (matchedCode) break; // Ambil kecocokan pertama
-                }
-            }
-            
-            if (matchedCode) {
-                // Cari deskripsi
-                const catInfo = ddcData.find(d => d.code === matchedCode);
-                matchedDesc = catInfo ? catInfo.desc : "";
-                
-                recDDCValue.innerText = matchedCode;
-                recDDCDesc.innerText = matchedDesc;
-                recLabel.classList.remove('hidden');
-                
-                // Jika klasifikasi masih kosong, isikan secara otomatis
-                if(inputKlasifikasi.value.trim() === '') {
-                    inputKlasifikasi.value = matchedCode;
-                    inputKlasifikasi.classList.add('bg-success', 'bg-opacity-10');
-                    setTimeout(() => inputKlasifikasi.classList.remove('bg-success', 'bg-opacity-10'), 1000);
-                }
-            } else {
-                recLabel.classList.add('hidden');
-            }
-        });
-    }
-})();
+            this.generatedBarcodes = [];
+            this.biblioResults = [];
+            this.ddcResults = [];
+            this.notif.show = false;
+        }
+    }));
+});
 </script>
-
 {% endblock %}
