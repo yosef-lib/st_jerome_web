@@ -23,8 +23,8 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: { DEFAULT: '#0d3b66', dark: '#0a2e50' },
-                        secondary: { DEFAULT: '#f4d35e', hover: '#f2c833' },
+                        primary: { DEFAULT: '#6D4C41', dark: '#4E342E' },
+                        secondary: { DEFAULT: '#D7CCC8', hover: '#BCAAA4', accent: '#F59E0B' },
                     },
                     fontFamily: {
                         serif: ['"Playfair Display"', 'Georgia', 'serif'],
@@ -37,7 +37,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .hero-bg {
-            background: linear-gradient(135deg, #0d3b66 0%, #0a2e50 100%);
+            background: linear-gradient(135deg, #5D4037 0%, #3E2723 100%);
             position: relative;
             overflow: hidden;
         }
@@ -54,7 +54,7 @@
         .search-box {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-top: 4px solid #f4d35e;
+            border-top: 4px solid #F59E0B;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             transform: translateY(3rem);
         }
@@ -82,11 +82,11 @@
     <div class="hero-bg pt-20 pb-28 px-4 text-center">
         <div id="tsparticles"></div>
         <div class="hero-content max-w-4xl mx-auto">
-            <div class="inline-block border border-secondary/30 text-secondary text-xs font-bold tracking-widest px-4 py-1 rounded-full mb-6 uppercase shadow-sm bg-black/10 backdrop-blur-sm">
+            <div class="inline-block border border-secondary/50 text-secondary text-xs font-bold tracking-widest px-4 py-1 rounded-full mb-6 uppercase shadow-sm bg-black/10 backdrop-blur-sm">
                 Ilmu Tanpa Batas
             </div>
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 drop-shadow-md">PERPUSTAKAAN DIGITAL<br><span class="text-secondary text-3xl md:text-4xl lg:text-5xl mt-2 block">ST. JEROME (IMAVI)</span></h1>
-            <p class="text-blue-100/90 text-sm md:text-base max-w-2xl mx-auto drop-shadow mb-10 leading-relaxed">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 drop-shadow-md">PERPUSTAKAAN DIGITAL<br><span class="text-amber-400 text-3xl md:text-4xl lg:text-5xl mt-2 block">ST. JEROME (IMAVI)</span></h1>
+            <p class="text-secondary text-sm md:text-base max-w-2xl mx-auto drop-shadow mb-10 leading-relaxed">
                 Akses koleksi buku teologi, filsafat, dan referensi akademik.<br>Tersedia 24 jam untuk seluruh civitas akademika IMAVI.
             </p>
         </div>
@@ -97,7 +97,7 @@
         <!-- Floating Search Box -->
         <div class="max-w-4xl mx-auto search-box rounded-xl p-6 md:p-8 relative z-30 mb-20 -mt-16">
             <div class="flex items-center gap-2 mb-4">
-                <span class="bg-secondary text-primary text-xs font-bold px-2 py-0.5 rounded uppercase">One Search</span>
+                <span class="bg-amber-400 text-amber-900 text-xs font-bold px-2 py-0.5 rounded uppercase">One Search</span>
                 <span class="text-sm text-slate-500 font-medium">Telusuri semua koleksi perpustakaan sekaligus</span>
             </div>
             
@@ -134,9 +134,9 @@
                     <p class="text-slate-500 mb-6 max-w-lg mx-auto">
                         Sayang sekali, kami tidak dapat menemukan buku dengan kata kunci <span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded" x-text="searchQuery"></span> di perpustakaan kami.
                     </p>
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-6 max-w-md mx-auto">
-                        <p class="text-indigo-800 font-medium mb-4"><i class="fa-solid fa-lightbulb text-secondary mr-2"></i>Apakah buku ini sangat penting untuk perkuliahan/penelitian Anda?</p>
-                        <button @click="openRequestModal" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg w-full transition shadow-sm">
+                    <div class="bg-[#EFEBE9] border border-[#D7CCC8] rounded-lg p-6 max-w-md mx-auto">
+                        <p class="text-primary-dark font-medium mb-4"><i class="fa-solid fa-lightbulb text-amber-500 mr-2"></i>Apakah buku ini sangat penting untuk perkuliahan/penelitian Anda?</p>
+                        <button @click="openRequestModal" class="bg-primary hover:bg-primary-dark text-white font-bold py-2.5 px-6 rounded-lg w-full transition shadow-sm">
                             <i class="fa-solid fa-hand-holding-heart mr-2"></i> Usulkan Pengadaan Buku Ini
                         </button>
                     </div>
@@ -225,27 +225,27 @@
         
         <!-- Modal 1: Request Book -->
         <div x-show="activeModal === 'request'" @click.away="closeModal()" class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
-            <div class="bg-indigo-600 p-5 text-white flex justify-between items-center">
+            <div class="bg-primary p-5 text-white flex justify-between items-center">
                 <h3 class="font-bold text-lg"><i class="fa-solid fa-hand-holding-heart mr-2"></i> Usulkan Buku Baru</h3>
-                <button @click="closeModal()" class="text-indigo-200 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button @click="closeModal()" class="text-secondary hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="p-6">
                 <p class="text-sm text-slate-600 mb-4">Silakan isi detail buku yang tidak Anda temukan. Kami akan mempertimbangkan pengadaannya.</p>
                 <form @submit.prevent="submitRequest" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Judul Buku / Topik Utama <span class="text-red-500">*</span></label>
-                        <input type="text" x-model="requestForm.judul" required class="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" x-model="requestForm.judul" required class="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary outline-none">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Pengarang (Opsional)</label>
-                        <input type="text" x-model="requestForm.pengarang" class="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Jika tahu...">
+                        <input type="text" x-model="requestForm.pengarang" class="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary outline-none" placeholder="Jika tahu...">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Alasan / Catatan Kebutuhan (Opsional)</label>
-                        <textarea x-model="requestForm.catatan" rows="3" class="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Contoh: Sangat dibutuhkan untuk matkul Teologi Dasar..."></textarea>
+                        <textarea x-model="requestForm.catatan" rows="3" class="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary outline-none" placeholder="Contoh: Sangat dibutuhkan untuk matkul Teologi Dasar..."></textarea>
                     </div>
                     <div class="pt-2">
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-md transition shadow">Kirim Usulan</button>
+                        <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-md transition shadow">Kirim Usulan</button>
                     </div>
                 </form>
             </div>
@@ -348,8 +348,8 @@
                     modes: { grab: { distance: 140, links: { opacity: 1 } } }
                 },
                 particles: {
-                    color: { value: "#ffffff" },
-                    links: { color: "#ffffff", distance: 150, enable: true, opacity: 0.2, width: 1 },
+                    color: { value: "#D7CCC8" },
+                    links: { color: "#D7CCC8", distance: 150, enable: true, opacity: 0.2, width: 1 },
                     move: { enable: true, speed: 1, direction: "none", random: false, straight: false, outModes: { default: "bounce" } },
                     number: { density: { enable: true, area: 800 }, value: 40 },
                     opacity: { value: 0.3 },
