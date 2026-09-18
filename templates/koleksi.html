@@ -86,7 +86,7 @@
                                                     </td>
 
                                                     <td class="p-2 text-center">
-                                                        <button @click="deleteEksemplar(e.id)" class="text-danger hover:text-opacity-70" title="Hapus Salinan"><i class="fa-solid fa-trash-can"></i></button>
+                                                        <button @click="deleteEksemplar(e.no_induk)" class="text-danger hover:text-opacity-70" title="Hapus Salinan"><i class="fa-solid fa-trash-can"></i></button>
                                                     </td>
                                                 </tr>
                                             </template>
@@ -149,14 +149,13 @@ document.addEventListener('alpine:init', () => {
                 console.error(e); alert("Error");
             }
         },
-        async deleteEksemplar(id) {
-            if (!confirm("Hapus barcode ini?")) return;
+        async deleteEksemplar(no_induk) {
+            if (!confirm("Hapus barcode " + no_induk + "?")) return;
             try {
-                const res = await fetch('/api/eksemplar/' + id, { method: 'DELETE' });
+                const res = await fetch('/api/eksemplar/' + encodeURIComponent(no_induk), { method: 'DELETE' });
                 if (res.ok) {
                     // refresh eksemplar list
-                    this.toggleEksemplar(this.expandedId); 
-                    this.toggleEksemplar(this.expandedId); // double toggle to refresh
+                    await this.toggleEksemplar(this.expandedId);
                     this.loadData(this.currentPage);
                 }
             } catch (e) {

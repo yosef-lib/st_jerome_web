@@ -2023,12 +2023,12 @@ def api_delete_biblio(id):
     conn.close()
     return jsonify({'status': 'success'})
 
-@app.route('/api/eksemplar/<int:id>', methods=['DELETE'])
+@app.route('/api/eksemplar/<string:no_induk>', methods=['DELETE'])
 @login_required
-def api_delete_eksemplar(id):
+def api_delete_eksemplar(no_induk):
     import database
     conn = database.get_db_connection()
-    conn.execute("DELETE FROM eksemplar WHERE id = ?", (id,))
+    conn.execute("DELETE FROM eksemplar WHERE no_induk = ?", (no_induk,))
     conn.commit()
     conn.close()
     return jsonify({'status': 'success'})
