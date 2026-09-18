@@ -1739,16 +1739,23 @@ def api_force_migrate():
         
         # 3. Migrate data if empty
         msg = "Tables created."
-        cursor.execute("SELECT COUNT(*) FROM eksemplar")
-        if cursor.fetchone()[0] == 0:
-            cursor.execute("SELECT * FROM buku")
-            buku_rows = cursor.fetchall()
-            cursor.execute("PRAGMA table_info(buku)")
-            columns = [col[1] for col in cursor.fetchall()]
+        # Selalu reset dan migrasi ulang untuk memperbaiki duplikat
+        cursor.execute("DELETE FROM eksemplar")
+        cursor.execute("DELETE FROM bibliografi")
+        
+        cursor.execute("SELECT * FROM buku")
+        buku_rows = cursor.fetchall()
+        cursor.execute("PRAGMA table_info(buku)")
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        biblio_map = {} # (judul, pengarang, penerbit) -> biblio_id
+        
+        migrated_count = 0
+        for row in buku_rows:
+            row_dict = dict(zip(columns, row))
+            key = (row_dict.get('judul', ''), row_dict.get('pengarang', ''), row_dict.get('penerbit', ''))
             
-            migrated_count = 0
-            for row in buku_rows:
-                row_dict = dict(zip(columns, row))
+            if key not in biblio_map:
                 cursor.execute("""
                     INSERT INTO bibliografi (
                         judul, gmd, edisi, isbn, penerbit, tahun_terbit, deskripsi_fisik, 
@@ -1763,19 +1770,21 @@ def api_force_migrate():
                     row_dict.get('bahasa'), row_dict.get('tempat_terbit'), row_dict.get('pengarang'), 
                     row_dict.get('subjek')
                 ))
-                biblio_id = cursor.lastrowid
-                
-                cursor.execute("""
-                    INSERT INTO eksemplar (
-                        biblio_id, no_induk, status_buku, lokasi, tgl_terima, copy_ke, catatan
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    biblio_id, row_dict.get('no_induk'), row_dict.get('status_buku'), 
-                    row_dict.get('lokasi'), row_dict.get('tgl_terima'), row_dict.get('copy_ke'), 
-                    row_dict.get('catatan')
-                ))
-                migrated_count += 1
-            msg += f" Migrated {migrated_count} records."
+                biblio_map[key] = cursor.lastrowid
+            
+            biblio_id = biblio_map[key]
+            
+            cursor.execute("""
+                INSERT INTO eksemplar (
+                    biblio_id, no_induk, status_buku, lokasi, tgl_terima, copy_ke, catatan
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                biblio_id, row_dict.get('no_induk'), row_dict.get('status_buku'), 
+                row_dict.get('lokasi'), row_dict.get('tgl_terima'), row_dict.get('copy_ke'), 
+                row_dict.get('catatan')
+            ))
+            migrated_count += 1
+        msg += f" Migrated {migrated_count} copies into {len(biblio_map)} titles."
         
         conn.commit()
         conn.close()
