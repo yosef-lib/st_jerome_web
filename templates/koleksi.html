@@ -135,7 +135,7 @@ document.addEventListener('alpine:init', () => {
                 this.totalData = data.total;
                 this.totalPages = data.total_pages;
             } catch (e) {
-                console.error(e);
+                console.error(e); alert("API Error: " + (e.message || e));
             }
             this.isLoading = false;
         },
@@ -152,7 +152,7 @@ document.addEventListener('alpine:init', () => {
                 const res = await fetch('/api/koleksi/eksemplar/' + id);
                 this.eksemplarList = await res.json();
             } catch (e) {
-                console.error(e);
+                console.error(e); alert("API Error: " + (e.message || e));
             }
             this.isLoadingEksemplar = false;
         }
@@ -160,3 +160,4 @@ document.addEventListener('alpine:init', () => {
 });
 </script>
 {% endblock %}
+
