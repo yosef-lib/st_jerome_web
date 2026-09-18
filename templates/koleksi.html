@@ -34,10 +34,9 @@
                     <th class="p-3 w-16"></th>
                 </tr>
             </thead>
-            <tbody>
-                <template x-for="b in bibliografi" :key="b.id">
-                    <React.Fragment>
-                        <tr class="border-b border-stroke hover:bg-slate-50 transition cursor-pointer" @click="toggleEksemplar(b.id)">
+            <template x-for="b in bibliografi" :key="b.id">
+                    <tbody class="hover:bg-slate-50 transition">
+                        <tr class="border-b border-stroke cursor-pointer" @click="toggleEksemplar(b.id)">
                             <td class="p-3 font-semibold text-primary" x-text="b.judul"></td>
                             <td class="p-3 text-slate-600" x-text="b.pengarang || '-'"></td>
                             <td class="p-3 text-slate-600" x-text="b.penerbit || '-'"></td>
@@ -86,8 +85,9 @@
                                 </div>
                             </td>
                         </tr>
-                    </React.Fragment>
+                    </tbody>
                 </template>
+            <tbody>
                 <tr x-show="bibliografi.length === 0 && !isLoading">
                     <td colspan="6" class="p-8 text-center text-slate-500">
                         Tidak ada koleksi buku yang ditemukan.
