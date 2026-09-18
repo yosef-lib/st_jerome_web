@@ -1763,7 +1763,6 @@ def api_force_migrate():
 def api_ddc_search():
     keyword = request.args.get('q', '').lower()
     import json
-    import os
     try:
         with open('ddc_kamus.json', 'r') as f:
             ddc_dict = json.load(f)
@@ -1771,10 +1770,29 @@ def api_ddc_search():
         ddc_dict = {}
         
     results = []
+    
+    # Clean keywords (ignore short words)
+    ignore_words = ['pengantar', 'buku', 'panduan', 'dasar', 'teori', 'ilmu', 'dan', 'yang']
+    keywords = [w for w in keyword.split() if w not in ignore_words and len(w) > 2]
+    
+    # If no keywords left, just search the original keyword
+    if not keywords:
+        keywords = [keyword]
+        
     for code, desc in ddc_dict.items():
+        # exact match
         if keyword in desc.lower():
             results.append({'kode': code, 'deskripsi': desc})
+            continue
+            
+        # keyword match
+        for kw in keywords:
+            if kw in desc.lower():
+                results.append({'kode': code, 'deskripsi': desc})
+                break
+                
     return jsonify(results)
+
 
 @app.route('/api/bibliografi/search', methods=['GET'])
 @login_required
