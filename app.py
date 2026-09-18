@@ -2057,3 +2057,7 @@ def api_get_biblio(id):
     if row:
         return jsonify(dict(row))
     return jsonify({}), 404
+
+@app.route('/api/version', methods=['GET'])
+def api_version():
+    return jsonify({'version': '2b2fa3d-fix-401', 'status': 'ok'})
