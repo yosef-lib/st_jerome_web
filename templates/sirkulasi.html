@@ -311,7 +311,7 @@ function sirkulasiApp() {
                     this.showAlert('error', 'Pencarian Gagal', result.message);
                 }
             } catch (err) {
-                this.showAlert('error', 'Error Jaringan', 'Gagal terhubung ke server.');
+                this.showAlert('error', 'Error Sistem', 'Error: ' + err.message + ' (Pastikan Anda sudah restart server PM2)');
             } finally {
                 this.isLoadingMember = false;
             }
