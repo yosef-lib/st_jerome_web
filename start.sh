@@ -1,0 +1,2 @@
+#!/bin/bash
+gunicorn app:app -b 127.0.0.1:5001
