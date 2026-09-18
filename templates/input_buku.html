@@ -245,7 +245,7 @@
 
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+(function() {
     const ddcData = [
         { code: "000", desc: "Komputer, Informasi, & Karya Umum" },
         { code: "100", desc: "Filsafat & Psikologi" },
@@ -396,8 +396,8 @@ document.addEventListener("DOMContentLoaded", function() {
         recLabel.innerHTML = '<i class="fa-solid fa-sparkles"></i> Rekomendasi AI: <span id="recDDCValue" class="font-bold cursor-pointer hover:underline"></span> (<span id="recDDCDesc"></span>)';
         inputKlasifikasi.parentNode.appendChild(recLabel);
 
-        const recDDCValue = document.getElementById('recDDCValue');
-        const recDDCDesc = document.getElementById('recDDCDesc');
+        const recDDCValue = recLabel.querySelector('#recDDCValue');
+        const recDDCDesc = recLabel.querySelector('#recDDCDesc');
         
         // Kalau diklik rekomendasinya, langsung masuk
         recDDCValue.addEventListener('click', function() {
@@ -443,7 +443,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
-});
+})();
 </script>
 
 {% endblock %}
