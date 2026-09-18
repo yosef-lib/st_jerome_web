@@ -1425,6 +1425,16 @@ def api_get_member(member_id):
             m['status'] = 'AKTIF'
             m['suspended_until'] = None
     
+    # Fetch active loans detail
+    loans_cursor = conn.execute("""
+        SELECT s.*, e.no_induk, b.judul 
+        FROM sirkulasi s
+        JOIN eksemplar e ON s.no_induk = e.no_induk
+        JOIN bibliografi b ON e.biblio_id = b.id
+        WHERE s.member_id = ? AND s.return_date IS NULL
+    """, (member_id,))
+    loans = [dict(row) for row in loans_cursor.fetchall()]
+
     conn.close()
     return jsonify({
         'status': 'success',
@@ -1433,9 +1443,12 @@ def api_get_member(member_id):
             'nama': m['nama'],
             'tipe': tipe,
             'status': m['status'],
+            'email': m.get('email', '-'),
+            'masa_berlaku': m.get('masa_berlaku', '2027-05-07'),
             'suspended_until': m.get('suspended_until', '-'),
             'active_loans': active_loans,
-            'max_loans': max_loans
+            'max_loans': max_loans,
+            'loans': loans
         }
     })
 
