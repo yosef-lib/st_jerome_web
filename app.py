@@ -539,7 +539,7 @@ def edit_koleksi(id):
             UPDATE buku SET 
                 no_induk=?, judul=?, pengarang=?, subjek=?, gmd=?, edisi=?, 
                 isbn=?, penerbit=?, tahun_terbit=?, tempat_terbit=?, deskripsi_fisik=?, 
-                judul_seri=?, bahasa=?, klasifikasi=?, cutter=?, huruf_judul=?, lokasi=?
+                judul_seri=?, bahasa=?, klasifikasi=?, cutter=?, huruf_judul=?, lokasi=?, is_reference_only=?
             WHERE id=?
         ''', (
             request.form.get('no_induk'), request.form.get('judul'), request.form.get('pengarang'),
@@ -547,7 +547,7 @@ def edit_koleksi(id):
             request.form.get('isbn'), request.form.get('penerbit'), request.form.get('tahun_terbit'),
             request.form.get('tempat_terbit'), request.form.get('deskripsi_fisik'), request.form.get('judul_seri'),
             request.form.get('bahasa'), request.form.get('klasifikasi'), request.form.get('cutter'),
-            request.form.get('huruf_judul'), request.form.get('lokasi'), id
+            request.form.get('huruf_judul'), request.form.get('lokasi'), 1 if request.form.get('is_reference_only') else 0, id
         ))
         conn.commit()
         conn.close()
