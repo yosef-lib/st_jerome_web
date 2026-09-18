@@ -167,7 +167,7 @@
                         </li>
 
                         <!-- Menu Sirkulasi & Koleksi -->
-                        {% set koleksi_active = request.path.startswith('/koleksi') or request.path == '/input_buku' or request.path == '/audit_rak' %}
+                        {% set koleksi_active = request.path == '/sirkulasi' or request.path.startswith('/koleksi') or request.path == '/input_buku' or request.path == '/audit_rak' %}
                         <li x-data="{ expanded: {{ 'true' if koleksi_active else 'false' }} }">
                             <a href="#" @click.prevent="expanded = !expanded" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if koleksi_active %}text-white bg-boxdark2{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
                                 <i class="fa-solid fa-book w-5 text-center"></i> Sirkulasi & Koleksi
@@ -175,6 +175,7 @@
                             </a>
                             <div x-show="expanded" style="display: none;" x-transition>
                                 <ul class="mt-2 flex flex-col gap-1 pl-10 pr-2 pb-2">
+                                    <li><a href="/sirkulasi" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/sirkulasi' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}"><i class="fa-solid fa-cash-register mr-2 mt-1"></i> Kasir Sirkulasi</a></li>
                                     <li><a href="/koleksi" class="flex rounded-md px-3 py-2 text-sm {% if request.path.startswith('/koleksi') %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Daftar Koleksi</a></li>
                                     <li><a href="/input_buku" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/input_buku' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Input Buku Baru</a></li>
                                     <li><a href="/audit_rak" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/audit_rak' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Audit Rak</a></li>

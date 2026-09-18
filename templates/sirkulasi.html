@@ -1,0 +1,263 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl" x-data="sirkulasiApp()">
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-title-md2 font-semibold text-black">Kasir Sirkulasi Pintar</h2>
+    </div>
+
+    <!-- Alert Global -->
+    <div x-show="alert.show" x-transition class="mb-6 rounded-md py-4 px-5 border" :class="alert.type === 'error' ? 'bg-danger bg-opacity-20 text-danger border-danger' : 'bg-success bg-opacity-20 text-success border-success'">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-circle-exclamation text-xl" x-show="alert.type === 'error'"></i>
+            <i class="fa-solid fa-circle-check text-xl" x-show="alert.type === 'success'"></i>
+            <div>
+                <h4 class="font-semibold" x-text="alert.title"></h4>
+                <p x-html="alert.message"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        
+        <!-- PANEL PEMINJAMAN -->
+        <div class="flex flex-col gap-6">
+            <div class="rounded-sm border border-stroke bg-white shadow-default">
+                <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center">
+                    <h3 class="font-medium text-primary text-lg"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> Mode Peminjaman</h3>
+                </div>
+                
+                <div class="p-6.5">
+                    <!-- Scan Anggota -->
+                    <div class="mb-6">
+                        <label class="mb-2.5 block text-black font-medium">1. Barcode Anggota (NIM/ID)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                                <i class="fa-solid fa-id-card"></i>
+                            </span>
+                            <input type="text" x-model="memberId" @keydown.enter="fetchMember()" :disabled="isLoadingMember" placeholder="Scan Barcode Anggota lalu tekan Enter..." class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 pl-12 pr-5 outline-none transition focus:border-primary active:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Info Anggota -->
+                    <div x-show="member" x-transition class="mb-6 p-5 border rounded bg-slate-50 relative" :class="{'border-danger': member && member.status === 'DIBLOKIR', 'border-success': member && member.status === 'AKTIF'}">
+                        <button @click="resetMember()" class="absolute top-4 right-4 text-slate-400 hover:text-danger"><i class="fa-solid fa-times"></i></button>
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="h-14 w-14 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold">
+                                <span x-text="member ? member.nama.charAt(0) : ''"></span>
+                            </div>
+                            <div>
+                                <h4 class="text-black font-bold text-lg" x-text="member ? member.nama : ''"></h4>
+                                <p class="text-sm font-medium" x-text="member ? member.tipe : ''"></p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 text-sm mt-4 pt-4 border-t border-stroke">
+                            <div>
+                                <p class="text-slate-500">Status Akun</p>
+                                <p class="font-bold" :class="member && member.status === 'AKTIF' ? 'text-success' : 'text-danger'">
+                                    <span x-text="member ? member.status : ''"></span>
+                                    <span x-show="member && member.status === 'DIBLOKIR'" class="block text-xs" x-text="'(Sampai: ' + member.suspended_until + ')'"></span>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-slate-500">Buku Dipinjam</p>
+                                <p class="font-bold text-black"><span x-text="member ? member.active_loans : '0'"></span> / <span x-text="member ? member.max_loans : '0'"></span> Maksimal</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scan Buku -->
+                    <div>
+                        <label class="mb-2.5 block text-black font-medium" :class="{'opacity-50': !canBorrow}">2. Barcode Buku (Item)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                                <i class="fa-solid fa-barcode"></i>
+                            </span>
+                            <input type="text" x-model="borrowBookId" @keydown.enter="processBorrow()" :disabled="!canBorrow" placeholder="Scan Barcode Buku lalu tekan Enter..." class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 pl-12 pr-5 outline-none transition focus:border-primary active:border-primary disabled:cursor-not-allowed disabled:bg-whiter">
+                        </div>
+                        <p x-show="!canBorrow && member && member.status === 'AKTIF'" class="mt-2 text-xs text-danger font-medium"><i class="fa-solid fa-info-circle"></i> Anggota telah mencapai batas maksimal peminjaman.</p>
+                        <p x-show="member && member.status === 'DIBLOKIR'" class="mt-2 text-xs text-danger font-medium"><i class="fa-solid fa-lock"></i> Anggota sedang diblokir, tidak bisa meminjam.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL PENGEMBALIAN -->
+        <div class="flex flex-col gap-6">
+            <div class="rounded-sm border border-stroke bg-white shadow-default">
+                <div class="border-b border-stroke py-4 px-6.5 flex justify-between items-center">
+                    <h3 class="font-medium text-success text-lg"><i class="fa-solid fa-arrow-right-to-bracket mr-2"></i> Mode Pengembalian Cepat</h3>
+                </div>
+                
+                <div class="p-6.5">
+                    <div class="mb-6">
+                        <label class="mb-2.5 block text-black font-medium">Scan Barcode Buku</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                                <i class="fa-solid fa-barcode"></i>
+                            </span>
+                            <input type="text" x-model="returnBookId" @keydown.enter="processReturn()" :disabled="isLoadingReturn" placeholder="Scan Barcode Buku yang kembali..." class="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 pl-12 pr-5 outline-none transition focus:border-success active:border-success">
+                        </div>
+                    </div>
+
+                    <!-- Log Aktivitas Terakhir -->
+                    <div>
+                        <h4 class="mb-3 font-medium text-black">Histori Transaksi Sesi Ini</h4>
+                        <div class="flex flex-col gap-3 max-h-80 overflow-y-auto pr-2">
+                            
+                            <template x-if="logs.length === 0">
+                                <div class="text-center py-6 bg-slate-50 border border-stroke rounded border-dashed">
+                                    <p class="text-sm text-slate-400">Belum ada transaksi di sesi ini.</p>
+                                </div>
+                            </template>
+
+                            <template x-for="log in logs.slice().reverse()" :key="log.id">
+                                <div class="p-3 rounded border text-sm" :class="log.type === 'borrow' ? 'bg-blue-50 border-blue-200' : (log.denda > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200')">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <span class="font-bold text-black">
+                                            <i class="fa-solid" :class="log.type === 'borrow' ? 'fa-arrow-right-from-bracket text-primary' : 'fa-arrow-right-to-bracket text-success'"></i>
+                                            <span x-text="log.type === 'borrow' ? ' Peminjaman' : ' Pengembalian'"></span>
+                                        </span>
+                                        <span class="text-xs text-slate-500" x-text="log.time"></span>
+                                    </div>
+                                    <p class="text-black mb-1"><span class="font-medium" x-text="log.buku_judul"></span> (<span x-text="log.buku_id"></span>)</p>
+                                    <p class="text-slate-600">Oleh: <span class="font-medium" x-text="log.anggota_nama"></span></p>
+                                    
+                                    <div x-show="log.denda > 0" class="mt-2 pt-2 border-t border-red-200 flex justify-between text-danger font-bold">
+                                        <span>Terlambat <span x-text="log.terlambat_hari"></span> hari</span>
+                                        <span>Denda: Rp <span x-text="log.denda"></span></span>
+                                    </div>
+                                </div>
+                            </template>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sirkulasiApp() {
+    return {
+        memberId: '',
+        member: null,
+        isLoadingMember: false,
+        
+        borrowBookId: '',
+        isBorrowing: false,
+        
+        returnBookId: '',
+        isLoadingReturn: false,
+        
+        logs: [],
+        logCounter: 0,
+        
+        alert: { show: false, type: '', title: '', message: '' },
+        
+        get canBorrow() {
+            if (!this.member) return false;
+            if (this.member.status !== 'AKTIF') return false;
+            if (this.member.active_loans >= this.member.max_loans) return false;
+            return true;
+        },
+
+        showAlert(type, title, message) {
+            this.alert = { show: true, type, title, message };
+            setTimeout(() => { this.alert.show = false; }, 5000);
+        },
+
+        resetMember() {
+            this.member = null;
+            this.memberId = '';
+            this.borrowBookId = '';
+            // Don't focus immediately to allow smooth transition
+            setTimeout(() => document.querySelector('[x-model="memberId"]').focus(), 100);
+        },
+
+        async fetchMember() {
+            if (!this.memberId.trim()) return;
+            this.isLoadingMember = true;
+            
+            // Dummy simulation for now until backend API is ready
+            // We will hook this up to actual Python backend next.
+            setTimeout(() => {
+                this.member = {
+                    id: this.memberId,
+                    nama: 'Fr. ' + this.memberId, // Dummy
+                    tipe: 'Reguler',
+                    status: 'AKTIF', // Or DIBLOKIR
+                    suspended_until: '-',
+                    active_loans: 0,
+                    max_loans: 2
+                };
+                this.isLoadingMember = false;
+                
+                // Focus on borrow book input
+                setTimeout(() => document.querySelector('[x-model="borrowBookId"]').focus(), 100);
+            }, 500);
+        },
+
+        async processBorrow() {
+            if (!this.borrowBookId.trim() || !this.canBorrow) return;
+            this.isBorrowing = true;
+            
+            // Dummy simulation
+            setTimeout(() => {
+                this.logCounter++;
+                this.logs.push({
+                    id: this.logCounter,
+                    type: 'borrow',
+                    time: new Date().toLocaleTimeString('id-ID'),
+                    buku_judul: 'Buku Dummy ' + this.borrowBookId,
+                    buku_id: this.borrowBookId,
+                    anggota_nama: this.member.nama,
+                    denda: 0
+                });
+                
+                this.showAlert('success', 'Berhasil', `Buku <b>${this.borrowBookId}</b> berhasil dipinjamkan kepada <b>${this.member.nama}</b>.`);
+                this.member.active_loans++;
+                this.borrowBookId = '';
+                this.isBorrowing = false;
+            }, 500);
+        },
+
+        async processReturn() {
+            if (!this.returnBookId.trim()) return;
+            this.isLoadingReturn = true;
+            
+            // Dummy simulation
+            setTimeout(() => {
+                this.logCounter++;
+                // Randomize fake fine for UI testing
+                let isLate = Math.random() > 0.7;
+                let days = isLate ? 3 : 0;
+                let denda = days * 500;
+                
+                this.logs.push({
+                    id: this.logCounter,
+                    type: 'return',
+                    time: new Date().toLocaleTimeString('id-ID'),
+                    buku_judul: 'Buku Dummy ' + this.returnBookId,
+                    buku_id: this.returnBookId,
+                    anggota_nama: 'Fr. Anonymous',
+                    denda: denda,
+                    terlambat_hari: days
+                });
+                
+                if (denda > 0) {
+                    this.showAlert('error', 'Terlambat & Denda', `Buku kembali terlambat ${days} hari. Denda Rp ${denda}. Akun otomatis dibekukan.`);
+                } else {
+                    this.showAlert('success', 'Berhasil', `Buku <b>${this.returnBookId}</b> berhasil dikembalikan tepat waktu.`);
+                }
+                
+                this.returnBookId = '';
+                this.isLoadingReturn = false;
+            }, 500);
+        }
+    }
+}
+</script>
+{% endblock %}

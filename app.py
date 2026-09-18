@@ -1383,5 +1383,11 @@ def export_kunjungan():
 
 
 
+
+@app.route('/sirkulasi')
+@login_required
+def sirkulasi():
+    return render_template('sirkulasi.html', page_title="Sirkulasi & Kasir")
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
