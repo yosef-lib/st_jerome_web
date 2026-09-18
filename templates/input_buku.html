@@ -162,7 +162,11 @@
 
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('inputBuku', () => ({
+    Alpine.data('inputBuku', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    return {
+        editMode: !!editId,
         form: {
             biblio_id: null,
             judul: '',
@@ -348,7 +352,8 @@ document.addEventListener('alpine:init', () => {
                 this.isSubmitting = false;
             }
         }
-    }));
+        };
+});
 });
 </script>
 {% endblock %}
