@@ -64,7 +64,7 @@ def logout():
 
 @app.route('/')
 def index():
-    if 'user_id' in session:
+    if 'logged_in' in session:
         return render_template('index.html')
     return redirect(url_for('opac_page'))
 
