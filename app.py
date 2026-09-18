@@ -1983,16 +1983,24 @@ def api_koleksi_list():
         
         conn = database.get_db_connection()
         
-        query = """
+        where_clause = "(b.judul LIKE ? OR b.pengarang LIKE ? OR b.klasifikasi LIKE ?)"
+        params = [f'%{search}%', f'%{search}%', f'%{search}%']
+        
+        if cover_status == 'has_cover':
+            where_clause += " AND ((b.image IS NOT NULL AND b.image != '' AND b.image != 'NOT_FOUND') OR (b.isbn IS NOT NULL AND b.isbn != ''))"
+        elif cover_status == 'no_cover':
+            where_clause += " AND (b.isbn IS NULL OR b.isbn = '') AND (b.image IS NULL OR b.image = '' OR b.image = 'NOT_FOUND')"
+            
+        query = f"""
             SELECT b.*, COUNT(e.no_induk) as jumlah_eksemplar
             FROM bibliografi b
             LEFT JOIN eksemplar e ON b.id = e.biblio_id
-            WHERE b.judul LIKE ? OR b.pengarang LIKE ? OR b.klasifikasi LIKE ?
+            WHERE {where_clause}
             GROUP BY b.id
             ORDER BY b.id DESC
             LIMIT ? OFFSET ?
         """
-        cursor = conn.execute(query, (f'%{search}%', f'%{search}%', f'%{search}%', per_page, offset))
+        cursor = conn.execute(query, tuple(params + [per_page, offset]))
         results = [dict(row) for row in cursor.fetchall()]
         
         import re
@@ -2005,7 +2013,6 @@ def api_koleksi_list():
                 else:
                     row['cover_url'] = f"/static/uploads/{row['image']}"
             elif row.get('isbn'):
-                # Extract first clean ISBN (remove hyphens, non-alphanumeric except X)
                 raw_isbn = str(row['isbn']).split(',')[0].split(' ')[0].upper()
                 cleaned = re.sub(r'[^0-9X]', '', raw_isbn)
                 if cleaned:
@@ -2015,7 +2022,8 @@ def api_koleksi_list():
             else:
                 row['cover_url'] = None
         
-        total = conn.execute("SELECT COUNT(*) FROM bibliografi WHERE judul LIKE ? OR pengarang LIKE ?", (f'%{search}%', f'%{search}%')).fetchone()[0]
+        total_query = f"SELECT COUNT(*) FROM bibliografi b WHERE {where_clause}"
+        total = conn.execute(total_query, tuple(params)).fetchone()[0]
         conn.close()
         return jsonify({
             'data': results,
