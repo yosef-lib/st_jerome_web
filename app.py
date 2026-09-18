@@ -1977,6 +1977,7 @@ def api_koleksi_list():
     try:
         search = request.args.get('search', '')
         page = int(request.args.get('page', 1))
+        cover_status = request.args.get('cover_status', 'all')
         per_page = 20
         offset = (page - 1) * per_page
         

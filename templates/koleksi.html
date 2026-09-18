@@ -42,6 +42,13 @@
             </span>
             <input type="text" x-model="searchQuery" @input.debounce.500ms="loadData(1)" class="w-full border border-stroke rounded pl-10 pr-3 py-2 outline-none focus:border-primary text-black" placeholder="Cari Judul, Pengarang, atau DDC...">
         </div>
+        <div>
+            <select x-model="coverStatus" @change="loadData(1)" class="border border-stroke rounded px-3 py-2 outline-none focus:border-primary bg-white text-slate-700 font-medium">
+                <option value="all">Semua Buku</option>
+                <option value="has_cover">? Sudah Bersampul</option>
+                <option value="no_cover">? Belum Bersampul</option>
+            </select>
+        </div>
     </div>
 
     <div class="overflow-x-auto relative">
@@ -169,6 +176,7 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('koleksiManager', () => ({
         searchQuery: '',
+        coverStatus: 'all',
         bibliografi: [],
         totalData: 0,
         currentPage: 1,
@@ -301,7 +309,7 @@ document.addEventListener('alpine:init', () => {
             this.currentPage = page;
             this.expandedId = null;
             try {
-                const res = await fetch('/api/koleksi/list?search=' + encodeURIComponent(this.searchQuery) + '&page=' + page);
+                const res = await fetch('/api/koleksi/list?search=' + encodeURIComponent(this.searchQuery) + '&cover_status=' + this.coverStatus + '&page=' + page);
                 const data = await res.json();
                 this.bibliografi = data.data;
                 this.totalData = data.total;
