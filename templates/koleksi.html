@@ -143,6 +143,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 const res = await fetch('/api/bibliografi/' + id, { method: 'DELETE', credentials: 'same-origin' });
                 if (res.status === 401) { alert('Sesi habis! Silakan refresh halaman dan coba lagi.'); return; }
+                if (!res.ok) { const txt = await res.text(); console.error(txt); alert('Server Error ' + res.status + ': Silakan cek console browser (F12) untuk detailnya.'); return; }
                 const data = await res.json();
                 if (data.status === 'success') {
                     this.expandedId = null;
@@ -159,6 +160,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 const res = await fetch('/api/eksemplar/' + encodeURIComponent(no_induk), { method: 'DELETE', credentials: 'same-origin' });
                 if (res.status === 401) { alert('Sesi habis! Silakan refresh halaman dan coba lagi.'); return; }
+                if (!res.ok) { const txt = await res.text(); console.error(txt); alert('Server Error ' + res.status + ': Silakan cek console browser (F12) untuk detailnya.'); return; }
                 const data = await res.json();
                 if (data.status === 'success') {
                     const bid = this.expandedId;
