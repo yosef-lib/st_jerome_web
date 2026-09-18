@@ -1659,7 +1659,7 @@ def api_return():
 def api_missing_covers():
     conn = database.get_db_connection()
     # Get up to 100 books that lack both ISBN and image
-    cursor = conn.execute("SELECT id, judul, pengarang FROM bibliografi WHERE (isbn IS NULL OR isbn = '') AND (image IS NULL OR image = '') LIMIT 100")
+    cursor = conn.execute("SELECT id, judul, pengarang FROM bibliografi WHERE (isbn IS NULL OR isbn = '') AND (image IS NULL OR image = '') LIMIT 50")
     results = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return jsonify(results)
@@ -1997,7 +1997,9 @@ def api_koleksi_list():
         import re
         for row in results:
             if row.get('image'):
-                if row['image'].startswith('http'):
+                if row['image'] == 'NOT_FOUND':
+                    row['cover_url'] = None
+                elif row['image'].startswith('http'):
                     row['cover_url'] = row['image']
                 else:
                     row['cover_url'] = f"/static/uploads/{row['image']}"
