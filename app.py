@@ -1395,6 +1395,7 @@ def sirkulasi():
 # ==============================================================
 
 @app.route('/api/sirkulasi/member/<member_id>', methods=['GET'])
+@login_required
 def api_get_member(member_id):
     conn = database.get_db_connection()
     member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
@@ -1630,3 +1631,14 @@ def api_return():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+@app.route('/api/debug/db_path', methods=['GET'])
+def api_debug_db():
+    import os
+    import database
+    return jsonify({
+        'cwd': os.getcwd(),
+        'db_path_relative': database.DB_NAME,
+        'db_path_absolute': os.path.abspath(database.DB_NAME),
+        'db_exists': os.path.exists(os.path.abspath(database.DB_NAME))
+    })
