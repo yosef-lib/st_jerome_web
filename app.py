@@ -1907,3 +1907,25 @@ def api_koleksi_eksemplar(biblio_id):
     results = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return jsonify(results)
+
+@app.route('/api/debug/koleksi', methods=['GET'])
+def api_debug_koleksi():
+    import traceback
+    import database
+    try:
+        conn = database.get_db_connection()
+        query = """
+            SELECT b.*, COUNT(e.no_induk) as jumlah_eksemplar
+            FROM bibliografi b
+            LEFT JOIN eksemplar e ON b.id = e.biblio_id
+            WHERE b.judul LIKE ?
+            GROUP BY b.id
+            ORDER BY b.id DESC
+            LIMIT 10
+        """
+        cursor = conn.execute(query, ('%%',))
+        results = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return jsonify({'status': 'success', 'data': results})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()})
