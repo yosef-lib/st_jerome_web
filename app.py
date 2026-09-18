@@ -63,9 +63,14 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/')
-@login_required
 def index():
-    return render_template('index.html')
+    if 'user_id' in session:
+        return render_template('index.html')
+    return redirect(url_for('opac_page'))
+
+@app.route('/opac')
+def opac_page():
+    return render_template('opac.html')
 
 @app.route('/input_buku')
 @login_required
@@ -1676,6 +1681,130 @@ def api_save_cover():
         conn.close()
         return jsonify({'status': 'success'})
     return jsonify({'status': 'error'})
+
+
+# ==========================================
+# OPAC & PUBLIC APIs
+# ==========================================
+
+@app.route('/api/opac/search', methods=['GET'])
+def api_opac_search():
+    search = request.args.get('q', '').strip()
+    if not search:
+        return jsonify([])
+        
+    conn = database.get_db_connection()
+    
+    # Track zero-result queries if they yield nothing (handled below)
+    query = """
+        SELECT b.id, b.judul, b.pengarang, b.penerbit, b.tahun_terbit, b.klasifikasi, b.image, b.isbn,
+               COUNT(e.no_induk) as total_eksemplar,
+               SUM(CASE WHEN e.status_ketersediaan = 'Tersedia' THEN 1 ELSE 0 END) as tersedia
+        FROM bibliografi b
+        LEFT JOIN eksemplar e ON b.id = e.biblio_id
+        WHERE b.judul LIKE ? OR b.pengarang LIKE ? OR b.penerbit LIKE ? OR b.klasifikasi LIKE ?
+        GROUP BY b.id
+        ORDER BY b.id DESC
+        LIMIT 50
+    """
+    cursor = conn.execute(query, (f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%'))
+    results = [dict(row) for row in cursor.fetchall()]
+    
+    import re
+    for row in results:
+        # Resolve Cover URL
+        if row.get('image'):
+            if row['image'] == 'NOT_FOUND':
+                row['cover_url'] = None
+            elif row['image'].startswith('http'):
+                row['cover_url'] = row['image']
+            else:
+                row['cover_url'] = f"/static/uploads/{row['image']}"
+        elif row.get('isbn'):
+            raw_isbn = str(row['isbn']).split(',')[0].split(' ')[0].upper()
+            cleaned = re.sub(r'[^0-9X]', '', raw_isbn)
+            if cleaned:
+                row['cover_url'] = f"https://books.google.com/books/content?vid=ISBN{cleaned}&printsec=frontcover&img=1&zoom=1"
+            else:
+                row['cover_url'] = None
+        else:
+            row['cover_url'] = None
+            
+        # Resolve Wayfinding (Location)
+        klas = str(row.get('klasifikasi', ''))
+        lokasi = "Lantai 1 ? Rak Umum"
+        if klas.startswith('1'): lokasi = "Lantai 1 ? Rak Filsafat & Psikologi (100)"
+        elif klas.startswith('2'): lokasi = "Lantai 1 ? Rak Agama & Teologi (200)"
+        elif klas.startswith('3'): lokasi = "Lantai 1 ? Rak Ilmu Sosial (300)"
+        elif klas.startswith('4'): lokasi = "Lantai 2 ? Rak Bahasa (400)"
+        elif klas.startswith('5'): lokasi = "Lantai 2 ? Rak Sains & Matematika (500)"
+        elif klas.startswith('6'): lokasi = "Lantai 2 ? Rak Teknologi (600)"
+        elif klas.startswith('7'): lokasi = "Lantai 2 ? Rak Seni & Rekreasi (700)"
+        elif klas.startswith('8'): lokasi = "Lantai 3 ? Rak Sastra (800)"
+        elif klas.startswith('9'): lokasi = "Lantai 3 ? Rak Sejarah & Geografi (900)"
+        row['lokasi_rak'] = lokasi
+
+    # Zero-Result Hook Logging
+    if len(results) == 0 and len(search) > 3:
+        try:
+            conn.execute("""
+                INSERT INTO pencarian_gagal (keyword, jumlah_pencarian)
+                VALUES (?, 1)
+                ON CONFLICT(keyword) DO UPDATE SET 
+                jumlah_pencarian = jumlah_pencarian + 1,
+                update_terakhir = CURRENT_TIMESTAMP
+            """, (search.lower(),))
+            conn.commit()
+        except:
+            pass
+            
+    conn.close()
+    return jsonify(results)
+
+@app.route('/api/opac/request', methods=['POST'])
+def api_opac_request():
+    data = request.json
+    judul = data.get('judul')
+    pengarang = data.get('pengarang', '')
+    catatan = data.get('catatan', '')
+    
+    if not judul:
+        return jsonify({'status': 'error', 'message': 'Judul/Topik wajib diisi'}), 400
+        
+    conn = database.get_db_connection()
+    conn.execute(
+        "INSERT INTO usulan_buku (judul_topik, pengarang, catatan) VALUES (?, ?, ?)",
+        (judul, pengarang, catatan)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success'})
+
+@app.route('/api/opac/reserve', methods=['POST'])
+def api_opac_reserve():
+    data = request.json
+    biblio_id = data.get('biblio_id')
+    nim = data.get('nim')
+    
+    if not biblio_id or not nim:
+        return jsonify({'status': 'error', 'message': 'NIM dan ID Buku wajib diisi'}), 400
+        
+    conn = database.get_db_connection()
+    
+    # Check if already reserved
+    existing = conn.execute("SELECT id FROM reservasi WHERE biblio_id = ? AND nim_pemustaka = ? AND status = 'Aktif'", (biblio_id, nim)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Anda sudah mereservasi buku ini dan sedang dalam antrean.'}), 400
+        
+    conn.execute(
+        "INSERT INTO reservasi (biblio_id, nim_pemustaka) VALUES (?, ?)",
+        (biblio_id, nim)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success'})
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
