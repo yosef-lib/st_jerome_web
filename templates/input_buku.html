@@ -241,7 +241,11 @@
     </div>
 </dialog>
 
+
+
+
 <script>
+document.addEventListener("DOMContentLoaded", function() {
     const ddcData = [
         { code: "000", desc: "Komputer, Informasi, & Karya Umum" },
         { code: "100", desc: "Filsafat & Psikologi" },
@@ -298,10 +302,56 @@
         { code: "900", desc: "Sejarah & Geografi" }
     ];
 
+    const ddcKeywords = [
+        { keywords: ["komputer", "informasi", "sistem", "data", "software", "program", "internet"], code: "000" },
+        { keywords: ["filsafat", "logika", "metafisika", "epistemologi", "filosofi"], code: "100" },
+        { keywords: ["psikologi", "mental", "jiwa", "depresi", "karakter", "kepribadian"], code: "150" },
+        { keywords: ["agama", "iman", "kepercayaan", "teologi", "Tuhan"], code: "200" },
+        { keywords: ["alkitab", "bibel", "injil", "perjanjian", "mazmur", "taurat"], code: "220" },
+        { keywords: ["kristen", "kekristenan", "protestan"], code: "230" },
+        { keywords: ["allah", "tritunggal", "bapa", "roh kudus"], code: "231" },
+        { keywords: ["yesus", "kristus", "kristologi", "salib"], code: "232" },
+        { keywords: ["keselamatan", "soteriologi", "dosa", "rahmat", "penebusan"], code: "234" },
+        { keywords: ["eskatologi", "akhir zaman", "kiamat"], code: "236" },
+        { keywords: ["moral", "etika", "baik buruk", "hati nurani"], code: "240" },
+        { keywords: ["pastoral", "gembala", "umat", "paroki"], code: "253" },
+        { keywords: ["liturgi", "ibadah", "misa", "ekaristi", "nyanyian gereja"], code: "264" },
+        { keywords: ["sakramen", "baptis", "krisma", "imamat"], code: "265" },
+        { keywords: ["misi", "penginjilan", "misionaris"], code: "266" },
+        { keywords: ["sejarah gereja", "bapa gereja", "patristik", "konsili"], code: "270" },
+        { keywords: ["katolik", "roma", "paus", "uskup", "vatikan"], code: "282" },
+        { keywords: ["islam", "muslim", "quran", "muhammad"], code: "297" },
+        { keywords: ["sosial", "sosiologi", "masyarakat", "komunitas"], code: "300" },
+        { keywords: ["politik", "negara", "pemerintah", "demokrasi"], code: "320" },
+        { keywords: ["ekonomi", "bisnis", "uang", "manajemen", "keuangan"], code: "330" },
+        { keywords: ["hukum", "undang", "pidana", "perdata"], code: "340" },
+        { keywords: ["kanonik", "hukum gereja", "codex iuris canonici"], code: "348" },
+        { keywords: ["pendidikan", "sekolah", "guru", "belajar", "pedagogi"], code: "370" },
+        { keywords: ["bahasa", "linguistik", "tata bahasa", "kamus"], code: "400" },
+        { keywords: ["latin"], code: "470" },
+        { keywords: ["yunani"], code: "480" },
+        { keywords: ["ibrani"], code: "492.4" },
+        { keywords: ["sains", "ilmu pengetahuan", "biologi", "fisika", "kimia", "alam"], code: "500" },
+        { keywords: ["matematika", "kalkulus", "aljabar"], code: "510" },
+        { keywords: ["teknologi", "teknik", "mesin", "industri"], code: "600" },
+        { keywords: ["kedokteran", "medis", "kesehatan", "penyakit"], code: "610" },
+        { keywords: ["seni", "kesenian", "lukisan", "estetika"], code: "700" },
+        { keywords: ["arsitektur", "bangunan", "candi", "gereja (bangunan)"], code: "720" },
+        { keywords: ["musik", "lagu", "nyanyian", "not balok"], code: "780" },
+        { keywords: ["sastra", "novel", "puisi", "cerpen", "dongeng", "fiksi"], code: "800" },
+        { keywords: ["sejarah", "historis", "perang", "masalalu"], code: "900" },
+        { keywords: ["geografi", "peta", "bumi", "wilayah"], code: "910" },
+        { keywords: ["biografi", "riwayat", "tokoh", "otobiografi", "memoar"], code: "920" }
+    ];
+
     const ddcList = document.getElementById('ddcList');
     const searchDDC = document.getElementById('searchDDC');
-
+    const inputKlasifikasi = document.getElementById('input_klasifikasi');
+    const inputJudul = document.querySelector('input[name="judul"]');
+    
+    // --- FITUR 1: RENDER KAMUS DDC ---
     function renderDDC(filterText = "") {
+        if(!ddcList) return;
         ddcList.innerHTML = '';
         const filtered = ddcData.filter(item => 
             item.code.includes(filterText) || item.desc.toLowerCase().includes(filterText.toLowerCase())
@@ -316,8 +366,11 @@
             const li = document.createElement('li');
             li.className = "flex justify-between items-center p-3 border-b border-stroke hover:bg-slate-50 cursor-pointer transition";
             li.onclick = () => {
-                document.getElementById('input_klasifikasi').value = item.code;
+                inputKlasifikasi.value = item.code;
                 document.getElementById('ddcModal').close();
+                // Add a small success effect
+                inputKlasifikasi.classList.add('bg-success', 'bg-opacity-20');
+                setTimeout(() => inputKlasifikasi.classList.remove('bg-success', 'bg-opacity-20'), 1000);
             };
             li.innerHTML = 
                 <div>
@@ -330,10 +383,67 @@
         });
     }
 
-    searchDDC.addEventListener('input', (e) => renderDDC(e.target.value));
+    if(searchDDC) {
+        searchDDC.addEventListener('input', (e) => renderDDC(e.target.value));
+        renderDDC();
+    }
     
-    // Render initial list
-    renderDDC();
+    // --- FITUR 2: AUTO-DETECT DDC DARI JUDUL BUKU ---
+    if(inputJudul) {
+        // Buat elemen label rekomendasi di bawah input klasifikasi
+        const recLabel = document.createElement('div');
+        recLabel.className = 'mt-2 text-xs text-primary font-medium hidden';
+        recLabel.innerHTML = '<i class="fa-solid fa-sparkles"></i> Rekomendasi AI: <span id="recDDCValue" class="font-bold cursor-pointer hover:underline"></span> (<span id="recDDCDesc"></span>)';
+        inputKlasifikasi.parentNode.appendChild(recLabel);
+
+        const recDDCValue = document.getElementById('recDDCValue');
+        const recDDCDesc = document.getElementById('recDDCDesc');
+        
+        // Kalau diklik rekomendasinya, langsung masuk
+        recDDCValue.addEventListener('click', function() {
+            inputKlasifikasi.value = this.innerText;
+            inputKlasifikasi.classList.add('bg-success', 'bg-opacity-20');
+            setTimeout(() => inputKlasifikasi.classList.remove('bg-success', 'bg-opacity-20'), 1000);
+        });
+
+        inputJudul.addEventListener('input', function(e) {
+            const judul = e.target.value.toLowerCase();
+            let matchedCode = null;
+            let matchedDesc = null;
+            
+            if (judul.trim().length > 3) {
+                for (let category of ddcKeywords) {
+                    for (let keyword of category.keywords) {
+                        if (judul.includes(keyword)) {
+                            matchedCode = category.code;
+                            break;
+                        }
+                    }
+                    if (matchedCode) break; // Ambil kecocokan pertama
+                }
+            }
+            
+            if (matchedCode) {
+                // Cari deskripsi
+                const catInfo = ddcData.find(d => d.code === matchedCode);
+                matchedDesc = catInfo ? catInfo.desc : "";
+                
+                recDDCValue.innerText = matchedCode;
+                recDDCDesc.innerText = matchedDesc;
+                recLabel.classList.remove('hidden');
+                
+                // Jika klasifikasi masih kosong, isikan secara otomatis
+                if(inputKlasifikasi.value.trim() === '') {
+                    inputKlasifikasi.value = matchedCode;
+                    inputKlasifikasi.classList.add('bg-success', 'bg-opacity-10');
+                    setTimeout(() => inputKlasifikasi.classList.remove('bg-success', 'bg-opacity-10'), 1000);
+                }
+            } else {
+                recLabel.classList.add('hidden');
+            }
+        });
+    }
+});
 </script>
 
 {% endblock %}
