@@ -1699,7 +1699,7 @@ def api_opac_search():
     query = """
         SELECT b.id, b.judul, b.pengarang, b.penerbit, b.tahun_terbit, b.klasifikasi, b.image, b.isbn,
                COUNT(e.no_induk) as total_eksemplar,
-               SUM(CASE WHEN e.status_ketersediaan = 'Tersedia' THEN 1 ELSE 0 END) as tersedia
+               SUM(CASE WHEN (e.status_ketersediaan = 'Tersedia' AND (e.status_buku IS NULL OR e.status_buku != 'DIPINJAM')) THEN 1 ELSE 0 END) as tersedia
         FROM bibliografi b
         LEFT JOIN eksemplar e ON b.id = e.biblio_id
         WHERE b.judul LIKE ? OR b.pengarang LIKE ? OR b.penerbit LIKE ? OR b.klasifikasi LIKE ?
