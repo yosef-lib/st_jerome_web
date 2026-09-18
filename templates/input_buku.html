@@ -113,6 +113,15 @@
                 </div>
             </div>
 
+            
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium mb-1">Gambar Sampul / Cover (Opsional)</label>
+                        <input type="file" @change="handleFile" accept="image/*" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black">
+                        <div x-show="imagePreview" class="mt-2">
+                            <img :src="imagePreview" class="h-32 object-contain border border-stroke rounded p-1">
+                        </div>
+                    </div>
+
             <!-- SECTION 2: Eksemplar -->
             <div class="mb-4">
                 <h3 class="text-md font-semibold border-b border-stroke pb-2 mb-4 text-slate-700">2. Pembuatan Eksemplar (Barcode)</h3>
@@ -166,6 +175,18 @@ document.addEventListener('alpine:init', () => {
             bahasa: 'Indonesia',
             jumlah: 1
         },
+
+        imageFile: null,
+        imagePreview: null,
+        
+        handleFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                this.imageFile = file;
+                this.imagePreview = URL.createObjectURL(file);
+            }
+        },
+
         biblioResults: [],
         ddcResults: [],
         isSubmitting: false,
@@ -249,12 +270,23 @@ document.addEventListener('alpine:init', () => {
             this.isSubmitting = true;
             this.notif.show = false;
             
+
             try {
+                const formData = new FormData();
+                for (let key in this.form) {
+                    if (this.form[key] !== null && this.form[key] !== '') {
+                        formData.append(key, this.form[key]);
+                    }
+                }
+                if (this.imageFile) {
+                    formData.append('image', this.imageFile);
+                }
+
                 const res = await fetch('/api/buku/input_batch', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(this.form)
+                    body: formData
                 });
+
                 const data = await res.json();
                 
                 if (data.status === 'success') {
