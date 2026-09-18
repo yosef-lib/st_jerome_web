@@ -7,7 +7,10 @@ import io
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'stjerome_secret_key'
+app.secret_key = 'stjerome_secret_key_imavi_2026'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
 ANTREAN_FILE = 'antrian_stiker.json'
 
 def login_required(f):
@@ -26,6 +29,7 @@ if not os.path.exists(database.DB_NAME):
 def login():
     if request.method == 'POST':
         if request.form['username'] == 'yosef' and request.form['password'] == 'bcajember':
+            session.permanent = True
             session['logged_in'] = True
             return redirect(url_for('index'))
         else:
