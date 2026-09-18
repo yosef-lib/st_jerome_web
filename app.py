@@ -21,6 +21,16 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def api_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            return jsonify({'status': 'error', 'message': 'Sesi tidak valid, silakan refresh halaman.'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+
 # Inisialisasi database jika belum ada
 if not os.path.exists(database.DB_NAME):
     database.init_db()
@@ -52,7 +62,7 @@ def input_buku():
     return render_template('input_buku.html')
 
 @app.route('/api/antrean', methods=['GET'])
-@login_required
+@api_login_required
 def get_antrean():
     if os.path.exists(ANTREAN_FILE):
         with open(ANTREAN_FILE, 'r') as f:
@@ -92,7 +102,7 @@ def cetak_khusus():
     return render_template('cetak_khusus.html', koleksi_list=[dict(row) for row in koleksi], search=search, page=page, total_pages=total_pages)
 
 @app.route('/api/cetak_khusus', methods=['POST'])
-@login_required
+@api_login_required
 def api_cetak_khusus():
     import json, os, tempfile
     from template_stiker import generate_stiker_pdf
@@ -129,7 +139,7 @@ def api_cetak_khusus():
 
 
 @app.route('/api/buku/<path:no_induk>', methods=['GET'])
-@login_required
+@api_login_required
 def get_buku(no_induk):
     conn = database.get_db_connection()
     buku = conn.execute("SELECT * FROM buku WHERE no_induk = ?", (no_induk,)).fetchone()
@@ -140,7 +150,7 @@ def get_buku(no_induk):
     return jsonify({'status': 'error', 'message': 'Not found'}), 404
 
 @app.route('/api/antrean', methods=['POST'])
-@login_required
+@api_login_required
 def add_antrean():
     data = request.json
     
@@ -184,7 +194,7 @@ def add_antrean():
     return jsonify({'status': 'success'})
 
 @app.route('/api/antrean/hapus', methods=['POST'])
-@login_required
+@api_login_required
 def hapus_antrean():
     no_induk = request.json.get('no_induk')
     index = request.json.get('index')
@@ -208,14 +218,14 @@ def hapus_antrean():
     return jsonify({'status': 'success'})
 
 @app.route('/api/antrean/hapus_semua', methods=['POST'])
-@login_required
+@api_login_required
 def hapus_semua_antrean():
     if os.path.exists(ANTREAN_FILE):
         os.remove(ANTREAN_FILE)
     return jsonify({'status': 'success'})
 
 @app.route('/api/antrean/existing', methods=['POST'])
-@login_required
+@api_login_required
 def add_antrean_existing():
     data = request.json
     no_induk = data.get('no_induk')
@@ -275,7 +285,7 @@ def cetak_sirkulasi():
     return render_template('cetak_sirkulasi.html', koleksi_list=[dict(row) for row in buku_list], page=page, total_pages=total_pages, search=search)
 
 @app.route('/api/cetak_sirkulasi', methods=['POST'])
-@login_required
+@api_login_required
 def api_cetak_sirkulasi():
     import json, os, tempfile
     from template_stiker import generate_stiker_pdf
@@ -1399,7 +1409,7 @@ def sirkulasi():
 # ==============================================================
 
 @app.route('/api/sirkulasi/member/<member_id>', methods=['GET'])
-@login_required
+@api_login_required
 def api_get_member(member_id):
     conn = database.get_db_connection()
     member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
@@ -1470,7 +1480,7 @@ def api_get_member(member_id):
 
 
 @app.route('/api/sirkulasi/pay_fine', methods=['POST'])
-@login_required
+@api_login_required
 def api_pay_fine():
     data = request.json
     loan_id = data.get('loan_id')
@@ -1497,7 +1507,7 @@ def api_pay_fine():
     return jsonify({'status': 'success', 'message': 'Denda lunas.'})
 
 @app.route('/api/sirkulasi/borrow', methods=['POST'])
-@login_required
+@api_login_required
 def api_borrow():
     data = request.json
     member_id = data.get('member_id')
@@ -1548,7 +1558,7 @@ def calculate_working_days(start_date, end_date, conn):
 
 
 @app.route('/api/sirkulasi/renew', methods=['POST'])
-@login_required
+@api_login_required
 def api_renew():
     data = request.json
     book_id = data.get('book_id')
@@ -1588,7 +1598,7 @@ def api_renew():
     return jsonify({'status': 'success', 'message': 'Berhasil diperpanjang 14 hari.', 'new_due_date': new_due_date.strftime('%Y-%m-%d')})
 
 @app.route('/api/sirkulasi/return', methods=['POST'])
-@login_required
+@api_login_required
 def api_return():
     data = request.json
     book_id = data.get('book_id')
@@ -1763,7 +1773,7 @@ def api_force_migrate():
         return jsonify({'status': 'error', 'message': str(e), 'trace': traceback.format_exc()})
 
 @app.route('/api/ddc/search', methods=['GET'])
-@login_required
+@api_login_required
 def api_ddc_search():
     keyword = request.args.get('q', '').lower()
     import json
@@ -1799,7 +1809,7 @@ def api_ddc_search():
 
 
 @app.route('/api/bibliografi/search', methods=['GET'])
-@login_required
+@api_login_required
 def api_biblio_search():
     keyword = request.args.get('q', '')
     conn = database.get_db_connection()
@@ -1810,7 +1820,7 @@ def api_biblio_search():
     return jsonify(results)
 
 @app.route('/api/buku/input_batch', methods=['POST'])
-@login_required
+@api_login_required
 def api_input_batch():
     from werkzeug.utils import secure_filename
     import os
@@ -1914,7 +1924,7 @@ def api_input_batch():
 
 
 @app.route('/api/koleksi/list', methods=['GET'])
-@login_required
+@api_login_required
 def api_koleksi_list():
     import traceback
     try:
@@ -1950,7 +1960,7 @@ def api_koleksi_list():
 
 
 @app.route('/api/koleksi/eksemplar/<int:biblio_id>', methods=['GET'])
-@login_required
+@api_login_required
 def api_koleksi_eksemplar(biblio_id):
     conn = database.get_db_connection()
     cursor = conn.execute("SELECT no_induk, status_ketersediaan, status_buku, lokasi, tgl_terima FROM eksemplar WHERE biblio_id = ? ORDER BY no_induk", (biblio_id,))
@@ -2015,7 +2025,7 @@ def api_debug_files():
     return jsonify(files_found)
 
 @app.route('/api/bibliografi/<int:id>', methods=['DELETE'])
-@login_required
+@api_login_required
 def api_delete_biblio(id):
     import database
     conn = database.get_db_connection()
@@ -2028,7 +2038,7 @@ def api_delete_biblio(id):
     return jsonify({'status': 'success'})
 
 @app.route('/api/eksemplar/<string:no_induk>', methods=['DELETE'])
-@login_required
+@api_login_required
 def api_delete_eksemplar(no_induk):
     import database
     conn = database.get_db_connection()
@@ -2038,7 +2048,7 @@ def api_delete_eksemplar(no_induk):
     return jsonify({'status': 'success'})
 
 @app.route('/api/bibliografi/get/<int:id>', methods=['GET'])
-@login_required
+@api_login_required
 def api_get_biblio(id):
     import database
     conn = database.get_db_connection()
