@@ -7,6 +7,17 @@ import io
 from functools import wraps
 
 app = Flask(__name__)
+
+@app.errorhandler(500)
+def internal_error(error):
+    import traceback
+    return jsonify({
+        'status': 'error', 
+        'message': 'Internal Server Error: ' + str(error),
+        'trace': traceback.format_exc()
+    }), 500
+
+
 app.secret_key = 'stjerome_secret_key_imavi_2026'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
