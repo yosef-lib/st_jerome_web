@@ -1980,7 +1980,7 @@ def api_koleksi_list():
                 raw_isbn = str(row['isbn']).split(',')[0].split(' ')[0].upper()
                 cleaned = re.sub(r'[^0-9X]', '', raw_isbn)
                 if cleaned:
-                    row['cover_url'] = f"https://covers.openlibrary.org/b/isbn/{cleaned}-M.jpg?default=false"
+                    row['cover_url'] = f"https://books.google.com/books/content?vid=ISBN{cleaned}&printsec=frontcover&img=1&zoom=1"
                 else:
                     row['cover_url'] = None
             else:
