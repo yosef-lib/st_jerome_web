@@ -1903,6 +1903,10 @@ def api_input_batch():
         ))
         if image_filename:
             conn.execute("UPDATE bibliografi SET image = ? WHERE id = ?", (image_filename, biblio_id))
+        
+        # Also update status_buku in all eksemplar
+        if data.get('status_buku'):
+            conn.execute("UPDATE eksemplar SET status_buku = ? WHERE biblio_id = ?", (data.get('status_buku'), biblio_id))
 
     
     if jumlah_eksemplar > 0:
