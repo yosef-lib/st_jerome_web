@@ -284,8 +284,17 @@ def api_cetak_sirkulasi():
     placeholders = ','.join('?' for _ in ids)
     buku_list = []
     if ids:
-        buku_list_raw = conn.execute(f'SELECT * FROM buku WHERE id IN ({placeholders})', ids).fetchall()
-        buku_list = [dict(row) for row in buku_list_raw]
+        buku_list_raw = conn.execute(f'SELECT e.no_induk, b.judul, b.pengarang, b.klasifikasi, b.no_panggil as cutter FROM eksemplar e JOIN bibliografi b ON e.biblio_id = b.id WHERE e.no_induk IN ({placeholders})', ids).fetchall()
+        
+        # Parse no_panggil into klasifikasi, cutter, huruf_judul for the sticker template
+        buku_list = []
+        for row in buku_list_raw:
+            d = dict(row)
+            parts = d.get('cutter', '').split()
+            d['klasifikasi'] = parts[0] if len(parts) > 0 else d.get('klasifikasi', '')
+            d['cutter'] = parts[1] if len(parts) > 1 else ''
+            d['huruf_judul'] = parts[2] if len(parts) > 2 else ''
+            buku_list.append(d)
     conn.close()
     
     if not buku_list:
