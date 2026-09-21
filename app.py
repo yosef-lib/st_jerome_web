@@ -2319,7 +2319,6 @@ def api_robot_status():
 
 
 @app.route('/sirkulasi/cetak_struk/<member_id>')
-@login_required
 def cetak_struk(member_id):
     conn = database.get_db_connection()
     member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
