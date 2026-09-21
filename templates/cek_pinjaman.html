@@ -109,6 +109,115 @@
         </div>
         {% endif %}
 
+        
+        <!-- SELF CHECKOUT SECTION -->
+        {% if request.args.get('source') == 'kiosk' %}
+        <div class="luxury-card p-6 mb-8 border-l-4 border-l-success bg-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 opacity-5">
+                <i class="fa-solid fa-barcode text-9xl"></i>
+            </div>
+            <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center">
+                <div class="w-16 h-16 rounded-full bg-success/10 text-success flex items-center justify-center text-2xl shrink-0">
+                    <i class="fa-solid fa-scanner-touchscreen"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-boxdark text-xl mb-1">Peminjaman Mandiri</h3>
+                    <p class="text-secondary text-sm font-medium mb-4">Gunakan scanner fisik untuk menembak barcode buku yang ingin Anda pinjam hari ini.</p>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-barcode"></i>
+                        </div>
+                        <input type="text" id="kioskBarcode" class="w-full bg-slate-50 border-2 border-stroke rounded-xl pl-12 pr-4 py-4 text-xl font-bold text-boxdark focus:outline-none focus:border-success focus:bg-white transition-all shadow-inner" placeholder="Tembak barcode buku disini..." autocomplete="off" autofocus>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio Beeps -->
+        <script>
+            function playBeepSuccess() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.type = 'sine'; osc.frequency.value = 850;
+                    gain.gain.setValueAtTime(0, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.01);
+                    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+                    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
+                } catch(e) {}
+            }
+            function playBeepError() {
+                // Dimatikan sesuai permintaan
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const input = document.getElementById('kioskBarcode');
+                if(input) {
+                    // Auto-focus protection
+                    document.body.addEventListener('click', () => {
+                        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'BUTTON') {
+                            input.focus();
+                        }
+                    });
+                    
+                    document.addEventListener('keydown', (e) => {
+                        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && e.key.length === 1) {
+                            input.focus();
+                        }
+                    });
+
+                    input.addEventListener('keypress', function(e) {
+                        if(e.key === 'Enter') {
+                            e.preventDefault();
+                            const no_induk = this.value.trim();
+                            if(!no_induk) return;
+                            
+                            this.disabled = true;
+                            
+                            fetch('/api/kiosk_pinjam', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    member_id: "{{ member.member_id }}",
+                                    no_induk: no_induk
+                                })
+                            }).then(r => r.json()).then(data => {
+                                if(data.status === 'success') {
+                                    playBeepSuccess();
+                                    Swal.fire({
+                                        position: 'top',
+                                        icon: 'success',
+                                        title: 'Berhasil Dipinjam!',
+                                        text: data.judul,
+                                        showConfirmButton: false,
+                                        timer: 2000
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    playBeepError();
+                                    Swal.fire('Gagal Meminjam', data.message, 'error');
+                                    this.disabled = false;
+                                    this.value = '';
+                                    this.focus();
+                                }
+                            }).catch(err => {
+                                playBeepError();
+                                Swal.fire('Error', 'Kesalahan jaringan', 'error');
+                                this.disabled = false;
+                                this.value = '';
+                                this.focus();
+                            });
+                        }
+                    });
+                }
+            });
+        </script>
+        {% endif %}
+
         <!-- Daftar Pinjaman -->
         <div class="flex items-center justify-between mb-6">
             <h3 class="font-bold text-boxdark text-xl flex items-center gap-3">
