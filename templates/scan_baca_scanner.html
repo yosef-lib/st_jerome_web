@@ -91,6 +91,24 @@
         }
     }
 
+    
+    function playBeepError() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'square';
+            osc.frequency.value = 150;
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.6);
+        } catch (e) { console.log(e); }
+    }
+
     function submitManual() {
         const no_induk = document.getElementById('manualInput').value.trim();
         if(!no_induk) return;
@@ -110,11 +128,13 @@
                 document.getElementById('resultBox').style.display = 'block';
                 document.getElementById('manualInput').value = ''; 
             } else {
+                playBeepError();
                 document.getElementById('errorMsg').innerText = `No Induk: ${no_induk}`;
                 document.getElementById('errorBox').style.display = 'block';
             }
         }).catch(err => {
             console.error(err);
+            playBeepError();
             document.getElementById('errorMsg').innerText = 'Kesalahan jaringan.';
             document.getElementById('errorBox').style.display = 'block';
         });

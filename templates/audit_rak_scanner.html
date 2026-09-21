@@ -66,15 +66,50 @@
     </div>
 </div>
 
-<audio id="beep_success" src="{{ url_for('static', filename='audio/success.mp3') }}" preload="auto"></audio>
-<audio id="beep_error" src="{{ url_for('static', filename='audio/error.mp3') }}" preload="auto"></audio>
+
+
 <script src="{{ url_for('static', filename='js/html5-qr.min.js') }}"></script>
 
 <script>
     const barcodeInput = document.getElementById('barcode_input');
     const counterDitemukan = document.getElementById('counter_ditemukan');
-    const beepSuccess = document.getElementById('beep_success');
-    const beepError = document.getElementById('beep_error');
+    
+    
+
+    
+    function playBeepSuccess() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = 850;
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.01);
+            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.2);
+        } catch (e) { console.log(e); }
+    }
+
+    function playBeepError() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'square';
+            osc.frequency.value = 150; // Nada rendah/kasar
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.6);
+        } catch (e) { console.log(e); }
+    }
 
     let html5QrCode;
     const btnStart = document.getElementById('btnStartScan');
@@ -158,10 +193,10 @@
         .then(data => {
             if(data.status === 'success' || data.status === 'warning') {
                 if(data.status_rak === 'SALAH RAK') {
-                    beepError.play().catch(e=>console.log(e));
+                    playBeepError();
                     Swal.fire('SALAH RAK', 'Buku ' + data.judul + ' seharusnya di rak: ' + (data.ddc_asli || 'Tidak diketahui'), 'error');
                 } else {
-                    beepSuccess.play().catch(e=>console.log(e));
+                    playBeepSuccess();
                     if(data.status === 'success') {
                         counterDitemukan.innerText = parseInt(counterDitemukan.innerText) + 1;
                         Swal.fire({
@@ -177,12 +212,12 @@
                     }
                 }
             } else {
-                beepError.play().catch(e=>console.log(e));
+                playBeepError();
                 Swal.fire('Gagal', data.message, 'error');
             }
         })
         .catch(err => {
-            beepError.play().catch(e=>console.log(e));
+            playBeepError();
             Swal.fire('Error', 'Kesalahan jaringan', 'error');
         })
         .finally(() => {
