@@ -94,13 +94,13 @@
         <script>
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('source') === 'kiosk') {
-                document.write('<div class="mt-8 flex justify-center"><a href="/kiosk" class="bg-yellow-800 text-white px-8 py-4 rounded-xl font-bold text-xl shadow-lg hover:bg-yellow-900 transition">SELESAI (Kembali)</a></div>');
+                document.write('<div class="mt-8 flex justify-center"><a href="/kiosk_sirkulasi" class="bg-yellow-800 text-white px-8 py-4 rounded-xl font-bold text-xl shadow-lg hover:bg-yellow-900 transition">SELESAI (Kembali)</a></div>');
                 
                 // Auto redirect to Kiosk after 45 seconds of inactivity
-                let timeout = setTimeout(() => { window.location.href = '/kiosk'; }, 45000);
+                let timeout = setTimeout(() => { window.location.href = '/kiosk_sirkulasi'; }, 45000);
                 document.body.addEventListener('click', () => {
                     clearTimeout(timeout);
-                    timeout = setTimeout(() => { window.location.href = '/kiosk'; }, 45000);
+                    timeout = setTimeout(() => { window.location.href = '/kiosk_sirkulasi'; }, 45000);
                 });
             }
         </script>

@@ -2049,6 +2049,12 @@ def cek_pinjaman(member_id):
     return render_template('cek_pinjaman.html', member=dict(member), loans=[dict(l) for l in loans], total_denda=fines)
 
 
+
+@app.route('/kiosk_sirkulasi')
+def kiosk_sirkulasi():
+    return render_template('kiosk_sirkulasi.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 

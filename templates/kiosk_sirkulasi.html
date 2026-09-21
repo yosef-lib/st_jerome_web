@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk Mandiri - St. Jerome</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        body { background-color: #292524; color: white; overflow: hidden; }
+        .kiosk-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .glass-input { background: rgba(0,0,0,0.3); color: white; border: 2px solid rgba(255,255,255,0.2); transition: all 0.3s; }
+        .glass-input:focus { border-color: #f59e0b; outline: none; background: rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative bg-stone-900" x-data="kioskApp()" @click="focusInput()">
+    
+    <!-- Pattern Background -->
+    <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#f59e0b 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+    <div class="relative z-10 w-full max-w-4xl px-6 flex flex-col items-center text-center">
+        <i class="fa-solid fa-book-open-reader text-6xl text-amber-500 mb-6"></i>
+        <h1 class="text-4xl md:text-5xl font-bold tracking-wider mb-2 text-white">KIOSK MANDIRI</h1>
+        <p class="text-xl text-stone-400 mb-12">Perpustakaan St. Jerome</p>
+        
+        <div class="w-full max-w-2xl kiosk-card rounded-2xl p-10 shadow-2xl">
+            <h2 class="text-2xl font-semibold mb-6 text-stone-200">Silakan Scan Kartu Anggota Anda</h2>
+            
+            <form @submit.prevent="checkMember" class="relative">
+                <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-barcode text-stone-400 text-2xl"></i>
+                </div>
+                <input type="text" id="barcodeInput" x-model="memberId" class="glass-input w-full rounded-xl pl-16 pr-6 py-6 text-3xl font-bold text-center tracking-widest placeholder-stone-500" placeholder="TAP KARTU DISINI" autocomplete="off" autofocus>
+            </form>
+            
+            <div class="mt-8 flex items-center justify-center gap-3 text-stone-400 animate-pulse">
+                <i class="fa-solid fa-arrow-down"></i>
+                <span>Gunakan mesin scanner di bawah layar</span>
+                <i class="fa-solid fa-arrow-down"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="absolute bottom-6 text-stone-500 text-sm">
+        Sistem Asisten Perpustakaan Terintegrasi &bull; 2026
+    </div>
+    
+    <!-- Loading overlay -->
+    <div x-show="loading" class="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center" style="display: none;">
+        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-amber-500 mb-4"></i>
+        <div class="text-xl font-bold text-white tracking-widest">MEMPROSES...</div>
+    </div>
+    
+    <script>
+        function kioskApp() {
+            return {
+                memberId: '',
+                loading: false,
+                
+                init() {
+                    this.focusInput();
+                    // Jaga-jaga kalau input kehilangan fokus
+                    setInterval(() => {
+                        if(document.activeElement.id !== 'barcodeInput' && !this.loading) {
+                            this.focusInput();
+                        }
+                    }, 2000);
+                },
+                
+                focusInput() {
+                    const input = document.getElementById('barcodeInput');
+                    if(input) input.focus();
+                },
+                
+                checkMember() {
+                    if(!this.memberId.trim()) return;
+                    
+                    this.loading = true;
+                    setTimeout(() => {
+                        window.location.href = '/cek_pinjaman/' + encodeURIComponent(this.memberId.trim()) + '?source=kiosk';
+                    }, 800); // Fake delay for UX
+                }
+            }
+        }
+    </script>
+</body>
+</html>
