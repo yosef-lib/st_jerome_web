@@ -268,25 +268,30 @@
         {% endif %}
         
         
+        
         <!-- Tombol Selesai untuk Kiosk -->
         {% if request.args.get('source') == 'kiosk' %}
-        <div class="mt-12 flex flex-col sm:flex-row justify-center gap-4">
-            <button onclick="window.open('/sirkulasi/cetak_struk/{{ member.member_id }}', '_blank')" class="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-medium text-boxdark bg-cream shadow-xl border border-primary/20 hover:scale-105 transition-all duration-300">
-                <span class="relative flex items-center gap-2 font-bold tracking-widest uppercase">
-                    <i class="fa-solid fa-print"></i> CETAK STRUK
-                </span>
-            </button>
-            <a href="/kiosk_sirkulasi" class="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-medium text-primary bg-white shadow-xl border border-primary/20 hover:scale-105 transition-all duration-300">
+        <div class="mt-12 flex justify-center">
+            <button onclick="selesaiDanCetak()" class="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-10 font-medium text-white bg-primary shadow-xl border border-primary/20 hover:scale-105 transition-all duration-300">
                 <span class="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
                     <div class="relative h-full w-8 bg-white/20"></div>
                 </span>
                 <span class="absolute inset-0 rounded-full bg-primary transition-all duration-300 ease-out group-hover:bg-boxdark"></span>
-                <span class="relative flex items-center gap-2 font-bold text-white tracking-widest uppercase">
-                    <i class="fa-solid fa-arrow-left"></i> SELESAI TRANSAKSI
+                <span class="relative flex items-center gap-3 font-bold text-white tracking-widest uppercase text-lg">
+                    <i class="fa-solid fa-print"></i> SELESAI & CETAK STRUK
                 </span>
-            </a>
+            </button>
         </div>
         <script>
+            function selesaiDanCetak() {
+                // Buka tab baru untuk cetak struk thermal
+                window.open('/sirkulasi/cetak_struk/{{ member.member_id }}', '_blank');
+                // Redirect tab ini kembali ke layar awal Kiosk
+                setTimeout(() => {
+                    window.location.href = '/kiosk_sirkulasi';
+                }, 500);
+            }
+            
             // Auto redirect to Kiosk after 45 seconds of inactivity
             let timeout = setTimeout(() => { window.location.href = '/kiosk_sirkulasi'; }, 45000);
             document.body.addEventListener('click', () => {
@@ -295,6 +300,7 @@
             });
         </script>
         {% endif %}
+
 
         
         <div class="mt-12 mb-8 text-center border-t border-primary/10 pt-8">
