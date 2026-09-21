@@ -135,12 +135,12 @@
 
 <script>
 // --- Logika Edit Modal ---
-function openEditModal(id, nama, tipe, masa, status) {
+function openEditModal(id, nama, tipe, masa) {
     document.getElementById('edit_member_id').value = id;
     document.getElementById('edit_nama').value = nama;
     document.getElementById('edit_tipe_anggota').value = tipe;
     document.getElementById('edit_masa_berlaku').value = masa;
-    document.getElementById('edit_status').value = status || 'AKTIF';
+    
     document.getElementById('editModal').showModal();
 }
 
