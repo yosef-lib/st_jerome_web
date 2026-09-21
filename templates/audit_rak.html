@@ -4,8 +4,7 @@
 {% block page_subtitle %}Manajemen Audit Inventaris Perpustakaan{% endblock %}
 
 {% block content %}
-<script src="{{ url_for('static', filename='js/html5-qr.min.js') }}"></script>
-<div class="grid grid-cols-1 gap-6">
+<div class="flex flex-col gap-6 max-w-4xl mx-auto">
 
     {% if not active_session %}
     <!-- NO ACTIVE SESSION -->
@@ -26,112 +25,71 @@
     </div>
     {% else %}
     <!-- ACTIVE SESSION -->
-    <div class="flex flex-col gap-6 max-w-4xl mx-auto">
-        <!-- Panel Kiri: Scanner -->
-        <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
-            <div class="mb-4">
-                <span class="inline-block rounded bg-success/10 px-2.5 py-0.5 text-sm font-medium text-success mb-2">Sesi Aktif</span>
-                <h3 class="text-xl font-bold text-black">{{ active_session.nama_sesi }}</h3>
-                <p class="text-xs text-slate-500">Mulai: {{ active_session.start_date }}</p>
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 text-center">
+        <div class="mb-4">
+            <span class="inline-block rounded bg-success/10 px-2.5 py-0.5 text-sm font-medium text-success mb-2">Sesi Aktif</span>
+            <h3 class="text-2xl font-bold text-black">{{ active_session.nama_sesi }}</h3>
+            <p class="text-sm text-slate-500 mt-1">Dimulai sejak: {{ active_session.start_date }}</p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8 mt-6">
+            <div class="rounded border border-stroke p-4 bg-slate-50">
+                <p class="text-sm font-medium text-slate-500 mb-1">Total Katalog</p>
+                <h4 class="text-2xl font-bold text-black">{{ stats.total_koleksi }}</h4>
             </div>
-            
-            <!-- RACK SELECTION -->
-            <div class="mb-5">
-                <label class="mb-2 block text-sm font-medium text-black">Target Rak Saat Ini</label>
-                <select id="target_rak" class="w-full rounded border border-stroke bg-transparent py-3 px-4 outline-none transition focus:border-primary active:border-primary">
-                    <option value="">-- Pilih Rak (Wajib) --</option>
-                    <option value="0">000 - Karya Umum</option>
-                    <option value="1">100 - Filsafat & Psikologi</option>
-                    <option value="2">200 - Agama & Teologi</option>
-                    <option value="3">300 - Ilmu Sosial</option>
-                    <option value="4">400 - Bahasa</option>
-                    <option value="5">500 - Sains & Matematika</option>
-                    <option value="6">600 - Teknologi</option>
-                    <option value="7">700 - Seni & Rekreasi</option>
-                    <option value="8">800 - Sastra</option>
-                    <option value="9">900 - Sejarah & Geografi</option>
-                    <option value="F">Fiksi</option>
-                    <option value="R">Referensi</option>
-                </select>
+            <div class="rounded border border-stroke p-4 bg-success/10">
+                <p class="text-sm font-medium text-success mb-1">Berhasil Dipindai</p>
+                <h4 class="text-2xl font-bold text-success">{{ stats.ditemukan }}</h4>
             </div>
-
-            <!-- SCANNER AREA -->
-            <div class="mb-6">
-                <label class="mb-2 block text-sm font-medium text-black">Scan Barcode</label>
-                
-                <!-- CAMERA SCANNER -->
-                <style>
-                    #reader { width: 100%; margin: 0 auto; text-align: center; }
-                    #reader video { object-fit: cover; border-radius: 0.25rem; }
-                    #reader img { margin: 0 auto; }
-                </style>
-                <div id="reader" class="mb-3 rounded overflow-hidden border border-stroke bg-slate-900 text-center flex justify-center items-center"></div>
-                
-                <div id="scanActions" class="mb-4">
-                    <button type="button" id="btnStartScan" class="w-full flex items-center justify-center gap-2 rounded bg-success px-4 py-3 font-medium text-white hover:bg-opacity-90">
-                        <i class="fa-solid fa-camera"></i> Aktifkan Kamera (Kamera Belakang)
-                    </button>
-                    <button type="button" id="btnStopScan" class="hidden w-full flex items-center justify-center gap-2 rounded border border-danger text-danger px-4 py-3 font-medium hover:bg-danger hover:text-white transition">
-                        <i class="fa-solid fa-stop"></i> Matikan Kamera
-                    </button>
-                </div>
-                
-                <!-- MANUAL INPUT -->
-                <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2">
-                        <i class="fa-solid fa-keyboard text-slate-400"></i>
-                    </span>
-                    <input type="text" id="barcode_input" class="w-full rounded border border-stroke bg-transparent py-3 pl-11 pr-4 outline-none transition focus:border-primary active:border-primary text-lg font-bold" placeholder="Atau ketik manual & Enter...">
-                </div>
-            </div>
-            
-            <form method="POST" action="{{ url_for('audit_rak') }}" id="stopSessionForm">
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <a href="{{ url_for('audit_rak_scanner') }}" class="w-full flex-1 rounded bg-primary p-3 font-medium text-white hover:bg-opacity-90 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-barcode"></i> Lanjutkan Scan
+            </a>
+            <form method="POST" action="{{ url_for('audit_rak') }}" id="stopSessionForm" class="flex-1">
                 <input type="hidden" name="action" value="stop">
                 <input type="hidden" name="session_id" value="{{ active_session.id }}">
-                <button type="button" onclick="confirmStop()" class="w-full rounded border border-danger text-danger p-3 font-medium hover:bg-danger hover:text-white transition">
-                    <i class="fa-solid fa-stop mr-2"></i> Tutup Sesi & Lihat Laporan
+                <button type="button" onclick="confirmStop()" class="w-full rounded border border-danger text-danger p-3 font-medium hover:bg-danger hover:text-white transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-stop"></i> Tutup Sesi
                 </button>
             </form>
         </div>
-        
-        <!-- Panel Kanan: Progress & Riwayat -->
-        <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="rounded border border-stroke p-4 bg-slate-50">
-                    <p class="text-sm font-medium text-slate-500 mb-1">Total Eksemplar Katalog</p>
-                    <h4 class="text-2xl font-bold text-black">{{ stats.total_koleksi }}</h4>
-                </div>
-                <div class="rounded border border-stroke p-4 bg-success/10">
-                    <p class="text-sm font-medium text-success mb-1">Berhasil Dipindai</p>
-                    <h4 class="text-2xl font-bold text-success" id="counter_ditemukan">{{ stats.ditemukan }}</h4>
-                </div>
-            </div>
-            
-            <h4 class="font-bold text-black mb-3">Baru Saja Dipindai</h4>
-            <div class="overflow-x-auto">
-                <table class="w-full table-auto">
-                    <thead>
-                        <tr class="bg-gray-2 text-left">
-                            <th class="py-2 px-4 font-medium text-black">Waktu</th>
-                            <th class="py-2 px-4 font-medium text-black">Barcode</th>
-                            <th class="py-2 px-4 font-medium text-black">Judul Buku</th>
-                            <th class="py-2 px-4 font-medium text-black text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="riwayat_tbody">
-                        {% for r in recent_scans %}
-                        <tr>
-                            <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ r.scan_date }}</td>
-                            <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium">{{ r.no_induk }}</td>
-                            <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ r.judul }}</td>
-                            <td class="border-b border-[#eee] py-3 px-4 text-center">
-                                <span class="inline-flex rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">Ditemukan</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    </div>
+    
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <h4 class="font-bold text-black mb-3">10 Scan Terakhir</h4>
+        <div class="overflow-x-auto">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-2 text-left">
+                        <th class="py-2 px-4 font-medium text-black">Waktu</th>
+                        <th class="py-2 px-4 font-medium text-black">Barcode</th>
+                        <th class="py-2 px-4 font-medium text-black">Judul Buku</th>
+                        <th class="py-2 px-4 font-medium text-black text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in recent_scans %}
+                    <tr>
+                        <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ r.scan_date[-8:] }}</td>
+                        <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium">{{ r.no_induk }}</td>
+                        <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ r.judul }}</td>
+                        <td class="border-b border-[#eee] py-3 px-4 text-center">
+                            {% if r.status == 'SALAH RAK' %}
+                                <span class="inline-flex rounded-full bg-danger/10 px-3 py-1 text-xs font-medium text-danger">Salah Rak</span>
+                            {% else %}
+                                <span class="inline-flex rounded-full bg-success/10 px-3 py-1 text-xs font-medium text-success">Ditemukan</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="py-4 text-center text-slate-500 text-sm">Belum ada buku yang discan.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
     {% endif %}
@@ -168,201 +126,11 @@
     {% endif %}
 </div>
 
-<!-- AUDIO -->
-<audio id="beep_success" src="{{ url_for('static', filename='audio/success.mp3') }}" preload="auto"></audio>
-<audio id="beep_error" src="{{ url_for('static', filename='audio/error.mp3') }}" preload="auto"></audio>
-
 <script>
     function confirmStop() {
         if(confirm("Apakah Anda yakin ingin mengakhiri sesi Stock Opname ini? Buku yang belum dipindai akan masuk ke laporan BUKU HILANG.")) {
             document.getElementById('stopSessionForm').submit();
         }
     }
-
-    {% if active_session %}
-    const barcodeInput = document.getElementById('barcode_input');
-    const tbody = document.getElementById('riwayat_tbody');
-    const counterDitemukan = document.getElementById('counter_ditemukan');
-    const beepSuccess = document.getElementById('beep_success');
-    const beepError = document.getElementById('beep_error');
-
-    barcodeInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const no_induk = this.value.trim();
-            if(!no_induk) return;
-            
-            this.disabled = true;
-            
-            const target_rak = document.getElementById('target_rak').value;
-            if(!target_rak) {
-                alert('Silakan pilih Target Rak terlebih dahulu!');
-                barcodeInput.disabled = false;
-                barcodeInput.focus();
-                return;
-            }
-            
-            fetch("{{ url_for('api_scan_opname') }}", {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    no_induk: no_induk,
-                    session_id: {{ active_session.id }},
-                    target_rak: target_rak
-                })
-            })
-            .then(res => res.json())
-            .then(data => processScanResult(data))
-            .catch(err => {
-                beepError.play().catch(e=>console.log(e));
-                alert("Terjadi kesalahan jaringan.");
-            })
-            .finally(() => {
-                barcodeInput.value = '';
-                barcodeInput.disabled = false;
-                barcodeInput.focus();
-            });
-        }
-    });
-    
-    // Auto focus (biarkan select dan element form lainnya berfungsi normal)
-    document.addEventListener('click', (e) => {
-        // Jangan auto-focus jika user sedang mengklik atau berada di dalam select/button/input lain
-        const activeTag = document.activeElement ? document.activeElement.tagName : '';
-        const targetTag = e.target ? e.target.tagName : '';
-        
-        if(activeTag !== 'INPUT' && activeTag !== 'BUTTON' && activeTag !== 'SELECT' && 
-           targetTag !== 'INPUT' && targetTag !== 'BUTTON' && targetTag !== 'SELECT') {
-            barcodeInput.focus();
-        }
-    });
-
-    let html5QrCode;
-    const btnStart = document.getElementById('btnStartScan');
-    const btnStop = document.getElementById('btnStopScan');
-
-    document.addEventListener('DOMContentLoaded', () => {
-        html5QrCode = new Html5Qrcode("reader");
-
-        btnStart.addEventListener('click', () => {
-            const target_rak = document.getElementById('target_rak').value;
-            if(!target_rak) {
-                alert('Silakan pilih Target Rak terlebih dahulu sebelum mengaktifkan kamera!');
-                return;
-            }
-
-            // Start scanning, prefer back camera
-            html5QrCode.start(
-                { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 150 }
-                },
-                (decodedText) => {
-                    onScanSuccess(decodedText);
-                },
-                (errorMessage) => {
-                    // Abaikan error frame kosong
-                }
-            ).then(() => {
-                btnStart.classList.add('hidden');
-                btnStop.classList.remove('hidden');
-            }).catch((err) => {
-                alert("Gagal mengakses kamera. Pastikan Anda sudah memberikan izin kamera pada browser.");
-            });
-        });
-
-        btnStop.addEventListener('click', () => {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    btnStop.classList.add('hidden');
-                    btnStart.classList.remove('hidden');
-                });
-            }
-        });
-    });
-
-    function onScanSuccess(decodedText) {
-        // Stop scanning temporarily
-        if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.pause();
-        }
-        
-        const no_induk = decodedText.trim();
-        const target_rak = document.getElementById('target_rak').value;
-        if(!target_rak) {
-            alert('Pilih Rak dulu sebelum scan kamera!');
-            if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) html5QrCode.resume();
-            return;
-        }
-        
-        fetch("{{ url_for('api_scan_opname') }}", {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                no_induk: no_induk,
-                session_id: {{ active_session.id }},
-                target_rak: target_rak
-            })
-        })
-        .then(res => res.json())
-        .then(data => processScanResult(data))
-        .catch(err => {
-            beepError.play().catch(e=>console.log(e));
-            alert("Terjadi kesalahan jaringan.");
-        })
-        .finally(() => {
-            setTimeout(() => { 
-                if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
-                    html5QrCode.resume(); 
-                }
-            }, 1500); // Resume after 1.5s
-        });
-    }
-    
-    function processScanResult(data) {
-        if(data.status === 'success' || data.status === 'warning') {
-            beepSuccess.play().catch(e=>console.log(e));
-            if(data.status === 'success') {
-                let count = parseInt(counterDitemukan.innerText);
-                counterDitemukan.innerText = count + 1;
-            }
-            
-            // Tentukan warna berdasarkan status_rak
-            let bgClass = 'bg-success/5';
-            let badgeClass = 'bg-success/10 text-success';
-            let badgeText = 'BENAR';
-            
-            if(data.status_rak === 'SALAH RAK') {
-                bgClass = 'bg-danger/5';
-                badgeClass = 'bg-danger/10 text-danger';
-                badgeText = 'SALAH RAK';
-                beepError.play().catch(e=>console.log(e)); // Mainkan error beep jika salah rak
-            }
-            
-            const tr = document.createElement('tr');
-            tr.classList.add(bgClass);
-            tr.innerHTML = `
-                <td class="border-b border-[#eee] py-3 px-4 text-sm">Baru saja</td>
-                <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium">${data.no_induk}</td>
-                <td class="border-b border-[#eee] py-3 px-4 text-sm">${data.judul}</td>
-                <td class="border-b border-[#eee] py-3 px-4 text-center">
-                    <span class="inline-flex rounded-full ${badgeClass} px-3 py-1 text-sm font-medium">${badgeText}</span>
-                </td>
-            `;
-            tbody.insertBefore(tr, tbody.firstChild);
-            
-            if(data.status === 'warning') {
-                alert(data.message);
-            } else if (data.status_rak === 'SALAH RAK') {
-                alert("PERINGATAN: BUKU SALAH RAK! Seharusnya di rak: " + (data.ddc_asli || 'Tidak diketahui'));
-            }
-        } else {
-            beepError.play().catch(e=>console.log(e));
-            alert(data.message);
-        }
-    }
-
-    {% endif %}
 </script>
 {% endblock %}

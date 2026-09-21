@@ -1254,6 +1254,18 @@ def anomali():
 
 
 
+
+@app.route('/audit_rak/scanner')
+@login_required
+def audit_rak_scanner():
+    conn = database.get_db_connection()
+    active_session = conn.execute("SELECT * FROM stock_opname_session WHERE status = 'AKTIF' ORDER BY id DESC LIMIT 1").fetchone()
+    conn.close()
+    if not active_session:
+        flash("Tidak ada sesi aktif, silakan mulai sesi terlebih dahulu.", "warning")
+        return redirect(url_for('audit_rak'))
+    return render_template('audit_rak_scanner.html', active_session=active_session)
+
 @app.route('/audit_rak', methods=['GET', 'POST'])
 @login_required
 def audit_rak():

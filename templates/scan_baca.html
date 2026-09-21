@@ -1,216 +1,47 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
 
-{% block page_title %}Scan Buku Yang Telah Dibaca{% endblock %}
-{% block page_subtitle %}Pindai barcode buku yang tertinggal di meja baca menggunakan kamera HP{% endblock %}
+{% block page_title %}Buku Yang Telah Dibaca{% endblock %}
+{% block page_subtitle %}Pencatatan Buku dari Meja Baca Pengunjung{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto">
-
-    <div class="rounded-sm border border-stroke bg-white shadow-default">
-        <div class="text-center pt-8 pb-4 px-6">
-            <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
-                <i class="fa-solid fa-qrcode text-3xl"></i>
-            </div>
-            <h4 class="text-xl font-bold text-black mb-1">Scan Buku Yang Telah Dibaca</h4>
-            <p class="text-sm font-medium text-slate-500">Arahkan kamera ke barcode buku, pencatatan otomatis ke log keterbacaan.</p>
+<div class="flex flex-col gap-6 max-w-4xl mx-auto">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-sm border border-stroke shadow-default">
+        <div>
+            <h3 class="font-bold text-black text-xl mb-1">Riwayat Pindai Hari Ini</h3>
+            <p class="text-sm text-slate-500">Mencatat buku yang telah selesai dibaca namun belum dikembalikan ke rak.</p>
         </div>
-        
+        <a href="{{ url_for('scan_baca_scanner') }}" class="inline-flex items-center justify-center gap-2 rounded bg-primary px-6 py-3 font-medium text-white hover:bg-opacity-90 transition">
+            <i class="fa-solid fa-barcode"></i> Mulai Scan Buku
+        </a>
+    </div>
+
+    <div class="bg-white rounded-sm border border-stroke shadow-default">
+        <div class="p-6 border-b border-stroke flex justify-between items-center">
+            <h4 class="font-bold text-black">Data Hari Ini</h4>
+            <span class="inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">{{ recent|length }} Buku</span>
+        </div>
         <div class="p-6">
-            <div id="reader" class="rounded-lg overflow-hidden border-2 border-stroke bg-black w-full min-h-[250px] flex items-center justify-center relative">
-                <button id="btnStartScan" class="absolute z-10 flex items-center gap-2 rounded bg-primary py-3 px-6 font-medium text-white hover:bg-opacity-90 transition shadow-lg">
-                    <i class="fa-solid fa-camera"></i> Buka Kamera HP
-                </button>
-            </div>
-            
-            <div class="mt-4 flex justify-center hidden" id="scanActions">
-                <button id="btnStopScan" class="flex items-center gap-2 rounded border border-danger text-danger py-1.5 px-4 font-medium hover:bg-danger hover:text-white transition text-sm">
-                    <i class="fa-solid fa-stop"></i> Hentikan Kamera
-                </button>
-            </div>
-            
-            <!-- Manual Input -->
-            <div class="mt-6 mb-5">
-                <label class="mb-2 block text-sm font-bold text-black">Atau Masukkan Manual:</label>
-                <div class="flex gap-2">
-                    <input type="text" id="manualInput" placeholder="Ketik No. Induk..." onkeypress="if(event.key === 'Enter') submitManual()" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-primary active:border-primary">
-                    <button class="flex items-center justify-center rounded bg-primary py-2 px-5 font-medium text-white hover:bg-opacity-90 transition" onclick="submitManual()">Catat</button>
-                </div>
-            </div>
-
-            <!-- Success Result -->
-            <div id="resultBox" class="hidden text-center rounded-lg border border-success bg-success/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
-                <i class="fa-solid fa-circle-check text-success text-3xl mb-2"></i>
-                <div class="font-bold text-lg text-success mb-1">Berhasil Dicatat!</div>
-                <div id="bookTitle" class="font-semibold text-black text-sm"></div>
-                <div id="bookSubject" class="text-xs font-medium text-slate-500 mt-1"></div>
-            </div>
-
-            <!-- Error Result -->
-            <div id="errorBox" class="hidden text-center rounded-lg border border-danger bg-danger/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
-                <i class="fa-solid fa-circle-xmark text-danger text-3xl mb-2"></i>
-                <div class="font-bold text-lg text-danger mb-1">Buku Tidak Ditemukan</div>
-                <div id="errorMsg" class="text-xs font-medium text-slate-500 mt-1"></div>
-            </div>
-
-            <!-- Tips -->
-            <div class="rounded-md bg-blue-50 border border-blue-100 p-4 text-center">
-                <div class="font-bold text-primary mb-1 text-sm"><i class="fa-solid fa-lightbulb"></i> Tips Penggunaan</div>
-                <p class="text-xs text-slate-500 leading-relaxed">Buka halaman ini di browser HP Anda dan izinkan akses kamera. Koneksi jaringan yang sama dan akses HTTPS disarankan.</p>
-            </div>
-
-        <div class="p-6 border-t border-stroke bg-gray-50">
-            <h5 class="font-bold text-black mb-4"><i class="fa-solid fa-clock-rotate-left text-primary mr-2"></i> Baru Saja Discan Hari Ini</h5>
-            
             <div id="recentList" class="flex flex-col gap-3">
                 {% if recent %}
                     {% for r in recent %}
-                    <div class="bg-white p-3 rounded border border-stroke shadow-sm flex items-start gap-3 animate-[fadeIn_0.3s_ease-out]">
-                        <div class="bg-primary/10 text-primary w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div class="bg-slate-50 p-4 rounded border border-stroke flex items-start gap-4">
+                        <div class="bg-primary/10 text-primary w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fa-solid fa-book-open"></i>
                         </div>
                         <div>
-                            <p class="font-bold text-sm text-black line-clamp-1">{{ r.judul }}</p>
-                            <p class="text-xs text-slate-500 font-medium">{{ r.no_induk }} &bull; {{ r.waktu[-8:] }}</p>
+                            <p class="font-bold text-black text-lg mb-1">{{ r.judul }}</p>
+                            <p class="text-sm text-slate-500"><i class="fa-solid fa-barcode mr-1"></i> {{ r.no_induk }} &bull; <i class="fa-solid fa-clock ml-2 mr-1"></i> {{ r.waktu[-8:] }}</p>
                         </div>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div class="text-center text-slate-500 text-sm py-4 italic">Belum ada buku yang discan hari ini.</div>
+                    <div class="text-center text-slate-500 py-10">
+                        <i class="fa-solid fa-mug-hot text-4xl mb-3 text-slate-300"></i>
+                        <p>Belum ada buku yang discan hari ini.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
-        </div>
     </div>
 </div>
-
-<!-- Library Html5Qrcode -->
-<script src="{{ url_for('static', filename='js/html5-qr.min.js') }}"></script>
-<script>
-    let html5QrCode;
-    
-    function parseScanResult(code) {
-        // Hentikan scan sejenak biar ga double scan
-        if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.pause();
-        }
-        
-        document.getElementById('manualInput').value = code;
-        submitManual();
-        
-        // Resume setelah 2 detik
-        setTimeout(() => {
-            if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
-                html5QrCode.resume();
-            }
-        }, 2000);
-    }
-
-    function playBeep() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = 850; // Frekuensi nada tut
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.01);
-            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.2);
-        } catch (e) {
-            console.log("Audio not supported");
-        }
-    }
-
-    function submitManual() {
-        const no_induk = document.getElementById('manualInput').value.trim();
-        if(!no_induk) return;
-
-        // Hide previous boxes
-        document.getElementById('resultBox').style.display = 'none';
-        document.getElementById('errorBox').style.display = 'none';
-
-        fetch('/api/scan', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({no_induk: no_induk})
-        }).then(r => r.json()).then(data => {
-            if(data.status === 'success') {
-                playBeep(); // Mainkan suara TUT!
-                document.getElementById('bookTitle').innerText = data.judul;
-                document.getElementById('bookSubject').innerText = data.subjek || 'Tanpa subjek';
-                document.getElementById('resultBox').style.display = 'block';
-                document.getElementById('manualInput').value = ''; // clear input
-                
-                // Add to list
-                const now = new Date();
-                const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
-                const newItem = `
-                    <div class="bg-white p-3 rounded border border-success shadow-sm flex items-start gap-3 animate-[fadeIn_0.3s_ease-out] border-l-4">
-                        <div class="bg-success/10 text-success w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fa-solid fa-check"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold text-sm text-black line-clamp-1">${data.judul}</p>
-                            <p class="text-xs text-slate-500 font-medium">${no_induk} &bull; ${timeStr}</p>
-                        </div>
-                    </div>
-                `; </p>
-                        </div>
-                    </div>
-                ;
-                const list = document.getElementById('recentList');
-                if (list && list.innerHTML.includes('Belum ada')) list.innerHTML = '';
-                if (list) list.insertAdjacentHTML('afterbegin', newItem);
-            } else {
-                document.getElementById('errorMsg').innerText = `No Induk: ${no_induk}`;
-                document.getElementById('errorBox').style.display = 'block';
-            }
-        }).catch(err => {
-            console.error(err);
-            document.getElementById('errorMsg').innerText = 'Kesalahan jaringan.';
-            document.getElementById('errorBox').style.display = 'block';
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        html5QrCode = new Html5Qrcode("reader");
-        const btnStart = document.getElementById('btnStartScan');
-        const btnStop = document.getElementById('btnStopScan');
-        const actionBox = document.getElementById('scanActions');
-
-        btnStart.addEventListener('click', () => {
-            // Start scanning, prefer back camera
-            html5QrCode.start(
-                { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 150 }
-                },
-                (decodedText) => {
-                    parseScanResult(decodedText);
-                },
-                (errorMessage) => {
-                    // Abaikan error frame kosong
-                }
-            ).then(() => {
-                btnStart.style.display = 'none';
-                actionBox.classList.remove('hidden');
-            }).catch((err) => {
-                alert("Gagal mengakses kamera. Pastikan Anda sudah memberikan izin kamera pada browser.");
-            });
-        });
-
-        btnStop.addEventListener('click', () => {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    btnStart.style.display = 'flex';
-                    actionBox.classList.add('hidden');
-                });
-            }
-        });
-    });
-</script>
 {% endblock %}

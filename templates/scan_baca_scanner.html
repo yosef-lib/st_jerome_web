@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Scanner Meja Baca{% endblock %}
+{% block page_subtitle %}Pindai buku yang telah selesai dibaca pengunjung{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto flex flex-col gap-6">
+    <div class="flex justify-between items-center">
+        <a href="{{ url_for('scan_baca') }}" class="inline-flex items-center gap-2 rounded bg-slate-200 px-4 py-2 font-medium text-slate-700 hover:bg-slate-300">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Riwayat
+        </a>
+    </div>
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <!-- Result Box -->
+        <div id="resultBox" class="hidden text-center rounded-lg border border-success bg-success/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
+            <i class="fa-solid fa-circle-check text-success text-3xl mb-2"></i>
+            <div class="font-bold text-lg text-success mb-1">Berhasil Dicatat!</div>
+            <div id="bookTitle" class="font-semibold text-black text-sm"></div>
+            <div id="bookSubject" class="text-xs font-medium text-slate-500 mt-1"></div>
+        </div>
+
+        <!-- Error Result -->
+        <div id="errorBox" class="hidden text-center rounded-lg border border-danger bg-danger/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
+            <i class="fa-solid fa-circle-xmark text-danger text-3xl mb-2"></i>
+            <div class="font-bold text-lg text-danger mb-1">Buku Tidak Ditemukan</div>
+            <div id="errorMsg" class="text-xs font-medium text-slate-500 mt-1"></div>
+        </div>
+
+        <!-- CAMERA SCANNER -->
+        <style>
+            #reader { width: 100%; margin: 0 auto; text-align: center; }
+            #reader video { object-fit: cover; border-radius: 0.25rem; }
+            #reader img { margin: 0 auto; }
+        </style>
+        <div id="reader" class="mb-5 rounded overflow-hidden border border-stroke bg-slate-900 text-center flex justify-center items-center min-h-[250px]"></div>
+        
+        <div id="scanActions" class="mb-5">
+            <button type="button" id="btnStartScan" class="w-full flex items-center justify-center gap-2 rounded bg-primary px-4 py-4 font-bold text-white hover:bg-opacity-90 text-lg shadow-md">
+                <i class="fa-solid fa-camera"></i> Mulai Kamera Scanner
+            </button>
+            <button type="button" id="btnStopScan" class="hidden w-full flex items-center justify-center gap-2 rounded border-2 border-danger text-danger px-4 py-3 font-bold hover:bg-danger hover:text-white transition">
+                <i class="fa-solid fa-stop"></i> Matikan Kamera
+            </button>
+        </div>
+
+        <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2">
+                <i class="fa-solid fa-keyboard text-slate-400"></i>
+            </span>
+            <input type="text" id="manualInput" class="w-full rounded border border-stroke bg-transparent py-4 pl-12 pr-4 outline-none transition focus:border-primary active:border-primary text-xl font-bold text-center" placeholder="Ketik manual & Enter...">
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/html5-qr.min.js') }}"></script>
+<script>
+    let html5QrCode;
+    
+    function parseScanResult(code) {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.pause();
+        }
+        
+        document.getElementById('manualInput').value = code;
+        submitManual();
+        
+        setTimeout(() => {
+            if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+                html5QrCode.resume();
+            }
+        }, 2000);
+    }
+
+    function playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = 850;
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.01);
+            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.2);
+        } catch (e) {
+            console.log("Audio not supported");
+        }
+    }
+
+    function submitManual() {
+        const no_induk = document.getElementById('manualInput').value.trim();
+        if(!no_induk) return;
+
+        document.getElementById('resultBox').style.display = 'none';
+        document.getElementById('errorBox').style.display = 'none';
+
+        fetch('/api/scan', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({no_induk: no_induk})
+        }).then(r => r.json()).then(data => {
+            if(data.status === 'success') {
+                playBeep(); 
+                document.getElementById('bookTitle').innerText = data.judul;
+                document.getElementById('bookSubject').innerText = data.subjek || 'Tanpa subjek';
+                document.getElementById('resultBox').style.display = 'block';
+                document.getElementById('manualInput').value = ''; 
+            } else {
+                document.getElementById('errorMsg').innerText = `No Induk: ${no_induk}`;
+                document.getElementById('errorBox').style.display = 'block';
+            }
+        }).catch(err => {
+            console.error(err);
+            document.getElementById('errorMsg').innerText = 'Kesalahan jaringan.';
+            document.getElementById('errorBox').style.display = 'block';
+        });
+    }
+
+    document.getElementById('manualInput').addEventListener('keypress', function(e) {
+        if(e.key === 'Enter') submitManual();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        html5QrCode = new Html5Qrcode("reader");
+        const btnStart = document.getElementById('btnStartScan');
+        const btnStop = document.getElementById('btnStopScan');
+
+        btnStart.addEventListener('click', () => {
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText) => { parseScanResult(decodedText); },
+                (errorMessage) => { }
+            ).then(() => {
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+            }).catch((err) => {
+                alert("Gagal mengakses kamera. Pastikan Anda sudah memberikan izin.");
+            });
+        });
+
+        btnStop.addEventListener('click', () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    btnStop.classList.add('hidden');
+                    btnStart.classList.remove('hidden');
+                });
+            }
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        const activeTag = document.activeElement ? document.activeElement.tagName : '';
+        const targetTag = e.target ? e.target.tagName : '';
+        if(activeTag !== 'INPUT' && activeTag !== 'BUTTON' && targetTag !== 'INPUT' && targetTag !== 'BUTTON') {
+            document.getElementById('manualInput').focus();
+        }
+    });
+</script>
+{% endblock %}

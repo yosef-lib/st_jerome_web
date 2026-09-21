@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Scanner Stock Opname{% endblock %}
+{% block page_subtitle %}Sesi: {{ active_session.nama_sesi }}{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto flex flex-col gap-6">
+    <div class="flex justify-between items-center">
+        <a href="{{ url_for('audit_rak') }}" class="inline-flex items-center gap-2 rounded bg-slate-200 px-4 py-2 font-medium text-slate-700 hover:bg-slate-300">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard
+        </a>
+        <div class="text-sm font-bold text-success bg-success/10 px-3 py-1 rounded-full border border-success">
+            <i class="fa-solid fa-check"></i> <span id="counter_ditemukan">0</span> Discan
+        </div>
+    </div>
+
+    <!-- Peringatan Rak -->
+    <div class="rounded bg-warning/10 border border-warning p-3 text-warning text-sm font-medium text-center">
+        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Jangan lupa pilih rak sebelum mulai!
+    </div>
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <!-- RACK SELECTION -->
+        <div class="mb-5">
+            <label class="mb-2 block text-sm font-medium text-black">Target Rak Saat Ini</label>
+            <select id="target_rak" class="w-full rounded border border-stroke bg-transparent py-3 px-4 outline-none transition focus:border-primary active:border-primary font-bold text-lg">
+                <option value="">-- Pilih Rak (Wajib) --</option>
+                <option value="0">000 - Karya Umum</option>
+                <option value="1">100 - Filsafat & Psikologi</option>
+                <option value="2">200 - Agama & Teologi</option>
+                <option value="3">300 - Ilmu Sosial</option>
+                <option value="4">400 - Bahasa</option>
+                <option value="5">500 - Sains & Matematika</option>
+                <option value="6">600 - Teknologi</option>
+                <option value="7">700 - Seni & Rekreasi</option>
+                <option value="8">800 - Sastra</option>
+                <option value="9">900 - Sejarah & Geografi</option>
+                <option value="F">Fiksi</option>
+                <option value="R">Referensi</option>
+            </select>
+        </div>
+
+        <!-- CAMERA SCANNER -->
+        <style>
+            #reader { width: 100%; margin: 0 auto; text-align: center; }
+            #reader video { object-fit: cover; border-radius: 0.25rem; }
+            #reader img { margin: 0 auto; }
+        </style>
+        <div id="reader" class="mb-3 rounded overflow-hidden border border-stroke bg-slate-900 text-center flex justify-center items-center min-h-[250px]"></div>
+        
+        <div id="scanActions" class="mb-5">
+            <button type="button" id="btnStartScan" class="w-full flex items-center justify-center gap-2 rounded bg-success px-4 py-4 font-bold text-white hover:bg-opacity-90 text-lg shadow-md">
+                <i class="fa-solid fa-camera"></i> Mulai Kamera
+            </button>
+            <button type="button" id="btnStopScan" class="hidden w-full flex items-center justify-center gap-2 rounded border-2 border-danger text-danger px-4 py-3 font-bold hover:bg-danger hover:text-white transition">
+                <i class="fa-solid fa-stop"></i> Hentikan Kamera
+            </button>
+        </div>
+
+        <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2">
+                <i class="fa-solid fa-keyboard text-slate-400"></i>
+            </span>
+            <input type="text" id="barcode_input" class="w-full rounded border border-stroke bg-transparent py-4 pl-12 pr-4 outline-none transition focus:border-primary active:border-primary text-xl font-bold text-center" placeholder="Ketik barcode...">
+        </div>
+    </div>
+</div>
+
+<audio id="beep_success" src="{{ url_for('static', filename='audio/success.mp3') }}" preload="auto"></audio>
+<audio id="beep_error" src="{{ url_for('static', filename='audio/error.mp3') }}" preload="auto"></audio>
+<script src="{{ url_for('static', filename='js/html5-qr.min.js') }}"></script>
+
+<script>
+    const barcodeInput = document.getElementById('barcode_input');
+    const counterDitemukan = document.getElementById('counter_ditemukan');
+    const beepSuccess = document.getElementById('beep_success');
+    const beepError = document.getElementById('beep_error');
+
+    let html5QrCode;
+    const btnStart = document.getElementById('btnStartScan');
+    const btnStop = document.getElementById('btnStopScan');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        html5QrCode = new Html5Qrcode("reader");
+
+        btnStart.addEventListener('click', () => {
+            const target_rak = document.getElementById('target_rak').value;
+            if(!target_rak) {
+                alert('Silakan pilih Target Rak terlebih dahulu sebelum mengaktifkan kamera!');
+                return;
+            }
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText) => { onScanSuccess(decodedText); },
+                (errorMessage) => { /* ignore */ }
+            ).then(() => {
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+            }).catch((err) => {
+                alert("Gagal mengakses kamera. Izin ditolak atau tidak ada kamera.");
+            });
+        });
+
+        btnStop.addEventListener('click', () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    btnStop.classList.add('hidden');
+                    btnStart.classList.remove('hidden');
+                });
+            }
+        });
+    });
+
+    function onScanSuccess(decodedText) {
+        if (html5QrCode && html5QrCode.isScanning) html5QrCode.pause();
+        
+        const no_induk = decodedText.trim();
+        const target_rak = document.getElementById('target_rak').value;
+        if(!target_rak) {
+            alert('Pilih Rak dulu!');
+            if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) html5QrCode.resume();
+            return;
+        }
+        
+        sendScanRequest(no_induk, target_rak);
+    }
+
+    barcodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const no_induk = this.value.trim();
+            const target_rak = document.getElementById('target_rak').value;
+            
+            if(!target_rak) {
+                alert('Pilih Rak dulu!');
+                return;
+            }
+            if(!no_induk) return;
+            
+            this.disabled = true;
+            sendScanRequest(no_induk, target_rak);
+        }
+    });
+
+    function sendScanRequest(no_induk, target_rak) {
+        fetch("{{ url_for('api_scan_opname') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                no_induk: no_induk,
+                session_id: {{ active_session.id }},
+                target_rak: target_rak
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success' || data.status === 'warning') {
+                if(data.status_rak === 'SALAH RAK') {
+                    beepError.play().catch(e=>console.log(e));
+                    Swal.fire('SALAH RAK', 'Buku ' + data.judul + ' seharusnya di rak: ' + (data.ddc_asli || 'Tidak diketahui'), 'error');
+                } else {
+                    beepSuccess.play().catch(e=>console.log(e));
+                    if(data.status === 'success') {
+                        counterDitemukan.innerText = parseInt(counterDitemukan.innerText) + 1;
+                        Swal.fire({
+                            position: 'top',
+                            icon: 'success',
+                            title: 'Ditemukan',
+                            text: data.judul,
+                            showConfirmButton: false,
+                            timer: 1000
+                        });
+                    } else {
+                        Swal.fire('Sudah Di-scan', data.judul, 'info');
+                    }
+                }
+            } else {
+                beepError.play().catch(e=>console.log(e));
+                Swal.fire('Gagal', data.message, 'error');
+            }
+        })
+        .catch(err => {
+            beepError.play().catch(e=>console.log(e));
+            Swal.fire('Error', 'Kesalahan jaringan', 'error');
+        })
+        .finally(() => {
+            barcodeInput.value = '';
+            barcodeInput.disabled = false;
+            barcodeInput.focus();
+            setTimeout(() => { 
+                if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+                    html5QrCode.resume(); 
+                }
+            }, 1500);
+        });
+    }
+
+    // Auto focus manual input
+    document.addEventListener('click', (e) => {
+        const activeTag = document.activeElement ? document.activeElement.tagName : '';
+        const targetTag = e.target ? e.target.tagName : '';
+        if(activeTag !== 'INPUT' && activeTag !== 'BUTTON' && activeTag !== 'SELECT' && 
+           targetTag !== 'INPUT' && targetTag !== 'BUTTON' && targetTag !== 'SELECT') {
+            barcodeInput.focus();
+        }
+    });
+</script>
+{% endblock %}
