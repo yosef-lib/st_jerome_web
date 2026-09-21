@@ -79,7 +79,7 @@
                     
                     this.loading = true;
                     setTimeout(() => {
-                        window.location.href = '/cek_pinjaman/' + encodeURIComponent(this.memberId.trim());
+                        window.location.href = '/cek_pinjaman/' + encodeURIComponent(this.memberId.trim()) + '?source=kiosk';
                     }, 800); // Fake delay for UX
                 }
             }
