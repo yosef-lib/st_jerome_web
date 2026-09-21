@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+{% block content %}
+<div x-data="sampulManager()" x-init="loadData()" class="bg-white rounded-lg shadow-sm border border-stroke overflow-hidden">
+    <div class="bg-primary px-6 py-4 border-b border-stroke flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-images mr-2"></i> Laporan & Kelola Sampul Kosong</h2>
+        <div>
+            <button @click="loadData()" class="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded text-sm font-medium transition"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+        </div>
+    </div>
+    
+    <div class="p-6">
+        <!-- Pencarian -->
+        <div class="flex mb-6 gap-4">
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <input type="text" x-model="search" @keyup.enter="page=1; loadData()" class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2 focus:ring-primary focus:border-primary" placeholder="Cari judul, pengarang, atau ISBN...">
+            </div>
+            <button @click="page=1; loadData()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 font-medium">Cari</button>
+        </div>
+
+        <!-- Indikator Loading -->
+        <div x-show="loading" class="flex justify-center items-center py-12" style="display: none;">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-primary"></i>
+            <span class="ml-3 text-lg font-medium text-slate-600">Memuat data...</span>
+        </div>
+
+        <!-- Daftar Buku Kosong -->
+        <div x-show="!loading" style="display: none;">
+            <div class="mb-4 text-sm font-medium text-slate-600">
+                Menemukan <span x-text="total" class="text-primary font-bold"></span> buku yang belum memiliki sampul.
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <template x-for="book in books" :key="book.id">
+                    <div class="border border-slate-200 rounded-lg p-4 flex flex-col hover:shadow-md transition bg-slate-50">
+                        <div class="flex-1 mb-4">
+                            <h3 class="font-bold text-slate-800 text-base leading-tight mb-1" x-text="book.judul"></h3>
+                            <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-user text-slate-400 w-4"></i> <span x-text="book.pengarang || 'Tanpa Pengarang'"></span></p>
+                            <p class="text-xs text-slate-500"><i class="fa-solid fa-barcode text-slate-400 w-4"></i> ISBN: <span x-text="book.isbn || '-'"></span></p>
+                        </div>
+                        
+                        <div class="mt-auto border-t border-slate-200 pt-3">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Tempelkan Link (URL) Gambar Sampul:</label>
+                            <div class="flex gap-2">
+                                <input type="text" x-model="book.newImage" class="flex-1 text-xs border border-slate-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="https://...">
+                                <button @click="saveImage(book)" class="bg-success text-white px-3 py-1 rounded text-xs font-medium hover:bg-opacity-90 transition flex items-center">
+                                    <i class="fa-solid fa-save mr-1" x-show="!book.saving"></i>
+                                    <i class="fa-solid fa-spinner fa-spin mr-1" x-show="book.saving" style="display:none;"></i>
+                                    Simpan
+                                </button>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mt-1 italic">
+                                Tips: Cari buku di Google Images, klik kanan gambar, lalu "Copy image address" (Salin tautan gambar).
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Pesan Kosong -->
+            <div x-show="books.length === 0" class="text-center py-12" style="display: none;">
+                <i class="fa-solid fa-check-circle text-5xl text-success mb-3"></i>
+                <h3 class="text-lg font-bold text-slate-700">Luar Biasa!</h3>
+                <p class="text-slate-500">Semua buku (sesuai pencarian) sudah memiliki sampul.</p>
+            </div>
+
+            <!-- Pagination -->
+            <div x-show="totalPages > 1" class="flex justify-center items-center mt-8 gap-4" style="display: none;">
+                <button @click="prevPage()" :disabled="page <= 1" class="px-4 py-2 border rounded-md font-medium" :class="page <= 1 ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300'">
+                    <i class="fa-solid fa-chevron-left mr-1"></i> Sebelumnya
+                </button>
+                <span class="text-sm font-medium text-slate-600">Halaman <span x-text="page"></span> dari <span x-text="totalPages"></span></span>
+                <button @click="nextPage()" :disabled="page >= totalPages" class="px-4 py-2 border rounded-md font-medium" :class="page >= totalPages ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300'">
+                    Selanjutnya <i class="fa-solid fa-chevron-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('sampulManager', () => ({
+        search: '',
+        books: [],
+        loading: false,
+        total: 0,
+        page: 1,
+        totalPages: 1,
+        
+        async loadData() {
+            this.loading = true;
+            try {
+                const res = await fetch('/api/sampul_kosong?page=' + this.page + '&search=' + encodeURIComponent(this.search));
+                const data = await res.json();
+                if(data.status === 'success') {
+                    // Tambahkan state lokal untuk setiap buku
+                    this.books = data.data.map(b => ({...b, newImage: '', saving: false}));
+                    this.total = data.total;
+                    this.page = data.page;
+                    this.totalPages = data.total_pages;
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Gagal memuat data.");
+            }
+            this.loading = false;
+        },
+        
+        async saveImage(book) {
+            if (!book.newImage || book.newImage.trim() === '') {
+                alert("Harap masukkan link URL gambar.");
+                return;
+            }
+            if (!book.newImage.startsWith('http')) {
+                alert("URL harus diawali dengan http:// atau https://");
+                return;
+            }
+            
+            book.saving = true;
+            try {
+                const res = await fetch('/api/sampul/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: book.id, image_url: book.newImage.trim() })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    // Hapus dari daftar jika berhasil (karena sudah tidak kosong)
+                    this.books = this.books.filter(b => b.id !== book.id);
+                    this.total -= 1;
+                } else {
+                    alert("Gagal menyimpan: " + data.message);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Terjadi kesalahan koneksi.");
+            }
+            book.saving = false;
+        },
+        
+        nextPage() {
+            if (this.page < this.totalPages) {
+                this.page++;
+                this.loadData();
+            }
+        },
+        
+        prevPage() {
+            if (this.page > 1) {
+                this.page--;
+                this.loadData();
+            }
+        }
+    }));
+});
+</script>
+{% endblock %}

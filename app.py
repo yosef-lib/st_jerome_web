@@ -1806,6 +1806,69 @@ def api_opac_reserve():
     return jsonify({'status': 'success'})
 
 
+
+@app.route('/kelola_sampul')
+@login_required
+def kelola_sampul():
+    return render_template('kelola_sampul.html')
+
+@app.route('/api/sampul_kosong', methods=['GET'])
+@api_login_required
+def api_sampul_kosong():
+    search = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
+    per_page = 15
+    offset = (page - 1) * per_page
+    
+    conn = get_db_connection()
+    query = '''
+        SELECT id, judul, pengarang, penerbit, tahun_terbit, isbn
+        FROM bibliografi
+        WHERE (image IS NULL OR image = '' OR image = 'NOT_FOUND' OR image = 'RATE_LIMIT')
+    '''
+    params = []
+    
+    if search:
+        query += ' AND (judul LIKE ? OR pengarang LIKE ? OR isbn LIKE ?)'
+        params.extend(['%'+search+'%', '%'+search+'%', '%'+search+'%'])
+        
+    count_query = query.replace('SELECT id, judul, pengarang, penerbit, tahun_terbit, isbn', 'SELECT COUNT(*) as total')
+    cursor = conn.execute(count_query, params)
+    total = cursor.fetchone()['total']
+    
+    query += ' ORDER BY id DESC LIMIT ? OFFSET ?'
+    params.extend([per_page, offset])
+    
+    cursor = conn.execute(query, params)
+    books = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return jsonify({
+        'status': 'success',
+        'data': books,
+        'total': total,
+        'page': page,
+        'total_pages': (total + per_page - 1) // per_page
+    })
+
+@app.route('/api/sampul/update', methods=['POST'])
+@api_login_required
+def api_sampul_update():
+    data = request.json
+    biblio_id = data.get('id')
+    image_url = data.get('image_url')
+    
+    if not biblio_id or not image_url:
+        return jsonify({'status': 'error', 'message': 'Data tidak lengkap'}), 400
+        
+    conn = get_db_connection()
+    conn.execute('UPDATE bibliografi SET image = ? WHERE id = ?', (image_url, biblio_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'status': 'success'})
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
