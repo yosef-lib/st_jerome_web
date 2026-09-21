@@ -4,15 +4,31 @@
     <meta charset="UTF-8">
     <title>Struk Peminjaman - {{ member.nama }}</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0; padding: 10px; width: 300px; color: #000; }
+        /* Optimized for 58mm and 80mm Thermal Printers */
+        body { 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 12px; 
+            margin: 0 auto; 
+            padding: 5px; 
+            width: 100%;
+            max-width: 300px; /* Max 80mm */
+            color: #000; 
+            box-sizing: border-box;
+        }
         .center { text-align: center; }
         .bold { font-weight: bold; }
-        .line { border-bottom: 1px dashed #000; margin: 10px 0; }
-        table { width: 100%; border-collapse: collapse; }
-        td { vertical-align: top; padding: 2px 0; }
-        .title { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .line { border-bottom: 1px dashed #000; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        td { vertical-align: top; padding: 2px 0; word-wrap: break-word; }
+        .title { font-size: 14px; font-weight: bold; margin-bottom: 3px; }
         @media print {
-            body { padding: 0; width: 100%; }
+            body { 
+                padding: 0; 
+                margin: 0; 
+                width: 100%; 
+                max-width: none;
+            }
+            @page { margin: 0; } /* Hilangkan margin bawaan browser */
         }
     </style>
 </head>
