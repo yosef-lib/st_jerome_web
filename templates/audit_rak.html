@@ -3,6 +3,7 @@
 {% block page_title %}Stock Opname{% endblock %}
 {% block page_subtitle %}Manajemen Audit Inventaris Perpustakaan{% endblock %}
 
+<script src="https://unpkg.com/html5-qrcode"></script>
 {% block content %}
 <div class="grid grid-cols-1 gap-6">
 
@@ -34,15 +35,40 @@
                 <p class="text-xs text-slate-500">Mulai: {{ active_session.start_date }}</p>
             </div>
             
+            <!-- RACK SELECTION -->
+            <div class="mb-5">
+                <label class="mb-2 block text-sm font-medium text-black">Target Rak Saat Ini</label>
+                <select id="target_rak" class="w-full rounded border border-stroke bg-transparent py-3 px-4 outline-none transition focus:border-primary active:border-primary">
+                    <option value="">-- Pilih Rak (Wajib) --</option>
+                    <option value="0">000 - Karya Umum</option>
+                    <option value="1">100 - Filsafat & Psikologi</option>
+                    <option value="2">200 - Agama & Teologi</option>
+                    <option value="3">300 - Ilmu Sosial</option>
+                    <option value="4">400 - Bahasa</option>
+                    <option value="5">500 - Sains & Matematika</option>
+                    <option value="6">600 - Teknologi</option>
+                    <option value="7">700 - Seni & Rekreasi</option>
+                    <option value="8">800 - Sastra</option>
+                    <option value="9">900 - Sejarah & Geografi</option>
+                    <option value="F">Fiksi</option>
+                    <option value="R">Referensi</option>
+                </select>
+            </div>
+
+            <!-- SCANNER AREA -->
             <div class="mb-6">
-                <label class="mb-2 block text-sm font-medium text-black">Scan Barcode Buku</label>
+                <label class="mb-2 block text-sm font-medium text-black">Scan Barcode</label>
+                
+                <!-- CAMERA SCANNER -->
+                <div id="reader" width="100%" class="mb-3 rounded overflow-hidden border border-stroke bg-slate-50"></div>
+                
+                <!-- MANUAL INPUT -->
                 <div class="relative">
                     <span class="absolute left-4 top-1/2 -translate-y-1/2">
-                        <i class="fa-solid fa-barcode text-slate-400"></i>
+                        <i class="fa-solid fa-keyboard text-slate-400"></i>
                     </span>
-                    <input type="text" id="barcode_input" autofocus class="w-full rounded border border-stroke bg-transparent py-3 pl-11 pr-4 outline-none transition focus:border-primary active:border-primary text-lg font-bold" placeholder="Tembak barcode di sini...">
+                    <input type="text" id="barcode_input" class="w-full rounded border border-stroke bg-transparent py-3 pl-11 pr-4 outline-none transition focus:border-primary active:border-primary text-lg font-bold" placeholder="Atau ketik manual & Enter...">
                 </div>
-                <p class="text-xs text-slate-500 mt-2"><i class="fa-solid fa-keyboard mr-1"></i> Tekan Enter setelah mengetik/scan</p>
             </div>
             
             <form method="POST" action="{{ url_for('audit_rak') }}" id="stopSessionForm">
@@ -154,45 +180,25 @@
             
             this.disabled = true;
             
+            const target_rak = document.getElementById('target_rak').value;
+            if(!target_rak) {
+                alert('Silakan pilih Target Rak terlebih dahulu!');
+                barcodeInput.disabled = false;
+                barcodeInput.focus();
+                return;
+            }
+            
             fetch("{{ url_for('api_scan_opname') }}", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     no_induk: no_induk,
-                    session_id: {{ active_session.id }}
+                    session_id: {{ active_session.id }},
+                    target_rak: target_rak
                 })
             })
             .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    beepSuccess.play().catch(e=>console.log(e));
-                    // Update counter
-                    let count = parseInt(counterDitemukan.innerText);
-                    counterDitemukan.innerText = count + 1;
-                    
-                    // Prepend to table
-                    const tr = document.createElement('tr');
-                    tr.classList.add('bg-success/5');
-                    tr.innerHTML = `
-                        <td class="border-b border-[#eee] py-3 px-4 text-sm">Baru saja</td>
-                        <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium">${data.no_induk}</td>
-                        <td class="border-b border-[#eee] py-3 px-4 text-sm">${data.judul}</td>
-                        <td class="border-b border-[#eee] py-3 px-4 text-center">
-                            <span class="inline-flex rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">Ditemukan</span>
-                        </td>
-                    `;
-                    tbody.insertBefore(tr, tbody.firstChild);
-                    
-                    // Remove background highlight after 1s
-                    setTimeout(() => tr.classList.remove('bg-success/5'), 1000);
-                } else if(data.status === 'warning') {
-                    beepSuccess.play().catch(e=>console.log(e)); // Already scanned is still a success sound but maybe distinct
-                    alert(data.message);
-                } else {
-                    beepError.play().catch(e=>console.log(e));
-                    alert(data.message);
-                }
-            })
+            .then(data => processScanResult(data))
             .catch(err => {
                 beepError.play().catch(e=>console.log(e));
                 alert("Terjadi kesalahan jaringan.");
@@ -211,6 +217,91 @@
             barcodeInput.focus();
         }
     });
+
+    // Initialize Camera Scanner
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: {width: 250, height: 100} },
+        false
+    );
+    
+    function onScanSuccess(decodedText, decodedResult) {
+        // Stop scanning temporarily
+        html5QrcodeScanner.pause(true);
+        
+        const no_induk = decodedText.trim();
+        const target_rak = document.getElementById('target_rak').value;
+        if(!target_rak) {
+            alert('Pilih Rak dulu sebelum scan kamera!');
+            html5QrcodeScanner.resume();
+            return;
+        }
+        
+        fetch("{{ url_for('api_scan_opname') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                no_induk: no_induk,
+                session_id: {{ active_session.id }},
+                target_rak: target_rak
+            })
+        })
+        .then(res => res.json())
+        .then(data => processScanResult(data))
+        .catch(err => {
+            beepError.play().catch(e=>console.log(e));
+            alert("Terjadi kesalahan jaringan.");
+        })
+        .finally(() => {
+            setTimeout(() => { html5QrcodeScanner.resume(); }, 1500); // Resume after 1.5s
+        });
+    }
+    
+    html5QrcodeScanner.render(onScanSuccess, (error) => {});
+    
+    function processScanResult(data) {
+        if(data.status === 'success' || data.status === 'warning') {
+            beepSuccess.play().catch(e=>console.log(e));
+            if(data.status === 'success') {
+                let count = parseInt(counterDitemukan.innerText);
+                counterDitemukan.innerText = count + 1;
+            }
+            
+            // Tentukan warna berdasarkan status_rak
+            let bgClass = 'bg-success/5';
+            let badgeClass = 'bg-success/10 text-success';
+            let badgeText = 'BENAR';
+            
+            if(data.status_rak === 'SALAH RAK') {
+                bgClass = 'bg-danger/5';
+                badgeClass = 'bg-danger/10 text-danger';
+                badgeText = 'SALAH RAK';
+                beepError.play().catch(e=>console.log(e)); // Mainkan error beep jika salah rak
+            }
+            
+            const tr = document.createElement('tr');
+            tr.classList.add(bgClass);
+            tr.innerHTML = `
+                <td class="border-b border-[#eee] py-3 px-4 text-sm">Baru saja</td>
+                <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium">${data.no_induk}</td>
+                <td class="border-b border-[#eee] py-3 px-4 text-sm">${data.judul}</td>
+                <td class="border-b border-[#eee] py-3 px-4 text-center">
+                    <span class="inline-flex rounded-full ${badgeClass} px-3 py-1 text-sm font-medium">${badgeText}</span>
+                </td>
+            `;
+            tbody.insertBefore(tr, tbody.firstChild);
+            
+            if(data.status === 'warning') {
+                alert(data.message);
+            } else if (data.status_rak === 'SALAH RAK') {
+                alert("PERINGATAN: BUKU SALAH RAK! Seharusnya di rak: " + (data.ddc_asli || 'Tidak diketahui'));
+            }
+        } else {
+            beepError.play().catch(e=>console.log(e));
+            alert(data.message);
+        }
+    }
+
     {% endif %}
 </script>
 {% endblock %}
