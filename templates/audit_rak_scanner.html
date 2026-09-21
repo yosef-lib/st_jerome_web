@@ -68,7 +68,22 @@
 
 
 
-<script src="{{ url_for('static', filename='js/html5-qr.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/html5-qr.min.js') }}">
+    // Auto-focus untuk Physical Scanner
+    document.addEventListener('keydown', (e) => {
+        const activeTag = document.activeElement ? document.activeElement.tagName : '';
+        // Abaikan jika user sedang mengetik di input/select lain
+        if(activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
+        
+        // Abaikan tombol kontrol (Ctrl, Alt, Shift, Meta, Enter, dll)
+        if(e.key.length > 1) return;
+        
+        const inputElem = document.getElementById('barcode_input');
+        if(inputElem) {
+            inputElem.focus();
+        }
+    });
+</script>
 
 <script>
     const barcodeInput = document.getElementById('barcode_input');
