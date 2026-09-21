@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 
-{% block page_title %}Scanner Meja Baca{% endblock %}
+{% block page_title %}Scan Buku Yang Telah Dibaca{% endblock %}
 {% block page_subtitle %}Pindai barcode buku yang tertinggal di meja baca menggunakan kamera HP{% endblock %}
 
 {% block content %}
@@ -11,7 +11,7 @@
             <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
                 <i class="fa-solid fa-qrcode text-3xl"></i>
             </div>
-            <h4 class="text-xl font-bold text-black mb-1">Pemindai Meja Baca</h4>
+            <h4 class="text-xl font-bold text-black mb-1">Scan Buku Yang Telah Dibaca</h4>
             <p class="text-sm font-medium text-slate-500">Arahkan kamera ke barcode buku, pencatatan otomatis ke log keterbacaan.</p>
         </div>
         
@@ -57,6 +57,28 @@
                 <div class="font-bold text-primary mb-1 text-sm"><i class="fa-solid fa-lightbulb"></i> Tips Penggunaan</div>
                 <p class="text-xs text-slate-500 leading-relaxed">Buka halaman ini di browser HP Anda dan izinkan akses kamera. Koneksi jaringan yang sama dan akses HTTPS disarankan.</p>
             </div>
+
+        <div class="p-6 border-t border-stroke bg-gray-50">
+            <h5 class="font-bold text-black mb-4"><i class="fa-solid fa-clock-rotate-left text-primary mr-2"></i> Baru Saja Discan Hari Ini</h5>
+            
+            <div id="recentList" class="flex flex-col gap-3">
+                {% if recent %}
+                    {% for r in recent %}
+                    <div class="bg-white p-3 rounded border border-stroke shadow-sm flex items-start gap-3 animate-[fadeIn_0.3s_ease-out]">
+                        <div class="bg-primary/10 text-primary w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-black line-clamp-1">{{ r.judul }}</p>
+                            <p class="text-xs text-slate-500 font-medium">{{ r.no_induk }} &bull; {{ r.waktu[-8:] }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-slate-500 text-sm py-4 italic">Belum ada buku yang discan hari ini.</div>
+                {% endif %}
+            </div>
+        </div>
         </div>
     </div>
 </div>
@@ -121,6 +143,27 @@
                 document.getElementById('bookSubject').innerText = data.subjek || 'Tanpa subjek';
                 document.getElementById('resultBox').style.display = 'block';
                 document.getElementById('manualInput').value = ''; // clear input
+                
+                // Add to list
+                const now = new Date();
+                const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
+                const newItem = `
+                    <div class="bg-white p-3 rounded border border-success shadow-sm flex items-start gap-3 animate-[fadeIn_0.3s_ease-out] border-l-4">
+                        <div class="bg-success/10 text-success w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-black line-clamp-1">${data.judul}</p>
+                            <p class="text-xs text-slate-500 font-medium">${no_induk} &bull; ${timeStr}</p>
+                        </div>
+                    </div>
+                `; </p>
+                        </div>
+                    </div>
+                ;
+                const list = document.getElementById('recentList');
+                if (list && list.innerHTML.includes('Belum ada')) list.innerHTML = '';
+                if (list) list.insertAdjacentHTML('afterbegin', newItem);
             } else {
                 document.getElementById('errorMsg').innerText = `No Induk: ${no_induk}`;
                 document.getElementById('errorBox').style.display = 'block';
