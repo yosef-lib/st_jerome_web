@@ -167,12 +167,6 @@
         });
     });
 
-    document.addEventListener('click', (e) => {
-        const activeTag = document.activeElement ? document.activeElement.tagName : '';
-        const targetTag = e.target ? e.target.tagName : '';
-        if(activeTag !== 'INPUT' && activeTag !== 'BUTTON' && targetTag !== 'INPUT' && targetTag !== 'BUTTON') {
-            document.getElementById('manualInput').focus();
-        }
-    });
+    
 </script>
 {% endblock %}

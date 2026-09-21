@@ -233,13 +233,6 @@
     }
 
     // Auto focus manual input
-        document.addEventListener('click', (e) => {
-        const activeTag = document.activeElement ? document.activeElement.tagName : '';
-        const targetTag = e.target ? e.target.tagName : '';
-        const ignoredTags = ['INPUT', 'BUTTON', 'SELECT', 'OPTION', 'OPTGROUP', 'A'];
-        if(!ignoredTags.includes(activeTag) && !ignoredTags.includes(targetTag)) {
-            barcodeInput.focus();
-        }
-    });
+        
 </script>
 {% endblock %}
