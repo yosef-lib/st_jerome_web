@@ -132,8 +132,11 @@ def api_cetak_khusus():
         
     conn = database.get_db_connection()
     placeholders = ','.join('?' for _ in ids)
-    koleksi = conn.execute(f'SELECT * FROM buku WHERE id IN ({placeholders})', ids).fetchall()
+    koleksi_data = conn.execute(f'SELECT * FROM buku WHERE id IN ({placeholders})', ids).fetchall()
     conn.close()
+    # Sort to match clicked order
+    k_dict = {str(row['id']): row for row in koleksi_data}
+    koleksi = [k_dict[str(i)] for i in ids if str(i) in k_dict]
     
     buku_list = [dict(row) for row in koleksi]
     
