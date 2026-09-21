@@ -146,54 +146,88 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('sampulManager', () => ({
         robot: { is_running: false, progress: 0, total: 0, current_book: '', results: [], error: '' },
-        pollInterval: null,
-        
-        init() {
-            this.checkRobotStatus();
-            this.pollInterval = setInterval(() => {
-                if (this.robot.is_running || document.visibilityState === 'visible') {
-                    this.checkRobotStatus();
-                }
-            }, 3000);
-        },
-        
-        async checkRobotStatus() {
-            try {
-                const res = await fetch('/api/robot/status');
-                const data = await res.json();
-                const wasRunning = this.robot.is_running;
-                this.robot = data;
-                
-                // Refresh data buku jika robot baru saja selesai
-                if (wasRunning && !data.is_running) {
-                    this.loadData();
-                }
-            } catch (e) {}
-        },
+        shouldStop: false,
         
         async startRobot() {
+            if (this.robot.is_running) return;
+            this.robot = { is_running: true, progress: 0, total: 50, current_book: 'Mengambil antrian buku...', results: [], error: '' };
+            this.shouldStop = false;
+            
             try {
-                const res = await fetch('/api/robot/start', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ limit: 50 })
-                });
+                // Ambil 50 buku kosong dari server
+                const res = await fetch('/api/sampul_kosong?page=1&search=');
                 const data = await res.json();
-                if (data.status === 'success') {
-                    this.checkRobotStatus();
-                } else {
-                    alert(data.message);
+                
+                if (!data.data || data.data.length === 0) {
+                    this.robot.error = "Luar biasa! Tidak ada lagi buku yang membutuhkan sampul.";
+                    this.robot.is_running = false;
+                    return;
+                }
+                
+                let books = data.data.slice(0, 50);
+                this.robot.total = books.length;
+                
+                for (let i = 0; i < books.length; i++) {
+                    if (this.shouldStop) {
+                        this.robot.error = "Dihentikan manual.";
+                        break;
+                    }
+                    
+                    let book = books[i];
+                    this.robot.current_book = book.judul + " - " + (book.pengarang || '');
+                    
+                    let image_url = 'NOT_FOUND';
+                    let statusText = 'Kosong';
+                    
+                    try {
+                        const query = book.judul + (book.pengarang ? ' ' + book.pengarang : '');
+                        const gRes = await fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query));
+                        
+                        if (gRes.status === 429) {
+                            this.robot.error = "Terhenti: Jaringan internet/WiFi Bapak terdeteksi melakukan terlalu banyak pencarian ke Google.";
+                            break;
+                        }
+                        
+                        const gData = await gRes.json();
+                        
+                        if (gData.items && gData.items.length > 0) {
+                            let img = gData.items[0].volumeInfo?.imageLinks?.thumbnail;
+                            if (img) {
+                                image_url = img.replace('http:', 'https:');
+                                statusText = 'Ditemukan';
+                            }
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    
+                    // Simpan ke database server
+                    await fetch('/api/sampul/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: book.id, image_url: image_url })
+                    });
+                    
+                    this.robot.results.unshift({
+                        judul: book.judul,
+                        status: statusText
+                    });
+                    this.robot.progress++;
+                    
+                    // Jeda 2 detik agar Google tidak marah
+                    await new Promise(r => setTimeout(r, 2000));
                 }
             } catch (e) {
-                alert("Gagal memulai robot.");
+                this.robot.error = "Terjadi kesalahan jaringan.";
             }
+            
+            this.robot.current_book = "Selesai";
+            this.robot.is_running = false;
+            this.loadData(); // Refresh UI bawah
         },
         
-        async stopRobot() {
-            try {
-                await fetch('/api/robot/stop', { method: 'POST' });
-                this.checkRobotStatus();
-            } catch (e) {}
+        stopRobot() {
+            this.shouldStop = true;
         },
         
         search: '',
