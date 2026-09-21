@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Laporan Stock Opname{% endblock %}
+{% block page_subtitle %}Sesi: {{ sesi.nama_sesi }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <a href="{{ url_for('audit_rak') }}" class="inline-flex items-center gap-2 rounded bg-slate-200 px-4 py-2 font-medium text-slate-700 hover:bg-slate-300">
+        <i class="fa-solid fa-arrow-left"></i> Kembali ke Stock Opname
+    </a>
+    
+    <button onclick="window.print()" class="inline-flex items-center gap-2 rounded bg-primary px-4 py-2 font-medium text-white hover:bg-opacity-90">
+        <i class="fa-solid fa-print"></i> Cetak Laporan
+    </button>
+</div>
+
+<!-- RINGKASAN -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 border-t-4 border-t-primary">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-500 mb-1">Total Koleksi (Katalog)</p>
+                <h4 class="text-3xl font-bold text-black">{{ total_koleksi }}</h4>
+            </div>
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                <i class="fa-solid fa-book text-xl text-primary"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 border-t-4 border-t-success">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-500 mb-1">Berhasil Ditemukan</p>
+                <h4 class="text-3xl font-bold text-success">{{ ditemukan }}</h4>
+            </div>
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+                <i class="fa-solid fa-check text-xl text-success"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 border-t-4 border-t-danger">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-500 mb-1">Buku Hilang / Tidak Dipindai</p>
+                <h4 class="text-3xl font-bold text-danger">{{ hilang }}</h4>
+            </div>
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-danger/10">
+                <i class="fa-solid fa-triangle-exclamation text-xl text-danger"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DAFTAR BUKU HILANG -->
+<div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+    <div class="mb-4">
+        <h3 class="text-lg font-bold text-black">Daftar Eksemplar Hilang</h3>
+        <p class="text-sm text-slate-500">Berikut adalah buku-buku yang terdaftar di katalog namun TIDAK dipindai selama sesi Stock Opname ini berlangsung. (Menampilkan maksimal 500 data)</p>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="bg-gray-2 text-left">
+                    <th class="py-3 px-4 font-medium text-black">No</th>
+                    <th class="py-3 px-4 font-medium text-black">Barcode</th>
+                    <th class="py-3 px-4 font-medium text-black">Judul Buku</th>
+                    <th class="py-3 px-4 font-medium text-black">Lokasi Terakhir</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in buku_hilang %}
+                <tr>
+                    <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ loop.index }}</td>
+                    <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium text-danger">{{ b.no_induk }}</td>
+                    <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ b.judul }}</td>
+                    <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ b.lokasi }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="py-8 text-center text-slate-500">
+                        <i class="fa-solid fa-face-smile text-3xl mb-2 text-success"></i><br>
+                        Luar biasa! Tidak ada buku yang hilang.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    @media print {
+        aside, header, .fa-arrow-left, button {
+            display: none !important;
+        }
+        body {
+            background-color: white !important;
+        }
+        .shadow-default {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+        }
+        .text-title-md {
+            font-size: 16pt !important;
+        }
+    }
+</style>
+{% endblock %}

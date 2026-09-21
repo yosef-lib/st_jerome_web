@@ -1,241 +1,216 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
+
+{% block page_title %}Stock Opname{% endblock %}
+{% block page_subtitle %}Manajemen Audit Inventaris Perpustakaan{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto p-4 md:p-6 2xl:p-10">
+<div class="grid grid-cols-1 gap-6">
 
-    <div class="rounded-sm border border-stroke bg-white shadow-default border-t-4 border-t-warning">
-        <div class="text-center pt-8 pb-4 px-6">
-            <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-warning/10 text-warning mb-4">
-                <i class="fa-solid fa-boxes-packing text-3xl"></i>
+    {% if not active_session %}
+    <!-- NO ACTIVE SESSION -->
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-10 text-center">
+        <div class="mb-5 inline-flex items-center justify-center rounded-full bg-slate-100 p-4">
+            <i class="fa-solid fa-box-open text-4xl text-primary"></i>
+        </div>
+        <h2 class="text-title-md font-bold text-black mb-2">Tidak ada Sesi Stock Opname Aktif</h2>
+        <p class="text-slate-500 mb-6 max-w-lg mx-auto">Mulai sesi baru untuk mulai memindai buku. Progres pemindaian akan tersimpan otomatis sehingga Anda bisa melanjutkannya besok atau lusa.</p>
+        
+        <form method="POST" action="{{ url_for('audit_rak') }}" class="max-w-md mx-auto flex flex-col gap-4">
+            <input type="hidden" name="action" value="start">
+            <input type="text" name="nama_sesi" required placeholder="Contoh: Audit Semester Ganjil 2026" class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+            <button type="submit" class="w-full rounded bg-primary p-3 font-medium text-white hover:bg-opacity-90">
+                <i class="fa-solid fa-play mr-2"></i> Mulai Sesi Baru
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <!-- ACTIVE SESSION -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Panel Kiri: Scanner -->
+        <div class="md:col-span-1 rounded-sm border border-stroke bg-white shadow-default p-6">
+            <div class="mb-4">
+                <span class="inline-block rounded bg-success/10 px-2.5 py-0.5 text-sm font-medium text-success mb-2">Sesi Aktif</span>
+                <h3 class="text-xl font-bold text-black">{{ active_session.nama_sesi }}</h3>
+                <p class="text-xs text-slate-500">Mulai: {{ active_session.start_date }}</p>
             </div>
-            <h4 class="text-xl font-bold text-black mb-1">Stock Opname / Stock Opname</h4>
-            <p class="text-sm font-medium text-slate-500">Scan barcode buku, sistem akan mendeteksi jika ada buku yang salah letak!</p>
+            
+            <div class="mb-6">
+                <label class="mb-2 block text-sm font-medium text-black">Scan Barcode Buku</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2">
+                        <i class="fa-solid fa-barcode text-slate-400"></i>
+                    </span>
+                    <input type="text" id="barcode_input" autofocus class="w-full rounded border border-stroke bg-transparent py-3 pl-11 pr-4 outline-none transition focus:border-primary active:border-primary text-lg font-bold" placeholder="Tembak barcode di sini...">
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><i class="fa-solid fa-keyboard mr-1"></i> Tekan Enter setelah mengetik/scan</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('audit_rak') }}" id="stopSessionForm">
+                <input type="hidden" name="action" value="stop">
+                <input type="hidden" name="session_id" value="{{ active_session.id }}">
+                <button type="button" onclick="confirmStop()" class="w-full rounded border border-danger text-danger p-3 font-medium hover:bg-danger hover:text-white transition">
+                    <i class="fa-solid fa-stop mr-2"></i> Tutup Sesi & Lihat Laporan
+                </button>
+            </form>
         </div>
         
-        <div class="px-6 mb-4">
-            <label class="mb-2.5 block font-bold text-black text-center text-lg">Anda Sedang Mengaudit Rak DDC Berapa?</label>
-            <select id="target_rak" class="w-full rounded border-[1.5px] border-stroke bg-warning/10 py-3 px-5 outline-none font-bold text-center">
-                <option value="000">Rak 000 (Komputer & Umum)</option>
-                <option value="100">Rak 100 (Filsafat & Psikologi)</option>
-                <option value="200" selected>Rak 200 (Agama & Teologi)</option>
-                <option value="300">Rak 300 (Ilmu Sosial)</option>
-                <option value="400">Rak 400 (Bahasa)</option>
-                <option value="500">Rak 500 (Sains & Mat)</option>
-                <option value="600">Rak 600 (Teknologi)</option>
-                <option value="700">Rak 700 (Kesenian)</option>
-                <option value="800">Rak 800 (Sastra)</option>
-                <option value="900">Rak 900 (Sejarah & Geografi)</option>
-            </select>
-        </div>
-
-        <div class="p-6">
-            <div id="reader" class="rounded-lg overflow-hidden border-2 border-stroke bg-black w-full min-h-[250px] flex items-center justify-center relative">
-                <button id="btnStartScan" class="absolute z-10 flex items-center gap-2 rounded bg-warning py-3 px-6 font-medium text-black hover:bg-opacity-90 transition shadow-lg">
-                    <i class="fa-solid fa-camera"></i> Buka Kamera HP
-                </button>
-            </div>
-            
-            <div class="mt-4 flex justify-center hidden" id="scanActions">
-                <button id="btnStopScan" class="flex items-center gap-2 rounded border border-danger text-danger py-1.5 px-4 font-medium hover:bg-danger hover:text-white transition text-sm">
-                    <i class="fa-solid fa-stop"></i> Hentikan Kamera
-                </button>
-            </div>
-            
-            <!-- Manual Input -->
-            <div class="mt-6 mb-5">
-                <label class="mb-2 block text-sm font-bold text-black">Atau Masukkan Manual / Gunakan Scanner Fisik:</label>
-                <div class="flex gap-2">
-                    <input type="text" id="manualInput" autofocus placeholder="Ketik No. Induk..." onkeypress="if(event.key === 'Enter') submitManual()" class="w-full rounded border-[1.5px] border-stroke bg-transparent py-2 px-4 outline-none transition focus:border-warning active:border-warning">
-                    <button class="flex items-center justify-center rounded bg-warning py-2 px-5 font-medium text-black hover:bg-opacity-90 transition" onclick="submitManual()">Cek Rak</button>
+        <!-- Panel Kanan: Progress & Riwayat -->
+        <div class="md:col-span-2 rounded-sm border border-stroke bg-white shadow-default p-6">
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="rounded border border-stroke p-4 bg-slate-50">
+                    <p class="text-sm font-medium text-slate-500 mb-1">Total Eksemplar Katalog</p>
+                    <h4 class="text-2xl font-bold text-black">{{ stats.total_koleksi }}</h4>
+                </div>
+                <div class="rounded border border-stroke p-4 bg-success/10">
+                    <p class="text-sm font-medium text-success mb-1">Berhasil Dipindai</p>
+                    <h4 class="text-2xl font-bold text-success" id="counter_ditemukan">{{ stats.ditemukan }}</h4>
                 </div>
             </div>
-
-            <!-- Result Box -->
-            <div id="resultBox" class="hidden text-center rounded-lg border-2 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
-                <i id="resultIcon" class="fa-solid text-4xl mb-2"></i>
-                <div id="resultTitle" class="font-bold text-xl mb-1"></div>
-                <div id="resultDesc" class="font-semibold text-black text-sm"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- STATISTIK & RIWAYAT -->
-    <div class="mt-6 rounded-sm border border-stroke bg-white shadow-default p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h4 class="text-xl font-bold text-black">Riwayat Sensus & Audit</h4>
             
-            <div class="flex gap-2">
-                <button onclick="location.reload()" class="flex items-center gap-2 rounded bg-primary py-2 px-4 font-medium text-white hover:bg-opacity-90 transition text-sm">
-                    <i class="fa-solid fa-rotate"></i> Segarkan Tabel
-                </button>
-                <a href="/export_audit" class="flex items-center gap-2 rounded bg-success py-2 px-4 font-medium text-white hover:bg-opacity-90 transition text-sm">
-                    <i class="fa-solid fa-file-excel"></i> Ekspor ke Excel
-                </a>
+            <h4 class="font-bold text-black mb-3">Baru Saja Dipindai</h4>
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-2 text-left">
+                            <th class="py-2 px-4 font-medium text-black">Waktu</th>
+                            <th class="py-2 px-4 font-medium text-black">Barcode</th>
+                            <th class="py-2 px-4 font-medium text-black">Judul Buku</th>
+                            <th class="py-2 px-4 font-medium text-black text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="riwayat_tbody">
+                        {% for r in recent_scans %}
+                        <tr>
+                            <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ r.scan_date }}</td>
+                            <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium">{{ r.no_induk }}</td>
+                            <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ r.judul }}</td>
+                            <td class="border-b border-[#eee] py-3 px-4 text-center">
+                                <span class="inline-flex rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">Ditemukan</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-4 gap-4 mb-6">
-            <div class="bg-gray-2 rounded p-3 text-center border-b-4 border-primary">
-                <div class="text-2xl font-bold text-black">{{ stats.total }}</div>
-                <div class="text-xs text-slate-500 uppercase">Total Scan</div>
-            </div>
-            <div class="bg-success/10 rounded p-3 text-center border-b-4 border-success">
-                <div class="text-2xl font-bold text-success">{{ stats.benar or 0 }}</div>
-                <div class="text-xs text-slate-500 uppercase">Sesuai Rak</div>
-            </div>
-            <div class="bg-danger/10 rounded p-3 text-center border-b-4 border-danger">
-                <div class="text-2xl font-bold text-danger">{{ stats.salah or 0 }}</div>
-                <div class="text-xs text-slate-500 uppercase">Salah Rak</div>
-            </div>
-            <div class="bg-warning/10 rounded p-3 text-center border-b-4 border-warning">
-                <div class="text-2xl font-bold text-warning">{{ stats.anomali or 0 }}</div>
-                <div class="text-xs text-slate-500 uppercase">Anomali</div>
-            </div>
-        </div>
-
-        <!-- History Table -->
-        <div class="max-w-full overflow-x-auto">
-            <table class="w-full table-auto text-sm">
-                <thead>
-                    <tr class="bg-gray-2 text-left">
-                        <th class="py-2 px-3 font-medium text-black">Waktu</th>
-                        <th class="py-2 px-3 font-medium text-black">No Induk</th>
-                        <th class="py-2 px-3 font-medium text-black">Judul</th>
-                        <th class="py-2 px-3 font-medium text-black">Target</th>
-                        <th class="py-2 px-3 font-medium text-black">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in riwayat %}
-                    <tr class="{% if loop.index0 == 0 %}bg-primary/5{% endif %}">
-                        <td class="border-b border-[#eee] py-3 px-3 text-slate-500 text-xs">{{ r.waktu_scan[-8:] }}</td>
-                        <td class="border-b border-[#eee] py-3 px-3 font-bold">{{ r.no_induk }}</td>
-                        <td class="border-b border-[#eee] py-3 px-3 line-clamp-1" title="{{ r.judul }}">{{ r.judul }}</td>
-                        <td class="border-b border-[#eee] py-3 px-3 font-bold">{{ r.rak_target }}</td>
-                        <td class="border-b border-[#eee] py-3 px-3">
-                            {% if r.status_audit == 'BENAR' %}
-                                <span class="bg-success/10 text-success px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-check"></i> BENAR</span>
-                            {% elif r.status_audit == 'SALAH RAK' %}
-                                <span class="bg-danger/10 text-danger px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-xmark"></i> SALAH RAK ({{ r.klasifikasi }})</span>
-                            {% else %}
-                                <span class="bg-warning/10 text-warning px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-triangle-exclamation"></i> ANOMALI</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center py-6 text-slate-500">Belum ada buku yang diaudit. Silakan mulai memindai!</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
     </div>
+    {% endif %}
+
+    <!-- RIWAYAT SESI SEBELUMNYA -->
+    {% if past_sessions %}
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 mt-4">
+        <h3 class="text-lg font-bold text-black mb-4">Riwayat Sesi Stock Opname</h3>
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="bg-gray-2 text-left">
+                    <th class="py-3 px-4 font-medium text-black">Nama Sesi</th>
+                    <th class="py-3 px-4 font-medium text-black">Tanggal Mulai</th>
+                    <th class="py-3 px-4 font-medium text-black">Tanggal Selesai</th>
+                    <th class="py-3 px-4 font-medium text-black text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in past_sessions %}
+                <tr>
+                    <td class="border-b border-[#eee] py-3 px-4">{{ s.nama_sesi }}</td>
+                    <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ s.start_date }}</td>
+                    <td class="border-b border-[#eee] py-3 px-4 text-sm">{{ s.end_date }}</td>
+                    <td class="border-b border-[#eee] py-3 px-4 text-center">
+                        <a href="{{ url_for('laporan_opname', session_id=s.id) }}" class="inline-flex items-center gap-1 rounded bg-primary px-3 py-1 text-sm text-white hover:bg-opacity-90">
+                            <i class="fa-solid fa-file-lines"></i> Laporan
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </div>
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<!-- AUDIO -->
+<audio id="beep_success" src="{{ url_for('static', filename='audio/success.mp3') }}" preload="auto"></audio>
+<audio id="beep_error" src="{{ url_for('static', filename='audio/error.mp3') }}" preload="auto"></audio>
+
 <script>
-    let html5QrCode;
-    
-    function parseScanResult(code) {
-        if (html5QrCode && html5QrCode.isScanning) html5QrCode.pause();
-        document.getElementById('manualInput').value = code;
-        submitManual();
-        setTimeout(() => {
-            if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) html5QrCode.resume();
-        }, 2500);
+    function confirmStop() {
+        if(confirm("Apakah Anda yakin ingin mengakhiri sesi Stock Opname ini? Buku yang belum dipindai akan masuk ke laporan BUKU HILANG.")) {
+            document.getElementById('stopSessionForm').submit();
+        }
     }
 
-    function playAudio(freq, duration, type) {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = type;
-            osc.frequency.value = freq;
-            osc.start();
-            setTimeout(function() { osc.stop(); }, duration);
-        } catch (e) {}
-    }
+    {% if active_session %}
+    const barcodeInput = document.getElementById('barcode_input');
+    const tbody = document.getElementById('riwayat_tbody');
+    const counterDitemukan = document.getElementById('counter_ditemukan');
+    const beepSuccess = document.getElementById('beep_success');
+    const beepError = document.getElementById('beep_error');
 
-    function submitManual() {
-        const no_induk = document.getElementById('manualInput').value.trim();
-        const target_rak = document.getElementById('target_rak').value;
-        if(!no_induk) return;
-
-        const resultBox = document.getElementById('resultBox');
-        const icon = document.getElementById('resultIcon');
-        const title = document.getElementById('resultTitle');
-        const desc = document.getElementById('resultDesc');
-        
-        resultBox.style.display = 'none';
-
-        fetch('/api/scan', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({no_induk: no_induk, mode: 'audit_rak', target_rak: target_rak})
-        }).then(r => r.json()).then(data => {
-            resultBox.className = 'text-center rounded-lg border-4 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]';
-            icon.className = 'fa-solid text-4xl mb-2';
+    barcodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const no_induk = this.value.trim();
+            if(!no_induk) return;
             
-            if(data.status === 'success') {
-                playAudio(800, 150, 'sine');
-                resultBox.classList.add('border-success', 'bg-success/10');
-                icon.classList.add('fa-circle-check', 'text-success');
-                title.classList.add('text-success');
-                title.innerText = 'BENAR!';
-                desc.innerText = data.message;
-            } else if(data.status === 'danger' || data.status === 'error') {
-                playAudio(300, 600, 'sawtooth');
-                resultBox.classList.add('border-danger', 'bg-danger/10');
-                icon.classList.add('fa-triangle-exclamation', 'text-danger');
-                title.classList.add('text-danger');
-                title.innerText = 'SALAH RAK!';
-                desc.innerText = data.message;
-            } else if(data.status === 'warning') {
-                playAudio(400, 300, 'square');
-                resultBox.classList.add('border-warning', 'bg-warning/10');
-                icon.classList.add('fa-circle-question', 'text-warning');
-                title.classList.add('text-warning');
-                title.innerText = 'ANOMALI METADATA';
-                desc.innerText = data.message;
-            }
-            resultBox.style.display = 'block';
-            document.getElementById('manualInput').value = '';
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        html5QrCode = new Html5Qrcode("reader");
-        const btnStart = document.getElementById('btnStartScan');
-        const btnStop = document.getElementById('btnStopScan');
-        const actionBox = document.getElementById('scanActions');
-
-        btnStart.addEventListener('click', () => {
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 100 } },
-                (decodedText) => { parseScanResult(decodedText); },
-                (errorMessage) => {}
-            ).then(() => {
-                btnStart.style.display = 'none';
-                actionBox.classList.remove('hidden');
-            }).catch((err) => {
-                alert("Gagal mengakses kamera. Pastikan koneksi HTTPS atau gunakan localhost.");
+            this.disabled = true;
+            
+            fetch("{{ url_for('api_scan_opname') }}", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    no_induk: no_induk,
+                    session_id: {{ active_session.id }}
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    beepSuccess.play().catch(e=>console.log(e));
+                    // Update counter
+                    let count = parseInt(counterDitemukan.innerText);
+                    counterDitemukan.innerText = count + 1;
+                    
+                    // Prepend to table
+                    const tr = document.createElement('tr');
+                    tr.classList.add('bg-success/5');
+                    tr.innerHTML = `
+                        <td class="border-b border-[#eee] py-3 px-4 text-sm">Baru saja</td>
+                        <td class="border-b border-[#eee] py-3 px-4 text-sm font-medium">${data.no_induk}</td>
+                        <td class="border-b border-[#eee] py-3 px-4 text-sm">${data.judul}</td>
+                        <td class="border-b border-[#eee] py-3 px-4 text-center">
+                            <span class="inline-flex rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">Ditemukan</span>
+                        </td>
+                    `;
+                    tbody.insertBefore(tr, tbody.firstChild);
+                    
+                    // Remove background highlight after 1s
+                    setTimeout(() => tr.classList.remove('bg-success/5'), 1000);
+                } else if(data.status === 'warning') {
+                    beepSuccess.play().catch(e=>console.log(e)); // Already scanned is still a success sound but maybe distinct
+                    alert(data.message);
+                } else {
+                    beepError.play().catch(e=>console.log(e));
+                    alert(data.message);
+                }
+            })
+            .catch(err => {
+                beepError.play().catch(e=>console.log(e));
+                alert("Terjadi kesalahan jaringan.");
+            })
+            .finally(() => {
+                barcodeInput.value = '';
+                barcodeInput.disabled = false;
+                barcodeInput.focus();
             });
-        });
-
-        btnStop.addEventListener('click', () => {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    btnStart.style.display = 'flex';
-                    actionBox.classList.add('hidden');
-                });
-            }
-        });
+        }
     });
+    
+    // Auto focus
+    document.addEventListener('click', () => {
+        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'BUTTON') {
+            barcodeInput.focus();
+        }
+    });
+    {% endif %}
 </script>
 {% endblock %}

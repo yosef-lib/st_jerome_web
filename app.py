@@ -17,8 +17,32 @@ def migrate_db():
             print("Migrating database: adding tanggal_input to anggota...")
             conn.execute('ALTER TABLE anggota ADD COLUMN tanggal_input TEXT')
             conn.execute("UPDATE anggota SET tanggal_input = date(masa_berlaku, '-4 years') WHERE masa_berlaku IS NOT NULL")
-            conn.commit()
-            print("Migration successful.")
+            
+        # Phase 1: Stock Opname & Settings tables
+        conn.execute('''CREATE TABLE IF NOT EXISTS pengaturan_sistem (
+            kunci TEXT PRIMARY KEY,
+            nilai TEXT
+        )''')
+        
+        conn.execute('''CREATE TABLE IF NOT EXISTS stock_opname_session (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nama_sesi TEXT NOT NULL,
+            start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            end_date DATETIME,
+            status TEXT DEFAULT 'AKTIF'
+        )''')
+        
+        conn.execute('''CREATE TABLE IF NOT EXISTS stock_opname_scan (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER,
+            no_induk TEXT,
+            scan_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'DITEMUKAN',
+            FOREIGN KEY (session_id) REFERENCES stock_opname_session(id)
+        )''')
+
+        conn.commit()
+        print("Migration successful.")
     except Exception as e:
         print("Migration error:", e)
     finally:
@@ -1229,58 +1253,118 @@ def anomali():
     return render_template('anomali.html', lokasi=lokasi, metadata_cacat=metadata_cacat, inkonsistensi_dict=inkonsistensi_dict, page=page, total_pages=total_pages)
 
 
-@app.route('/audit_rak')
+
+@app.route('/audit_rak', methods=['GET', 'POST'])
 @login_required
 def audit_rak():
     conn = database.get_db_connection()
-    riwayat = conn.execute("""
-        SELECT a.waktu_scan, a.rak_target, a.status_audit, a.no_induk, b.judul, b.klasifikasi
-        FROM audit_rak a
-        LEFT JOIN eksemplar e ON a.no_induk = e.no_induk
-        LEFT JOIN bibliografi b ON e.biblio_id = b.id
-        ORDER BY a.id DESC LIMIT 100
-    """).fetchall()
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'start':
+            nama_sesi = request.form.get('nama_sesi')
+            conn.execute("INSERT INTO stock_opname_session (nama_sesi) VALUES (?)", (nama_sesi,))
+            conn.commit()
+        elif action == 'stop':
+            session_id = request.form.get('session_id')
+            conn.execute("UPDATE stock_opname_session SET end_date = CURRENT_TIMESTAMP, status = 'SELESAI' WHERE id = ?", (session_id,))
+            conn.commit()
+            return redirect(url_for('laporan_opname', session_id=session_id))
+            
+    # Check active session
+    active_session = conn.execute("SELECT * FROM stock_opname_session WHERE status = 'AKTIF' ORDER BY id DESC LIMIT 1").fetchone()
     
-    # Statistik
-    stats = conn.execute("""
-        SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN status_audit = 'BENAR' THEN 1 ELSE 0 END) as benar,
-            SUM(CASE WHEN status_audit = 'SALAH RAK' THEN 1 ELSE 0 END) as salah,
-            SUM(CASE WHEN status_audit = 'ANOMALI' THEN 1 ELSE 0 END) as anomali
-        FROM audit_rak
-    """).fetchone()
+    recent_scans = []
+    stats = {'total_koleksi': 0, 'ditemukan': 0}
     
-    return render_template('audit_rak.html', riwayat=riwayat, stats=stats)
+    if active_session:
+        # Get total koleksi
+        stats['total_koleksi'] = conn.execute("SELECT COUNT(*) FROM eksemplar").fetchone()[0]
+        # Get found count
+        stats['ditemukan'] = conn.execute("SELECT COUNT(DISTINCT no_induk) FROM stock_opname_scan WHERE session_id = ?", (active_session['id'],)).fetchone()[0]
+        
+        # Get recent 20 scans
+        recent_scans = conn.execute('''
+            SELECT s.scan_date, s.no_induk, s.status, b.judul 
+            FROM stock_opname_scan s
+            LEFT JOIN eksemplar e ON s.no_induk = e.no_induk
+            LEFT JOIN bibliografi b ON e.biblio_id = b.id
+            WHERE s.session_id = ?
+            ORDER BY s.id DESC LIMIT 20
+        ''', (active_session['id'],)).fetchall()
+        
+    # Past sessions
+    past_sessions = conn.execute("SELECT * FROM stock_opname_session WHERE status = 'SELESAI' ORDER BY id DESC").fetchall()
+        
+    return render_template('audit_rak.html', active_session=active_session, stats=stats, recent_scans=recent_scans, past_sessions=past_sessions)
 
-@app.route('/export_audit')
+@app.route('/api/scan_opname', methods=['POST'])
 @login_required
-def export_audit():
-    import pandas as pd
-    from io import BytesIO
-    from flask import send_file
+def api_scan_opname():
+    data = request.json
+    no_induk = data.get('no_induk', '').strip()
+    session_id = data.get('session_id')
     
+    if not no_induk or not session_id:
+        return jsonify({'status': 'error', 'message': 'Data tidak lengkap'})
+        
     conn = database.get_db_connection()
-    df = pd.read_sql_query("""
-        SELECT a.waktu_scan as 'Waktu Scan', a.no_induk as 'No Induk', b.judul as 'Judul Buku', a.rak_target as 'Target Rak', a.status_audit as 'Status', b.klasifikasi as 'DDC Seharusnya'
-        FROM audit_rak a
-        LEFT JOIN eksemplar e ON a.no_induk = e.no_induk
+    
+    # Check if book exists
+    buku = conn.execute('''
+        SELECT e.no_induk, b.judul
+        FROM eksemplar e 
+        LEFT JOIN bibliografi b ON e.biblio_id = b.id 
+        WHERE e.no_induk = ?
+    ''', (no_induk,)).fetchone()
+    
+    if not buku:
+        conn.close()
+        return jsonify({'status': 'danger', 'message': f'Barcode {no_induk} tidak terdaftar di katalog!'})
+        
+    # Check if already scanned in this session
+    already = conn.execute("SELECT id FROM stock_opname_scan WHERE session_id = ? AND no_induk = ?", (session_id, no_induk)).fetchone()
+    if already:
+        conn.close()
+        return jsonify({'status': 'warning', 'message': f'Buku {buku["judul"]} sudah dipindai sebelumnya.'})
+        
+    # Insert
+    conn.execute("INSERT INTO stock_opname_scan (session_id, no_induk, status) VALUES (?, ?, 'DITEMUKAN')", (session_id, no_induk))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+        'status': 'success',
+        'message': f'Berhasil: {buku["judul"]}',
+        'no_induk': no_induk,
+        'judul': buku['judul']
+    })
+
+@app.route('/laporan_opname/<int:session_id>')
+@login_required
+def laporan_opname(session_id):
+    conn = database.get_db_connection()
+    sesi = conn.execute("SELECT * FROM stock_opname_session WHERE id = ?", (session_id,)).fetchone()
+    if not sesi:
+        return "Sesi tidak ditemukan", 404
+        
+    total_koleksi = conn.execute("SELECT COUNT(*) FROM eksemplar").fetchone()[0]
+    ditemukan = conn.execute("SELECT COUNT(DISTINCT no_induk) FROM stock_opname_scan WHERE session_id = ?", (session_id,)).fetchone()[0]
+    hilang = total_koleksi - ditemukan
+    
+    # Ambil 50 buku hilang sebagai sampel
+    buku_hilang = conn.execute('''
+        SELECT e.no_induk, b.judul, e.lokasi
+        FROM eksemplar e
         LEFT JOIN bibliografi b ON e.biblio_id = b.id
-        ORDER BY a.id DESC
-    """, conn)
+        WHERE e.no_induk NOT IN (
+            SELECT no_induk FROM stock_opname_scan WHERE session_id = ?
+        )
+        ORDER BY e.no_induk
+        LIMIT 500
+    ''', (session_id,)).fetchall()
     
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Riwayat Audit')
-    
-    output.seek(0)
-    
-    return send_file(
-        output, 
-        as_attachment=True, 
-        download_name='Laporan_Audit_Rak.xlsx',
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
+    return render_template('laporan_opname.html', sesi=sesi, total_koleksi=total_koleksi, ditemukan=ditemukan, hilang=hilang, buku_hilang=buku_hilang)
+
 
 
 
@@ -2160,6 +2244,75 @@ def cetak_struk_kembali(member_id):
     conn.close()
     
     return render_template('cetak_struk_kembali.html', member=dict(member), returns=[dict(r) for r in returns])
+
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    conn = database.get_db_connection()
+    if request.method == 'POST':
+        # Simpan pengaturan
+        token = request.form.get('telegram_token', '').strip()
+        chat_id = request.form.get('telegram_chat_id', '').strip()
+        
+        conn.execute("INSERT OR REPLACE INTO pengaturan_sistem (kunci, nilai) VALUES ('TELEGRAM_BOT_TOKEN', ?)", (token,))
+        conn.execute("INSERT OR REPLACE INTO pengaturan_sistem (kunci, nilai) VALUES ('TELEGRAM_CHAT_ID', ?)", (chat_id,))
+        conn.commit()
+        flash("Pengaturan berhasil disimpan!", "success")
+        return redirect(url_for('settings'))
+        
+    # Ambil pengaturan saat ini
+    config = {}
+    rows = conn.execute("SELECT kunci, nilai FROM pengaturan_sistem").fetchall()
+    for row in rows:
+        config[row['kunci']] = row['nilai']
+        
+    conn.close()
+    return render_template('settings.html', config=config)
+
+@app.route('/api/test_backup', methods=['POST'])
+@login_required
+def test_backup():
+    import telegram_backup
+    import traceback
+    try:
+        success, message = telegram_backup.run_backup(manual=True)
+        return jsonify({
+            'status': 'success' if success else 'error',
+            'message': message
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'trace': traceback.format_exc()
+        })
+
+
+
+import threading
+import time
+import datetime
+import telegram_backup
+
+def daily_backup_job():
+    while True:
+        now = datetime.datetime.now()
+        # Hitung waktu sampai jam 00:00 berikutnya
+        tomorrow = now + datetime.timedelta(days=1)
+        target = datetime.datetime(tomorrow.year, tomorrow.month, tomorrow.day, 0, 1, 0)
+        sleep_seconds = (target - now).total_seconds()
+        time.sleep(sleep_seconds)
+        
+        try:
+            telegram_backup.run_backup(manual=False)
+        except Exception as e:
+            print("Auto-backup failed:", e)
+
+# Jalankan scheduler di background thread
+backup_thread = threading.Thread(target=daily_backup_job, daemon=True)
+backup_thread.start()
 
 
 if __name__ == '__main__':

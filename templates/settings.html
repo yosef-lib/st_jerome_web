@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Pengaturan Sistem{% endblock %}
+{% block page_subtitle %}Konfigurasi Aplikasi dan Backup Otomatis{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 gap-6">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="rounded-sm border {% if category == 'success' %}border-success bg-success/10 text-success{% else %}border-danger bg-danger/10 text-danger{% endif %} px-4 py-3 shadow-default">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <div class="border-b border-stroke pb-4 mb-4">
+            <h3 class="font-bold text-black text-lg">
+                <i class="fa-brands fa-telegram text-[#0088cc] mr-2"></i> Telegram Backup (Awan Tanpa Batas)
+            </h3>
+            <p class="text-sm text-slate-500 mt-1">Konfigurasi Bot Telegram untuk mengirimkan cadangan database secara otomatis ke HP Anda.</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('settings') }}">
+            <div class="mb-5.5">
+                <label class="mb-2 block text-sm font-medium text-black">Telegram Bot Token</label>
+                <input type="text" name="telegram_token" value="{{ config.get('TELEGRAM_BOT_TOKEN', '') }}" placeholder="Contoh: 123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                <p class="text-xs text-slate-500 mt-1">Dapatkan dari <a href="https://t.me/BotFather" target="_blank" class="text-primary hover:underline">@BotFather</a></p>
+            </div>
+            
+            <div class="mb-5.5">
+                <label class="mb-2 block text-sm font-medium text-black">Telegram Chat ID (ID Bapak)</label>
+                <input type="text" name="telegram_chat_id" value="{{ config.get('TELEGRAM_CHAT_ID', '') }}" placeholder="Contoh: 12345678" class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                <p class="text-xs text-slate-500 mt-1">Dapatkan dari <a href="https://t.me/userinfobot" target="_blank" class="text-primary hover:underline">@userinfobot</a></p>
+            </div>
+            
+            <div class="flex gap-4">
+                <button type="submit" class="rounded bg-primary px-6 py-2.5 font-medium text-white hover:bg-opacity-90">
+                    <i class="fa-solid fa-save mr-2"></i> Simpan Konfigurasi
+                </button>
+                <button type="button" onclick="testBackup()" class="rounded bg-slate-100 border border-slate-300 px-6 py-2.5 font-medium text-slate-700 hover:bg-slate-200">
+                    <i class="fa-solid fa-paper-plane mr-2 text-primary"></i> Uji Coba Backup Sekarang
+                </button>
+            </div>
+        </form>
+        
+        <!-- PANDUAN -->
+        <div class="mt-8 rounded bg-blue-50 p-4 border border-blue-100 text-sm">
+            <h4 class="font-bold text-slate-800 mb-2"><i class="fa-solid fa-circle-info text-primary mr-1"></i> Cara Membuat Bot Telegram dalam 1 Menit:</h4>
+            <ol class="list-decimal pl-5 space-y-1 text-slate-600">
+                <li>Buka aplikasi Telegram di HP Bapak.</li>
+                <li>Cari <strong>@BotFather</strong>, klik Start, lalu ketik <code>/newbot</code>.</li>
+                <li>Beri nama bot Bapak (contoh: <em>Backup Perpus St Jerome</em>) dan username (contoh: <em>stjerome_backup_bot</em>).</li>
+                <li>BotFather akan memberikan <strong>Bot Token</strong> panjang. Salin ke kotak pertama di atas.</li>
+                <li>Cari <strong>@userinfobot</strong> di Telegram, klik Start. Salin angka <strong>Id</strong> Bapak ke kotak kedua di atas.</li>
+                <li>Cari nama bot Bapak yang baru dibuat tadi (contoh: @stjerome_backup_bot), klik Start agar bot bisa mengirim pesan ke Bapak. Selesai!</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+function testBackup() {
+    Swal.fire({
+        title: 'Mengirim Backup...',
+        text: 'Sistem sedang memadatkan database dan mengirimkannya ke Telegram Bapak.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch("{{ url_for('test_backup') }}", {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil Terkirim!',
+                text: 'Silakan cek aplikasi Telegram Bapak sekarang.',
+                confirmButtonColor: '#3085d6'
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengirim',
+                text: data.message,
+                confirmButtonColor: '#d33'
+            });
+        }
+    })
+    .catch(err => {
+        Swal.fire('Error', 'Terjadi kesalahan jaringan.', 'error');
+    });
+}
+</script>
+{% endblock %}
