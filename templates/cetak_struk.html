@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Struk Peminjaman - {{ member.nama }}</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0; padding: 10px; width: 300px; color: #000; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .line { border-bottom: 1px dashed #000; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        td { vertical-align: top; padding: 2px 0; }
+        .title { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        @media print {
+            body { padding: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body onload="window.print(); setTimeout(() => window.close(), 500);">
+    <div class="center">
+        <div class="title">PERPUSTAKAAN ST. JEROME</div>
+        <div>Sistem Asisten Perpustakaan</div>
+        <div>Bukti Transaksi Peminjaman</div>
+    </div>
+    
+    <div class="line"></div>
+    
+    <table>
+        <tr><td width="35%">Tgl/Jam</td><td>: <span id="datetime"></span></td></tr>
+        <tr><td>ID Anggota</td><td>: {{ member.member_id }}</td></tr>
+        <tr><td>Nama</td><td>: {{ member.nama }}</td></tr>
+        <tr><td>Status</td><td>: {{ member.tipe_anggota or 'Reguler' }}</td></tr>
+    </table>
+    
+    <div class="line"></div>
+    <div class="bold" style="margin-bottom: 5px;">BUKU YANG DIPINJAM:</div>
+    
+    {% if loans %}
+        {% for loan in loans %}
+        <div style="margin-bottom: 8px;">
+            <div>{{ loop.index }}. {{ loan.judul[:35] }}{% if loan.judul|length > 35 %}...{% endif %}</div>
+            <table style="font-size: 11px; margin-left: 10px; color: #333;">
+                <tr><td width="35%">Barcode</td><td>: {{ loan.no_induk }}</td></tr>
+                <tr><td>Tgl Pinjam</td><td>: {{ loan.loan_date[:10] }}</td></tr>
+                <tr><td>Batas Kembali</td><td class="bold">: {{ loan.due_date[:10] }}</td></tr>
+            </table>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="center" style="margin: 20px 0; font-style: italic;">Tidak ada pinjaman aktif.</div>
+    {% endif %}
+    
+    <div class="line"></div>
+    
+    <div class="center" style="margin-top: 15px;">
+        <div>Terima kasih atas kunjungan Anda.</div>
+        <div style="font-size: 10px; margin-top: 5px;">Harap kembalikan buku tepat waktu untuk menghindari denda.</div>
+    </div>
+    
+    <script>
+        const now = new Date();
+        document.getElementById('datetime').textContent = now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+    </script>
+</body>
+</html>

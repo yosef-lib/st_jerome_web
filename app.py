@@ -2014,6 +2014,23 @@ def api_robot_status():
     return jsonify(get_robot_state())
 
 
+
+@app.route('/sirkulasi/cetak_struk/<member_id>')
+@login_required
+def cetak_struk(member_id):
+    conn = database.get_db_connection()
+    member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
+    if not member:
+        conn.close()
+        return "Anggota tidak ditemukan", 404
+        
+    # Get active loans
+    loans = conn.execute("SELECT s.*, b.judul FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id WHERE s.member_id = ? AND s.return_date IS NULL ORDER BY s.loan_date DESC", (member_id,)).fetchall()
+    conn.close()
+    
+    return render_template('cetak_struk.html', member=dict(member), loans=[dict(l) for l in loans])
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 

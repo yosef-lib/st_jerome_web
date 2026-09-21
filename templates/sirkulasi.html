@@ -62,6 +62,9 @@
                     <button @click="endSession()" class="bg-danger hover:bg-red-600 text-white px-4 py-1.5 rounded shadow flex items-center gap-2 transition text-sm font-medium">
                         <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i> Selesai Transaksi (Esc)
                     </button>
+                    <button @click="cetakStruk()" class="bg-primary hover:bg-opacity-90 text-white px-4 py-1.5 rounded shadow flex items-center gap-2 transition text-sm font-medium">
+                        <i class="fa-solid fa-print"></i> Cetak Struk
+                    </button>
                     
                 </div>
                 
@@ -357,6 +360,12 @@ function sirkulasiApp() {
                 this.showAlert('error', 'Error Sistem', 'Error: ' + err.message + ' (Pastikan Anda sudah restart server PM2)');
             } finally {
                 this.isLoadingMember = false;
+            }
+        },
+        
+        cetakStruk() {
+            if (this.member) {
+                window.open('/sirkulasi/cetak_struk/' + encodeURIComponent(this.member.id), '_blank', 'width=350,height=600');
             }
         },
         
