@@ -8,6 +8,25 @@ from functools import wraps
 
 app = Flask(__name__)
 
+def migrate_db():
+    conn = database.get_db_connection()
+    try:
+        # Check if tanggal_input exists
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(anggota)").fetchall()]
+        if 'tanggal_input' not in columns:
+            print("Migrating database: adding tanggal_input to anggota...")
+            conn.execute('ALTER TABLE anggota ADD COLUMN tanggal_input TEXT')
+            conn.execute("UPDATE anggota SET tanggal_input = date(masa_berlaku, '-4 years') WHERE masa_berlaku IS NOT NULL")
+            conn.commit()
+            print("Migration successful.")
+    except Exception as e:
+        print("Migration error:", e)
+    finally:
+        conn.close()
+
+migrate_db()
+
+
 @app.errorhandler(500)
 def internal_error(error):
     import traceback
