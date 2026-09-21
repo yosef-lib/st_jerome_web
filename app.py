@@ -1869,6 +1869,31 @@ def api_sampul_update():
     return jsonify({'status': 'success'})
 
 
+
+@app.route('/api/opac/discover_cover', methods=['POST'])
+def api_opac_discover_cover():
+    data = request.json
+    biblio_id = data.get('id')
+    image_url = data.get('image_url')
+    
+    if not biblio_id or not image_url or not str(image_url).startswith('http'):
+        return jsonify({'status': 'error'}), 400
+        
+    try:
+        conn = database.get_db_connection()
+        conn.execute('''
+            UPDATE bibliografi 
+            SET image = ? 
+            WHERE id = ? AND (image IS NULL OR image = '' OR image = 'NOT_FOUND' OR image = 'RATE_LIMIT')
+        ''', (image_url, biblio_id))
+        conn.commit()
+        conn.close()
+    except:
+        pass
+        
+    return jsonify({'status': 'success'})
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 

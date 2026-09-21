@@ -385,11 +385,48 @@
                     try {
                         const res = await fetch('/api/opac/search?q=' + encodeURIComponent(this.searchQuery));
                         this.results = await res.json();
+                        
+                        // CROWDSOURCING COVER: Biarkan pengunjung yang mencarikan cover!
+                        setTimeout(() => {
+                            this.results.forEach((book, index) => {
+                                if (!book.image && !book.cover_url) {
+                                    this.findCoverFromGoogle(book, index);
+                                }
+                            });
+                        }, 500);
                     } catch (e) {
                         console.error(e);
                         alert('Gagal mencari: ' + e.message);
                     }
                     this.isLoading = false;
+                },
+                
+                async findCoverFromGoogle(book, index) {
+                    try {
+                        const query = book.judul + (book.pengarang ? ' ' + book.pengarang : '');
+                        const res = await fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query));
+                        const data = await res.json();
+                        
+                        if (data.items && data.items.length > 0) {
+                            let img = data.items[0].volumeInfo?.imageLinks?.thumbnail;
+                            if (img) {
+                                // Google sering mengembalikan http://, ganti ke https:// agar tidak kena Mixed Content error
+                                img = img.replace('http:', 'https:');
+                                
+                                // Tampilkan di UI secara instan!
+                                this.results[index].cover_url = img;
+                                
+                                // Simpan ke database server diam-diam
+                                fetch('/api/opac/discover_cover', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: book.id, image_url: img })
+                                }).catch(e => {});
+                            }
+                        }
+                    } catch (e) {
+                        // Abaikan error (bisa karena rate limit pengunjung dll)
+                    }
                 },
 
                 openRequestModal() {
