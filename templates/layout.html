@@ -169,7 +169,7 @@
                         <!-- Menu Sirkulasi Tunggal -->
                         <li>
                             <a href="/sirkulasi" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/sirkulasi' %}bg-primary text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
-                                <i class="fa-solid fa-cash-register w-5 text-center"></i> Kasir Sirkulasi
+                                <i class="fa-solid fa-cash-register w-5 text-center"></i> Sirkulasi
                             </a>
                         </li>
 
@@ -208,7 +208,7 @@
                             <div x-show="expanded" style="display: none;" x-transition>
                                 <ul class="mt-2 flex flex-col gap-1 pl-10 pr-2 pb-2">
                                     <li><a href="/anggota" class="flex rounded-md px-3 py-2 text-sm {% if request.path.startswith('/anggota') %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Daftar Keanggotaan</a></li>
-                                    <li><a href="/scan" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/scan' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Scanner Meja Baca</a></li>
+                                    <li><a href="/scan" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/scan' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Buku Yang Telah Dibaca</a></li>
                                     <li><a href="/analitik_kunjungan" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/analitik_kunjungan' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Analitik Kunjungan</a></li>
                                 </ul>
                             </div>
