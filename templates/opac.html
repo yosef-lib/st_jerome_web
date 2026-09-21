@@ -367,6 +367,9 @@
                 results: [],
                 isLoading: false,
                 hasSearched: false,
+                magicStatus: '',
+                magicCount: 0,
+                magicFound: 0,
                 
                 activeModal: null, // 'request', 'reserve', 'map'
                 selectedBook: null,
@@ -388,11 +391,20 @@
                         
                         // CROWDSOURCING COVER: Biarkan pengunjung yang mencarikan cover!
                         setTimeout(() => {
+                            let toFind = 0;
+                            this.magicFound = 0;
                             this.results.forEach((book, index) => {
-                                if (!book.image && !book.cover_url) {
+                                if ((!book.image || book.image === 'NOT_FOUND' || book.image === 'RATE_LIMIT') && !book.cover_url) {
+                                    toFind++;
                                     this.findCoverFromGoogle(book, index);
                                 }
                             });
+                            this.magicCount = toFind;
+                            if (toFind > 0) {
+                                this.magicStatus = '?? Sedang mencoba mencari ' + toFind + ' sampul dari Google...';
+                            } else {
+                                this.magicStatus = '';
+                            }
                         }, 500);
                     } catch (e) {
                         console.error(e);
@@ -415,6 +427,10 @@
                                 
                                 // Tampilkan di UI secara instan!
                                 this.results[index].cover_url = img;
+                                this.results = [...this.results]; // paksa update UI
+                                
+                                this.magicFound++;
+                                this.magicStatus = '? ' + this.magicFound + ' sampul baru berhasil ditarik dari Google!';
                                 
                                 // Simpan ke database server diam-diam
                                 fetch('/api/opac/discover_cover', {
@@ -426,6 +442,11 @@
                         }
                     } catch (e) {
                         // Abaikan error (bisa karena rate limit pengunjung dll)
+                    }
+                    this.magicCount--;
+                    if (this.magicCount <= 0 && this.magicFound === 0) {
+                        this.magicStatus = '? Google tidak memiliki gambar untuk buku-buku ini.';
+                        setTimeout(() => { this.magicStatus = ''; }, 3000);
                     }
                 },
 
