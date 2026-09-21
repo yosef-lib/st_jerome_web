@@ -102,21 +102,27 @@ def generate_cards_pdf(anggota_list, output_filename="kartu_output.pdf"):
         c.setLineWidth(0.8)
         c.line(x0, garis_y, x0 + id_w, garis_y)
 
-        # ── Nama (font 12pt, bagi 2 baris jika perlu, TIDAK disingkat) ─
-        NAMA_SIZE   = 12
-        LINE_HEIGHT = 5.5 * mm
-        nama_lines  = wrap_text(c, nama, FONT_MAIN, NAMA_SIZE, TEXT_MAX_X - x0)
+        # ── Nama (font 12pt, bagi 2 baris jika perlu, TIDAK disingkat) # Maksimal 3 kata
+        words = nama.split()
+        if len(words) > 3:
+            nama = " ".join(words[:3])
+            
+        NAMA_SIZE = 11
+        c.setFont(FONT_MAIN, NAMA_SIZE)
+        
+        # Auto-shrink font to fit 1 line
+        max_width = TEXT_MAX_X - x0
+        while c.stringWidth(nama, FONT_MAIN, NAMA_SIZE) > max_width and NAMA_SIZE > 7:
+            NAMA_SIZE -= 0.5
+            c.setFont(FONT_MAIN, NAMA_SIZE)
 
         c.setFillColorRGB(*biru)
-        c.setFont(FONT_MAIN, NAMA_SIZE)
         nama_y = garis_y - 6 * mm
-        for line in nama_lines[:2]:      # maks 2 baris
-            c.drawString(x0, nama_y, line)
-            nama_y -= LINE_HEIGHT
-
-        # ── Status / Tipe ──────────────────────────────────────────────
-        c.setFont(FONT_MAIN, 11)
-        c.drawString(x0, nama_y - 0.5 * mm, tipe)
+        c.drawString(x0, nama_y, nama)
+        
+        # Status / Tipe
+        c.setFont(FONT_MAIN, 10)
+        c.drawString(x0, nama_y - 5.5 * mm, tipe)
 
         # ═══════════════════════════════════════════════════════════════
         # ── BARCODE — persis SLiMS (EXP di luar kotak putih) ───────────
