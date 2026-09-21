@@ -60,7 +60,16 @@
                 <label class="mb-2 block text-sm font-medium text-black">Scan Barcode</label>
                 
                 <!-- CAMERA SCANNER -->
-                <div id="reader" width="100%" class="mb-3 rounded overflow-hidden border border-stroke bg-slate-50"></div>
+                <div id="reader" width="100%" class="mb-3 rounded overflow-hidden border border-stroke bg-slate-50 text-center"></div>
+                
+                <div id="scanActions" class="mb-4">
+                    <button type="button" id="btnStartScan" class="w-full flex items-center justify-center gap-2 rounded bg-success px-4 py-3 font-medium text-white hover:bg-opacity-90">
+                        <i class="fa-solid fa-camera"></i> Aktifkan Kamera (Kamera Belakang)
+                    </button>
+                    <button type="button" id="btnStopScan" class="hidden w-full flex items-center justify-center gap-2 rounded border border-danger text-danger px-4 py-3 font-medium hover:bg-danger hover:text-white transition">
+                        <i class="fa-solid fa-stop"></i> Matikan Kamera
+                    </button>
+                </div>
                 
                 <!-- MANUAL INPUT -->
                 <div class="relative">
@@ -218,22 +227,62 @@
         }
     });
 
-    // Initialize Camera Scanner
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: {width: 250, height: 100} },
-        false
-    );
-    
-    function onScanSuccess(decodedText, decodedResult) {
+    let html5QrCode;
+    const btnStart = document.getElementById('btnStartScan');
+    const btnStop = document.getElementById('btnStopScan');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        html5QrCode = new Html5Qrcode("reader");
+
+        btnStart.addEventListener('click', () => {
+            const target_rak = document.getElementById('target_rak').value;
+            if(!target_rak) {
+                alert('Silakan pilih Target Rak terlebih dahulu sebelum mengaktifkan kamera!');
+                return;
+            }
+
+            // Start scanning, prefer back camera
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 100 }
+                },
+                (decodedText) => {
+                    onScanSuccess(decodedText);
+                },
+                (errorMessage) => {
+                    // Abaikan error frame kosong
+                }
+            ).then(() => {
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+            }).catch((err) => {
+                alert("Gagal mengakses kamera. Pastikan Anda sudah memberikan izin kamera pada browser.");
+            });
+        });
+
+        btnStop.addEventListener('click', () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    btnStop.classList.add('hidden');
+                    btnStart.classList.remove('hidden');
+                });
+            }
+        });
+    });
+
+    function onScanSuccess(decodedText) {
         // Stop scanning temporarily
-        html5QrcodeScanner.pause(true);
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.pause();
+        }
         
         const no_induk = decodedText.trim();
         const target_rak = document.getElementById('target_rak').value;
         if(!target_rak) {
             alert('Pilih Rak dulu sebelum scan kamera!');
-            html5QrcodeScanner.resume();
+            if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) html5QrCode.resume();
             return;
         }
         
@@ -253,11 +302,13 @@
             alert("Terjadi kesalahan jaringan.");
         })
         .finally(() => {
-            setTimeout(() => { html5QrcodeScanner.resume(); }, 1500); // Resume after 1.5s
+            setTimeout(() => { 
+                if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+                    html5QrCode.resume(); 
+                }
+            }, 1500); // Resume after 1.5s
         });
     }
-    
-    html5QrcodeScanner.render(onScanSuccess, (error) => {});
     
     function processScanResult(data) {
         if(data.status === 'success' || data.status === 'warning') {
