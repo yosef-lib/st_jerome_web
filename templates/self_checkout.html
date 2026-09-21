@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cek Pinjaman - St. Jerome</title>
+    <title>Peminjaman Mandiri - St. Jerome</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -87,12 +87,12 @@
                     <span class="flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap"></i> {{ member.tipe_anggota or 'Reguler' }}</span>
                 </div>
                 
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm {% if member.status == 'AKTIF' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm {% if member.status == 'AKTIF' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-700 border border-red-200">
                     {% if member.status == 'AKTIF' %}
                         <i class="fa-solid fa-circle-check"></i> Keanggotaan Aktif
                     {% else %}
                         <i class="fa-solid fa-ban"></i> Dibekukan (Suspend)
-                    {% endif %}
+                    
                 </div>
             </div>
         </div>
@@ -108,9 +108,117 @@
                 <p class="text-red-700 text-sm mt-1 leading-relaxed">Anda memiliki denda keterlambatan sebesar <strong class="text-lg">Rp {{ "{:,.0f}".format(total_denda).replace(',', '.') }}</strong> yang belum dilunasi. Harap segera melunasinya di meja sirkulasi untuk menghindari pemblokiran akun.</p>
             </div>
         </div>
-        {% endif %}
+        
 
         
+        <!-- SELF CHECKOUT SECTION -->
+        
+        <div class="luxury-card p-6 mb-8 border-l-4 border-l-success bg-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 opacity-5">
+                <i class="fa-solid fa-barcode text-9xl"></i>
+            </div>
+            <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center">
+                <div class="w-16 h-16 rounded-full bg-success/10 text-success flex items-center justify-center text-2xl shrink-0">
+                    <i class="fa-solid fa-scanner-touchscreen"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-boxdark text-xl mb-1">Peminjaman Mandiri</h3>
+                    <p class="text-secondary text-sm font-medium mb-4">Gunakan scanner fisik untuk menembak barcode buku yang ingin Anda pinjam hari ini.</p>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-barcode"></i>
+                        </div>
+                        <input type="text" id="kioskBarcode" class="w-full bg-slate-50 border-2 border-stroke rounded-xl pl-12 pr-4 py-4 text-xl font-bold text-boxdark focus:outline-none focus:border-success focus:bg-white transition-all shadow-inner" placeholder="Tembak barcode buku disini..." autocomplete="off" autofocus>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio Beeps -->
+        <script>
+            function playBeepSuccess() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.type = 'sine'; osc.frequency.value = 850;
+                    gain.gain.setValueAtTime(0, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.01);
+                    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+                    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
+                } catch(e) {}
+            }
+            function playBeepError() {
+                // Dimatikan sesuai permintaan
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const input = document.getElementById('kioskBarcode');
+                if(input) {
+                    // Auto-focus protection
+                    document.body.addEventListener('click', () => {
+                        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'BUTTON') {
+                            input.focus();
+                        }
+                    });
+                    
+                    document.addEventListener('keydown', (e) => {
+                        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && e.key.length === 1) {
+                            input.focus();
+                        }
+                    });
+
+                    input.addEventListener('keypress', function(e) {
+                        if(e.key === 'Enter') {
+                            e.preventDefault();
+                            const no_induk = this.value.trim();
+                            if(!no_induk) return;
+                            
+                            this.disabled = true;
+                            
+                            fetch('/api/kiosk_pinjam', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    member_id: "{{ member.member_id }}",
+                                    no_induk: no_induk
+                                })
+                            }).then(r => r.json()).then(data => {
+                                if(data.status === 'success') {
+                                    playBeepSuccess();
+                                    Swal.fire({
+                                        position: 'top',
+                                        icon: 'success',
+                                        title: 'Berhasil Dipinjam!',
+                                        text: data.judul,
+                                        showConfirmButton: false,
+                                        timer: 2000
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    playBeepError();
+                                    Swal.fire('Gagal Meminjam', data.message, 'error');
+                                    this.disabled = false;
+                                    this.value = '';
+                                    this.focus();
+                                }
+                            }).catch(err => {
+                                playBeepError();
+                                Swal.fire('Error', 'Kesalahan jaringan', 'error');
+                                this.disabled = false;
+                                this.value = '';
+                                this.focus();
+                            });
+                        }
+                    });
+                }
+            });
+        </script>
+        
+
         <!-- Daftar Pinjaman -->
         <div class="flex items-center justify-between mb-6">
             <h3 class="font-bold text-boxdark text-xl flex items-center gap-3">
@@ -157,11 +265,41 @@
                     <i class="fa-solid fa-magnifying-glass"></i> Cari Buku
                 </a>
             </div>
-        {% endif %}
         
         
         
-        {% endif %}
+        
+        <!-- Tombol Selesai untuk Kiosk -->
+        
+        <div class="mt-12 flex justify-center">
+            <button onclick="selesaiDanCetak()" class="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-10 font-medium text-white bg-primary shadow-xl border border-primary/20 hover:scale-105 transition-all duration-300">
+                <span class="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
+                    <div class="relative h-full w-8 bg-white/20"></div>
+                </span>
+                <span class="absolute inset-0 rounded-full bg-primary transition-all duration-300 ease-out group-hover:bg-boxdark"></span>
+                <span class="relative flex items-center gap-3 font-bold text-white tracking-widest uppercase text-lg">
+                    <i class="fa-solid fa-print"></i> SELESAI & CETAK STRUK
+                </span>
+            </button>
+        </div>
+        <script>
+            function selesaiDanCetak() {
+                // Buka tab baru untuk cetak struk thermal
+                window.open('/sirkulasi/cetak_struk/{{ member.member_id }}', '_blank');
+                // Redirect tab ini kembali ke layar awal Kiosk
+                setTimeout(() => {
+                    window.location.href = '/kiosk_sirkulasi';
+                }, 500);
+            }
+            
+            // Auto redirect to Kiosk after 45 seconds of inactivity
+            let timeout = setTimeout(() => { window.location.href = '/kiosk_sirkulasi'; }, 45000);
+            document.body.addEventListener('click', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => { window.location.href = '/kiosk_sirkulasi'; }, 45000);
+            });
+        </script>
+        
 
 
         

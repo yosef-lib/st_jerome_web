@@ -2352,6 +2352,23 @@ def cek_pinjaman(member_id):
 
 
 
+
+@app.route('/self_checkout/<member_id>')
+def self_checkout(member_id):
+    conn = database.get_db_connection()
+    member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
+    if not member:
+        conn.close()
+        return "Anggota tidak ditemukan", 404
+        
+    loans = conn.execute("SELECT s.*, b.judul, b.image, b.pengarang FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id WHERE s.member_id = ? AND s.return_date IS NULL ORDER BY s.due_date ASC", (member_id,)).fetchall()
+    
+    # Check fines
+    fines = conn.execute("SELECT SUM(fine_amount) FROM sirkulasi WHERE member_id = ? AND fine_status = 'BELUM_LUNAS'", (member_id,)).fetchone()[0] or 0
+    
+    conn.close()
+    return render_template('self_checkout.html', member=dict(member), loans=[dict(l) for l in loans], total_denda=fines)
+
 @app.route('/kiosk_sirkulasi')
 def kiosk_sirkulasi():
     return render_template('kiosk_sirkulasi.html')

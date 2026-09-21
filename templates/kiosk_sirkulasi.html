@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cek Peminjaman - St. Jerome Library Assistant</title>
+    <title>Sirkulasi Mandiri - St. Jerome Library Assistant</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,7 +54,7 @@
                 <div class="w-28 h-28 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg border-4 border-primary mx-auto overflow-hidden">
                     <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-full h-full object-cover">
                 </div>
-                <h1 class="text-3xl font-bold mb-4 leading-tight tracking-tight">Cek<br>Peminjaman<br>St. Jerome</h1>
+                <h1 class="text-3xl font-bold mb-4 leading-tight tracking-tight">Sirkulasi<br>Mandiri<br>St. Jerome</h1>
                 <p class="text-bodydark text-sm mb-8 font-medium px-4">Silakan pindai Kartu Anggota Anda untuk melihat status peminjaman dan peringatan denda.</p>
             </div>
             <div class="mt-auto relative z-10 flex items-center justify-start gap-3 border-t border-bodydark/30 pt-4">
@@ -132,7 +132,7 @@
                     
                     this.loading = true;
                     setTimeout(() => {
-                        window.location.href = '/cek_pinjaman/' + encodeURIComponent(this.memberId.trim()) + '?source=kiosk';
+                        window.location.href = '/self_checkout/' + encodeURIComponent(this.memberId.trim());
                     }, 800); // Fake delay for UX
                 }
             }
