@@ -4,73 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cek Pinjaman - St. Jerome</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              boxdark: '#3E2723',
+              primary: '#6D4C41',
+              secondary: '#8D6E63',
+              cream: '#FDFBF7',
+              creamdark: '#F5F0E6'
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FDFBF7; }
+        .glass-header { 
+            background: rgba(62, 39, 35, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .luxury-card { 
+            background: white; 
+            border: 1px solid #F5F0E6; 
+            box-shadow: 0 10px 25px -5px rgba(109, 76, 65, 0.08), 0 8px 10px -6px rgba(109, 76, 65, 0.04); 
+            border-radius: 1.5rem;
+        }
+        .pattern-bg {
+            background-color: #FDFBF7;
+            background-image: radial-gradient(#8D6E63 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-10">
-    <!-- Header -->
-    <div class="bg-yellow-800 text-white shadow-md">
-        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-book-open-reader text-2xl"></i>
-                <h1 class="font-bold text-xl tracking-wide">ST. JEROME</h1>
+<body class="min-h-screen pb-12 pattern-bg">
+    
+    <!-- Header Elegan -->
+    <header class="glass-header sticky top-0 z-50 shadow-lg">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-white rounded-full p-1 shadow-md overflow-hidden flex items-center justify-center">
+                    <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-wider text-white">ST. JEROME</h1>
+                    <div class="text-xs font-medium text-creamdark/80 tracking-widest uppercase">Library Assistant</div>
+                </div>
             </div>
-            <div class="text-sm opacity-80">Portal Anggota</div>
+            <div class="hidden sm:block">
+                <span class="bg-primary/40 text-cream px-4 py-1.5 rounded-full text-xs font-bold tracking-wider border border-white/10 shadow-inner">
+                    PORTAL ANGGOTA
+                </span>
+            </div>
         </div>
-    </div>
+    </header>
 
-    <div class="max-w-3xl mx-auto px-4 mt-6">
-        <!-- Profil Anggota -->
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200 mb-6 flex items-start gap-4">
-            <div class="w-14 h-14 rounded-full bg-yellow-100 text-yellow-800 flex items-center justify-center flex-shrink-0 text-xl font-bold">
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 mt-8">
+        
+        <!-- Profil Anggota Card -->
+        <div class="luxury-card p-6 sm:p-8 mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 relative overflow-hidden">
+            <!-- Dekorasi -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-10 -mt-10"></div>
+            
+            <div class="w-20 h-20 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 text-3xl font-extrabold shadow-inner border-2 border-white">
                 {{ member.nama[0] }}
             </div>
-            <div>
-                <h2 class="font-bold text-lg text-gray-800">{{ member.nama }}</h2>
-                <div class="text-gray-500 text-sm"><i class="fa-solid fa-id-card w-4"></i> {{ member.member_id }} &bull; {{ member.tipe_anggota or 'Reguler' }}</div>
-                <div class="text-sm mt-1">
-                    Status: 
+            
+            <div class="text-center sm:text-left flex-1 relative z-10">
+                <h2 class="font-extrabold text-2xl text-boxdark mb-1">{{ member.nama }}</h2>
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-secondary text-sm font-medium mb-3">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-id-card"></i> {{ member.member_id }}</span>
+                    <span class="hidden sm:inline text-gray-300">|</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap"></i> {{ member.tipe_anggota or 'Reguler' }}</span>
+                </div>
+                
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm {% if member.status == 'AKTIF' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-red-50 text-red-700 border border-red-200{% endif %}">
                     {% if member.status == 'AKTIF' %}
-                        <span class="text-green-600 font-bold"><i class="fa-solid fa-check-circle"></i> Aktif</span>
+                        <i class="fa-solid fa-circle-check"></i> Keanggotaan Aktif
                     {% else %}
-                        <span class="text-red-600 font-bold"><i class="fa-solid fa-ban"></i> Dibekukan (Suspend)</span>
+                        <i class="fa-solid fa-ban"></i> Dibekukan (Suspend)
                     {% endif %}
                 </div>
             </div>
         </div>
 
+        <!-- Peringatan Denda -->
         {% if total_denda > 0 %}
-        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-            <i class="fa-solid fa-triangle-exclamation text-red-500 text-xl mt-0.5"></i>
-            <div>
-                <h3 class="font-bold text-red-800 text-sm">Peringatan Denda</h3>
-                <p class="text-red-700 text-sm mt-1">Anda memiliki denda keterlambatan sebesar <strong>Rp {{ "{:,.0f}".format(total_denda).replace(',', '.') }}</strong> yang belum dibayar. Harap segera melunasi di meja sirkulasi.</p>
+        <div class="luxury-card p-6 mb-8 border-l-4 border-l-red-500 bg-red-50/50 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 text-xl shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="text-center sm:text-left">
+                <h3 class="font-bold text-red-800 text-lg">Peringatan Denda Aktif</h3>
+                <p class="text-red-700 text-sm mt-1 leading-relaxed">Anda memiliki denda keterlambatan sebesar <strong class="text-lg">Rp {{ "{:,.0f}".format(total_denda).replace(',', '.') }}</strong> yang belum dilunasi. Harap segera melunasinya di meja sirkulasi untuk menghindari pemblokiran akun.</p>
             </div>
         </div>
         {% endif %}
 
-        <h3 class="font-bold text-gray-700 mb-4 text-lg border-b pb-2">Buku Yang Sedang Dipinjam ({{ loans|length }})</h3>
+        <!-- Daftar Pinjaman -->
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-bold text-boxdark text-xl flex items-center gap-3">
+                <i class="fa-solid fa-book-open text-primary"></i> 
+                Buku Yang Sedang Dipinjam
+                <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">{{ loans|length }}</span>
+            </h3>
+        </div>
 
         {% if loans %}
-            <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {% for loan in loans %}
-                <!-- Hitung sisa hari -->
-                {% set due_parts = loan.due_date.split(' ')[0].split('-') %}
-                {% set due_date = due_parts[0] + '-' + due_parts[1] + '-' + due_parts[2] %}
-                
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col sm:flex-row">
-                    <div class="p-4 flex-1">
-                        <h4 class="font-bold text-gray-800 text-base mb-1">{{ loan.judul }}</h4>
-                        <p class="text-gray-500 text-sm mb-3"><i class="fa-solid fa-user-pen"></i> {{ loan.pengarang or 'Tanpa Pengarang' }}</p>
+                <div class="luxury-card overflow-hidden flex flex-col group hover:shadow-xl transition-shadow duration-300">
+                    <div class="p-6 flex-1 relative">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <i class="fa-solid fa-book text-6xl text-primary"></i>
+                        </div>
                         
-                        <div class="grid grid-cols-2 gap-4 text-sm">
+                        <h4 class="font-bold text-boxdark text-lg mb-2 leading-snug pr-8 relative z-10">{{ loan.judul }}</h4>
+                        <p class="text-secondary text-sm font-medium mb-6 relative z-10"><i class="fa-solid fa-pen-nib mr-1.5 opacity-70"></i> {{ loan.pengarang or 'Tanpa Pengarang' }}</p>
+                        
+                        <div class="bg-creamdark/50 rounded-xl p-4 grid grid-cols-2 gap-4 border border-primary/5 relative z-10">
                             <div>
-                                <span class="text-gray-400 block text-xs uppercase tracking-wider">Tgl Pinjam</span>
-                                <span class="font-medium">{{ loan.loan_date[:10] }}</span>
+                                <span class="text-secondary block text-xs font-bold uppercase tracking-wider mb-1">Tgl Pinjam</span>
+                                <span class="font-semibold text-boxdark">{{ loan.loan_date[:10] }}</span>
                             </div>
                             <div>
-                                <span class="text-gray-400 block text-xs uppercase tracking-wider">Batas Kembali</span>
-                                <span class="font-bold text-yellow-700">{{ loan.due_date[:10] }}</span>
+                                <span class="text-secondary block text-xs font-bold uppercase tracking-wider mb-1">Batas Kembali</span>
+                                <span class="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">{{ loan.due_date[:10] }}</span>
                             </div>
                         </div>
                     </div>
@@ -78,23 +145,35 @@
             {% endfor %}
             </div>
         {% else %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-                <i class="fa-solid fa-box-open text-gray-300 text-5xl mb-4"></i>
-                <h4 class="font-bold text-gray-600">Tidak ada pinjaman</h4>
-                <p class="text-gray-400 text-sm mt-2">Anda tidak sedang meminjam buku apapun saat ini.</p>
+            <div class="luxury-card p-12 text-center flex flex-col items-center justify-center">
+                <div class="w-24 h-24 bg-creamdark rounded-full flex items-center justify-center text-primary/30 text-4xl mb-6">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <h4 class="font-bold text-boxdark text-xl mb-2">Belum Ada Pinjaman</h4>
+                <p class="text-secondary font-medium">Anda tidak sedang meminjam buku apapun saat ini.</p>
+                <a href="/opac" class="mt-6 inline-flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full font-bold shadow-md hover:bg-boxdark transition-colors">
+                    <i class="fa-solid fa-magnifying-glass"></i> Cari Buku
+                </a>
             </div>
         {% endif %}
-        
-
-        <div class="mt-8 text-center text-gray-400 text-xs">
-            &copy; 2026 Perpustakaan St. Jerome. <br>Harap kembalikan buku tepat waktu untuk menghindari denda harian.
-        </div>
         
         <!-- Tombol Selesai untuk Kiosk -->
         <script>
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('source') === 'kiosk') {
-                document.write('<div class="mt-8 flex justify-center"><a href="/kiosk_sirkulasi" class="bg-yellow-800 text-white px-8 py-4 rounded-xl font-bold text-xl shadow-lg hover:bg-yellow-900 transition">SELESAI (Kembali)</a></div>');
+                document.write(
+                    <div class="mt-12 flex justify-center">
+                        <a href="/kiosk_sirkulasi" class="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-medium text-primary bg-white shadow-xl border border-primary/20 hover:scale-105 transition-all duration-300">
+                            <span class="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
+                                <div class="relative h-full w-8 bg-white/20"></div>
+                            </span>
+                            <span class="absolute inset-0 rounded-full bg-primary transition-all duration-300 ease-out group-hover:bg-boxdark"></span>
+                            <span class="relative flex items-center gap-2 font-bold text-white tracking-widest uppercase">
+                                <i class="fa-solid fa-arrow-left"></i> SELESAI TRANSAKSI
+                            </span>
+                        </a>
+                    </div>
+                );
                 
                 // Auto redirect to Kiosk after 45 seconds of inactivity
                 let timeout = setTimeout(() => { window.location.href = '/kiosk_sirkulasi'; }, 45000);
@@ -104,7 +183,14 @@
                 });
             }
         </script>
-
-    </div>
+        
+        <div class="mt-12 mb-8 text-center border-t border-primary/10 pt-8">
+            <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" class="w-8 h-8 opacity-20 mx-auto mb-3 grayscale">
+            <p class="text-secondary/60 text-xs font-medium tracking-wide uppercase">
+                &copy; 2026 Perpustakaan St. Jerome<br>
+                Institutum Theologicum Ioannis Mariae Vianney
+            </p>
+        </div>
+    </main>
 </body>
 </html>
