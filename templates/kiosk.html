@@ -74,39 +74,13 @@
                     if(input) input.focus();
                 },
                 
-                async checkMember() {
+                checkMember() {
                     if(!this.memberId.trim()) return;
                     
                     this.loading = true;
-                    
-                    try {
-                        // 1. Catat sebagai Kunjungan Web (Absensi)
-                        const res = await fetch('/api/kunjungan', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                tipe_pengunjung: 'Member', 
-                                identitas: this.memberId.trim() 
-                            })
-                        });
-                        
-                        const data = await res.json();
-                        
-                        if (data.status === 'success') {
-                            // 2. Jika sukses absensi, langsung tampilkan status pinjaman
-                            window.location.href = '/cek_pinjaman/' + encodeURIComponent(this.memberId.trim()) + '?source=kiosk';
-                        } else {
-                            // Jika gagal (misal member tidak ditemukan)
-                            alert(data.message);
-                            this.memberId = '';
-                            this.loading = false;
-                            setTimeout(() => this.focusInput(), 100);
-                        }
-                    } catch (e) {
-                        alert("Terjadi kesalahan koneksi.");
-                        this.loading = false;
-                        this.memberId = '';
-                    }
+                    setTimeout(() => {
+                        window.location.href = '/cek_pinjaman/' + encodeURIComponent(this.memberId.trim()) + '?source=kiosk';
+                    }, 800); // Fake delay for UX
                 }
             }
         }
