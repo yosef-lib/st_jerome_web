@@ -431,21 +431,59 @@ def scan():
 def api_scan():
     data = request.json
     no_induk = data.get('no_induk')
+    mode = data.get('mode', 'baca')
+    target_rak = data.get('target_rak')
     
     if not no_induk:
         return jsonify({'status': 'error', 'message': 'Barcode kosong'})
         
     conn = database.get_db_connection()
-    buku = conn.execute('SELECT judul, subjek FROM buku WHERE no_induk = ?', (no_induk,)).fetchone()
     
-    if buku:
+    # Gunakan eksemplar JOIN bibliografi
+    buku = conn.execute('''
+        SELECT e.no_induk, b.judul, b.klasifikasi as subjek 
+        FROM eksemplar e 
+        JOIN bibliografi b ON e.biblio_id = b.id 
+        WHERE e.no_induk = ?
+    ''', (no_induk,)).fetchone()
+    
+    if not buku:
+        conn.close()
+        return jsonify({'status': 'error', 'message': f'Buku dengan Barcode {no_induk} tidak ditemukan.'})
+        
+    if mode == 'audit_rak':
+        if not target_rak:
+            conn.close()
+            return jsonify({'status': 'error', 'message': 'Target rak tidak dipilih'})
+            
+        ddc = str(buku['subjek'] or '')
+        status_audit = 'ANOMALI'
+        
+        # Validasi berdasarkan digit pertama DDC
+        if ddc.strip():
+            digit_pertama = ddc.strip()[0]
+            target_digit = target_rak[0]
+            if digit_pertama == target_digit:
+                status_audit = 'BENAR'
+            else:
+                status_audit = 'SALAH RAK'
+                
+        conn.execute('INSERT INTO audit_rak (no_induk, rak_target, status_audit) VALUES (?, ?, ?)', 
+                     (no_induk, target_rak, status_audit))
+        conn.commit()
+        conn.close()
+        return jsonify({
+            'status': 'success', 
+            'judul': buku['judul'], 
+            'subjek': ddc,
+            'status_audit': status_audit
+        })
+    else:
+        # Mode Baca
         conn.execute('INSERT OR REPLACE INTO buku_dibaca (no_induk) VALUES (?)', (no_induk,))
         conn.commit()
         conn.close()
         return jsonify({'status': 'success', 'judul': buku['judul'], 'subjek': buku['subjek']})
-    else:
-        conn.close()
-        return jsonify({'status': 'error', 'message': f'Buku dengan No Induk {no_induk} tidak ditemukan.'})
 
 @app.route('/dashboard')
 @login_required
@@ -1146,9 +1184,10 @@ def anomali():
 def audit_rak():
     conn = database.get_db_connection()
     riwayat = conn.execute("""
-        SELECT a.waktu_scan, a.rak_target, a.status_audit, b.no_induk, b.judul, b.klasifikasi
+        SELECT a.waktu_scan, a.rak_target, a.status_audit, a.no_induk, b.judul, b.klasifikasi
         FROM audit_rak a
-        JOIN buku b ON a.no_induk = b.no_induk
+        LEFT JOIN eksemplar e ON a.no_induk = e.no_induk
+        LEFT JOIN bibliografi b ON e.biblio_id = b.id
         ORDER BY a.id DESC LIMIT 100
     """).fetchall()
     
@@ -1175,7 +1214,8 @@ def export_audit():
     df = pd.read_sql_query("""
         SELECT a.waktu_scan as 'Waktu Scan', a.no_induk as 'No Induk', b.judul as 'Judul Buku', a.rak_target as 'Target Rak', a.status_audit as 'Status', b.klasifikasi as 'DDC Seharusnya'
         FROM audit_rak a
-        JOIN buku b ON a.no_induk = b.no_induk
+        LEFT JOIN eksemplar e ON a.no_induk = e.no_induk
+        LEFT JOIN bibliografi b ON e.biblio_id = b.id
         ORDER BY a.id DESC
     """, conn)
     
