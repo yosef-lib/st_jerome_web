@@ -60,7 +60,12 @@
                 <label class="mb-2 block text-sm font-medium text-black">Scan Barcode</label>
                 
                 <!-- CAMERA SCANNER -->
-                <div id="reader" width="100%" class="mb-3 rounded overflow-hidden border border-stroke bg-slate-50 text-center"></div>
+                <style>
+                    #reader { width: 100%; margin: 0 auto; text-align: center; }
+                    #reader video { object-fit: cover; border-radius: 0.25rem; }
+                    #reader img { margin: 0 auto; }
+                </style>
+                <div id="reader" class="mb-3 rounded overflow-hidden border border-stroke bg-slate-900 text-center flex justify-center items-center"></div>
                 
                 <div id="scanActions" class="mb-4">
                     <button type="button" id="btnStartScan" class="w-full flex items-center justify-center gap-2 rounded bg-success px-4 py-3 font-medium text-white hover:bg-opacity-90">
@@ -251,7 +256,7 @@
                 { facingMode: "environment" },
                 {
                     fps: 10,
-                    qrbox: { width: 250, height: 100 }
+                    qrbox: { width: 250, height: 150 }
                 },
                 (decodedText) => {
                     onScanSuccess(decodedText);
