@@ -9,7 +9,69 @@
     </div>
     
     <div class="p-6">
+        
+        <!-- PUSAT KOMANDO ROBOT -->
+        <div class="bg-slate-800 rounded-lg p-5 mb-8 text-white shadow-md relative overflow-hidden">
+            <!-- Background Decoration -->
+            <div class="absolute -right-10 -top-10 opacity-10">
+                <i class="fa-solid fa-robot text-9xl"></i>
+            </div>
+            
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="font-bold text-lg text-amber-400 mb-1"><i class="fa-solid fa-robot mr-2"></i> Pusat Komando Robot</h3>
+                    <p class="text-sm text-slate-300">Biarkan server mencari sampul otomatis. <br/>Gunakan tombol ini secara berkala agar tidak diblokir Google.</p>
+                </div>
+                
+                <div class="flex flex-col items-end gap-2">
+                    <button @click="startRobot()" x-show="!robot.is_running" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-6 py-2 rounded-md transition flex items-center shadow-lg">
+                        <i class="fa-solid fa-play mr-2"></i> Cari 50 Buku Sekarang
+                    </button>
+                    <button @click="stopRobot()" x-show="robot.is_running" style="display: none;" class="bg-danger hover:bg-opacity-80 text-white font-bold px-6 py-2 rounded-md transition flex items-center shadow-lg">
+                        <i class="fa-solid fa-stop mr-2"></i> Hentikan Robot
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel Status Robot -->
+            <div x-show="robot.is_running || robot.progress > 0 || robot.error" style="display: none;" class="mt-5 bg-slate-900/50 rounded p-4 border border-slate-700">
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-400">Proses Pencarian:</span>
+                    <span class="font-bold" x-text="robot.progress + ' / ' + robot.total"></span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5 mb-4">
+                    <div class="bg-amber-500 h-2.5 rounded-full transition-all duration-500" :style="'width: ' + (robot.total > 0 ? (robot.progress / robot.total * 100) : 0) + '%'"></div>
+                </div>
+                
+                <div class="text-sm">
+                    <span class="text-slate-400 mr-2">Target saat ini:</span>
+                    <span class="font-medium text-amber-300" x-text="robot.current_book"></span>
+                </div>
+                
+                <div x-show="robot.error" style="display: none;" class="mt-3 text-sm text-danger flex items-start gap-2 bg-danger/10 p-2 rounded">
+                    <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+                    <span x-text="robot.error"></span>
+                </div>
+
+                <!-- Hasil Terakhir -->
+                <div x-show="robot.results.length > 0" class="mt-4 border-t border-slate-700 pt-3">
+                    <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Hasil Pencarian Terakhir</h4>
+                    <div class="max-h-40 overflow-y-auto pr-2 space-y-2">
+                        <template x-for="r in robot.results">
+                            <div class="flex items-center justify-between bg-slate-800/80 p-2 rounded text-xs">
+                                <span class="truncate pr-4 flex-1" x-text="r.judul"></span>
+                                <span class="px-2 py-0.5 rounded font-medium" 
+                                      :class="r.status === 'Ditemukan' ? 'bg-success/20 text-success' : (r.status === 'Limit Google' ? 'bg-warning/20 text-warning' : 'bg-slate-700 text-slate-300')"
+                                      x-text="r.status"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Pencarian -->
+
         <div class="flex mb-6 gap-4">
             <div class="flex-1 relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -83,6 +145,57 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('sampulManager', () => ({
+        robot: { is_running: false, progress: 0, total: 0, current_book: '', results: [], error: '' },
+        pollInterval: null,
+        
+        init() {
+            this.checkRobotStatus();
+            this.pollInterval = setInterval(() => {
+                if (this.robot.is_running || document.visibilityState === 'visible') {
+                    this.checkRobotStatus();
+                }
+            }, 3000);
+        },
+        
+        async checkRobotStatus() {
+            try {
+                const res = await fetch('/api/robot/status');
+                const data = await res.json();
+                const wasRunning = this.robot.is_running;
+                this.robot = data;
+                
+                // Refresh data buku jika robot baru saja selesai
+                if (wasRunning && !data.is_running) {
+                    this.loadData();
+                }
+            } catch (e) {}
+        },
+        
+        async startRobot() {
+            try {
+                const res = await fetch('/api/robot/start', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ limit: 50 })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    this.checkRobotStatus();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("Gagal memulai robot.");
+            }
+        },
+        
+        async stopRobot() {
+            try {
+                await fetch('/api/robot/stop', { method: 'POST' });
+                this.checkRobotStatus();
+            } catch (e) {}
+        },
+        
         search: '',
         books: [],
         loading: false,

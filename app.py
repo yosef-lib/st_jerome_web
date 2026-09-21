@@ -1894,6 +1894,126 @@ def api_opac_discover_cover():
     return jsonify({'status': 'success'})
 
 
+
+import threading
+import json
+import urllib.request
+import urllib.parse
+import time
+import os
+
+ROBOT_STATE_FILE = 'robot_state.json'
+
+def get_robot_state():
+    try:
+        with open(ROBOT_STATE_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return {"is_running": False, "progress": 0, "total": 0, "current_book": "", "results": [], "error": ""}
+
+def save_robot_state(state):
+    with open(ROBOT_STATE_FILE, 'w') as f:
+        json.dump(state, f)
+
+def robot_worker(limit=50):
+    state = {"is_running": True, "progress": 0, "total": limit, "current_book": "Memulai...", "results": [], "error": ""}
+    save_robot_state(state)
+    
+    conn = database.get_db_connection()
+    cursor = conn.execute("SELECT id, judul, pengarang FROM bibliografi WHERE image IS NULL OR image = '' OR image = 'NOT_FOUND' OR image = 'RATE_LIMIT' LIMIT ?", (limit,))
+    books = cursor.fetchall()
+    
+    if not books:
+        state["is_running"] = False
+        state["current_book"] = "Selesai"
+        state["error"] = "Luar biasa! Tidak ada lagi buku yang membutuhkan sampul."
+        save_robot_state(state)
+        conn.close()
+        return
+        
+    state["total"] = len(books)
+    
+    for row in books:
+        current_state = get_robot_state()
+        if not current_state.get("is_running"):
+            break # manual stop
+            
+        biblio_id, judul, pengarang = row['id'], row['judul'], row['pengarang']
+        state["current_book"] = f"{judul} - {pengarang}"
+        save_robot_state(state)
+        
+        query = (judul or "") + " " + (pengarang or "")
+        image_url = 'NOT_FOUND'
+        
+        try:
+            url = "https://www.googleapis.com/books/v1/volumes?q=" + urllib.parse.quote(query)
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                if 'items' in data and len(data['items']) > 0:
+                    img = data['items'][0]['volumeInfo'].get('imageLinks', {}).get('thumbnail')
+                    if img:
+                        image_url = img.replace('http:', 'https:')
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                image_url = 'RATE_LIMIT'
+        except Exception:
+            pass
+            
+        conn.execute("UPDATE bibliografi SET image = ? WHERE id = ?", (image_url, biblio_id))
+        conn.commit()
+        
+        status_text = "Ditemukan" if image_url.startswith('http') else ("Limit Google" if image_url == 'RATE_LIMIT' else "Kosong")
+        
+        # Add to beginning of results so newest is at top
+        state["results"].insert(0, {
+            "judul": judul,
+            "status": status_text,
+            "image_url": image_url if image_url.startswith('http') else None
+        })
+        state["progress"] += 1
+        save_robot_state(state)
+        
+        if image_url == 'RATE_LIMIT':
+            state["error"] = "Terhenti otomatis karena Google mendeteksi terlalu banyak permintaan. Silakan coba lagi nanti."
+            break
+            
+        time.sleep(2.5) # Sleep 2.5 seconds to be safe
+        
+    state["is_running"] = False
+    state["current_book"] = "Selesai"
+    save_robot_state(state)
+    conn.close()
+
+@app.route('/api/robot/start', methods=['POST'])
+@api_login_required
+def api_robot_start():
+    state = get_robot_state()
+    if state.get("is_running"):
+        return jsonify({'status': 'error', 'message': 'Robot sedang berjalan!'})
+        
+    limit = request.json.get('limit', 50)
+    thread = threading.Thread(target=robot_worker, args=(limit,))
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({'status': 'success'})
+
+@app.route('/api/robot/stop', methods=['POST'])
+@api_login_required
+def api_robot_stop():
+    state = get_robot_state()
+    state["is_running"] = False
+    state["error"] = "Dihentikan manual oleh admin."
+    save_robot_state(state)
+    return jsonify({'status': 'success'})
+
+@app.route('/api/robot/status', methods=['GET'])
+@api_login_required
+def api_robot_status():
+    return jsonify(get_robot_state())
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
