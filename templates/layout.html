@@ -166,37 +166,36 @@
                             </a>
                         </li>
 
-                        <!-- Menu Sirkulasi & Koleksi -->
-                        {% set koleksi_active = request.path == '/sirkulasi' or request.path.startswith('/koleksi') or request.path == '/input_buku' or request.path == '/audit_rak' %}
-                        <li x-data="{ expanded: {{ 'true' if koleksi_active else 'false' }} }">
-                            <a href="#" @click.prevent="expanded = !expanded" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if koleksi_active %}text-white bg-boxdark2{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
-                                <i class="fa-solid fa-book w-5 text-center"></i> Sirkulasi & Koleksi
-                                <i class="fa-solid fa-chevron-down absolute right-4 transition-transform duration-200" :class="{ 'rotate-180': expanded }"></i>
+                        <!-- Menu Sirkulasi Tunggal -->
+                        <li>
+                            <a href="/sirkulasi" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/sirkulasi' %}bg-primary text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                <i class="fa-solid fa-cash-register w-5 text-center"></i> Kasir Sirkulasi
                             </a>
-                            <div x-show="expanded" style="display: none;" x-transition>
-                                <ul class="mt-2 flex flex-col gap-1 pl-10 pr-2 pb-2">
-                                    <li><a href="/sirkulasi" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/sirkulasi' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}"><i class="fa-solid fa-cash-register mr-2 mt-1"></i> Kasir Sirkulasi</a></li>
-                                    <li><a href="/koleksi" class="flex rounded-md px-3 py-2 text-sm {% if request.path.startswith('/koleksi') %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Daftar Koleksi</a></li>
-                                    <li><a href="/input_buku" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/input_buku' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Input Buku Baru</a></li>
-                                    <li><a href="/audit_rak" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/audit_rak' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Audit Rak</a></li>
-                                      <li><a href="/kelola_sampul" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/kelola_sampul' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Kelola Sampul Manual</a></li>
-                                </ul>
-                            </div>
                         </li>
 
-                        <!-- Menu Cetak & Label -->
-                        {% set cetak_active = request.path == '/cetak_khusus' or request.path == '/cetak_sirkulasi' %}
-                        <li x-data="{ expanded: {{ 'true' if cetak_active else 'false' }} }">
-                            <a href="#" @click.prevent="expanded = !expanded" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if cetak_active %}text-white bg-boxdark2{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
-                                <i class="fa-solid fa-print w-5 text-center"></i> Cetak & Label
+                        <!-- Menu Pengolahan Bahan Pustaka -->
+                        {% set pengolahan_active = request.path.startswith('/koleksi') or request.path == '/input_buku' or request.path == '/kelola_sampul' or request.path == '/cetak_khusus' or request.path == '/cetak_sirkulasi' %}
+                        <li x-data="{ expanded: {{ 'true' if pengolahan_active else 'false' }} }">
+                            <a href="#" @click.prevent="expanded = !expanded" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if pengolahan_active %}text-white bg-boxdark2{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                <i class="fa-solid fa-book w-5 text-center"></i> Pengolahan Bahan Pustaka
                                 <i class="fa-solid fa-chevron-down absolute right-4 transition-transform duration-200" :class="{ 'rotate-180': expanded }"></i>
                             </a>
                             <div x-show="expanded" style="display: none;" x-transition>
                                 <ul class="mt-2 flex flex-col gap-1 pl-10 pr-2 pb-2">
+                                    <li><a href="/koleksi" class="flex rounded-md px-3 py-2 text-sm {% if request.path.startswith('/koleksi') %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Daftar Koleksi</a></li>
+                                    <li><a href="/input_buku" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/input_buku' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Input Buku Baru</a></li>
+                                    <li><a href="/kelola_sampul" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/kelola_sampul' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Kelola Sampul Manual</a></li>
                                     <li><a href="/cetak_sirkulasi" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/cetak_sirkulasi' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Kartu & Kantong Buku</a></li>
                                     <li><a href="/cetak_khusus" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/cetak_khusus' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Stiker Eksemplar Khusus</a></li>
                                 </ul>
                             </div>
+                        </li>
+
+                        <!-- Menu Stock Opname -->
+                        <li>
+                            <a href="/audit_rak" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/audit_rak' %}bg-primary text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                <i class="fa-solid fa-boxes-packing w-5 text-center"></i> Stock Opname (Audit)
+                            </a>
                         </li>
 
                         <!-- Menu Keanggotaan & Kunjungan -->
@@ -219,41 +218,37 @@
                         {% set lapor_active = request.path == '/dashboard' or request.path == '/analisis_lanjutan' or request.path == '/anomali' %}
                         <li x-data="{ expanded: {{ 'true' if lapor_active else 'false' }} }">
                             <a href="#" @click.prevent="expanded = !expanded" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if lapor_active %}text-white bg-boxdark2{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
-                                <i class="fa-solid fa-chart-line w-5 text-center"></i> Laporan & Analisis
+                                <i class="fa-solid fa-chart-pie w-5 text-center"></i> Laporan & Analisis
                                 <i class="fa-solid fa-chevron-down absolute right-4 transition-transform duration-200" :class="{ 'rotate-180': expanded }"></i>
                             </a>
                             <div x-show="expanded" style="display: none;" x-transition>
                                 <ul class="mt-2 flex flex-col gap-1 pl-10 pr-2 pb-2">
-                                    <li><a href="/dashboard" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/dashboard' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Analisis Dasar</a></li>
-                                    <li><a href="/analisis_lanjutan" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/analisis_lanjutan' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Analisis Lanjutan</a></li>
-                                    <li><a href="/anomali" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/anomali' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Kualitas Data</a></li>
+                                    <li><a href="/dashboard" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/dashboard' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Dasbor Analitik</a></li>
+                                    <li><a href="/analisis_lanjutan" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/analisis_lanjutan' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Data Eksemplar</a></li>
+                                    <li><a href="/anomali" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/anomali' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Deteksi Anomali Data</a></li>
                                 </ul>
                             </div>
                         </li>
 
-                        <!-- Menu Sinkronisasi & Backup -->
-                        {% set sinkron_active = request.path == '/import_slims' or request.path == '/export_biblio' or request.path == '/export_item' or request.path == '/backup' %}
-                        <li x-data="{ expanded: {{ 'true' if sinkron_active else 'false' }} }">
-                            <a href="#" @click.prevent="expanded = !expanded" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if sinkron_active %}text-white bg-boxdark2{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
-                                <i class="fa-solid fa-cloud-arrow-up w-5 text-center"></i> Sinkronisasi & Sistem
+                        <!-- Menu Tampilan Publik -->
+                        <li x-data="{ expanded: false }">
+                            <a href="#" @click.prevent="expanded = !expanded" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out text-bodydark hover:bg-boxdark2 hover:text-white">
+                                <i class="fa-solid fa-globe w-5 text-center"></i> Tampilan Publik
                                 <i class="fa-solid fa-chevron-down absolute right-4 transition-transform duration-200" :class="{ 'rotate-180': expanded }"></i>
                             </a>
                             <div x-show="expanded" style="display: none;" x-transition>
                                 <ul class="mt-2 flex flex-col gap-1 pl-10 pr-2 pb-2">
-                                    <li><a href="/import_slims" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/import_slims' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Integrasi SLiMS</a></li>
-                                    <li><a href="/export_biblio" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/export_biblio' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Ekspor Bibliografi</a></li>
-                                    <li><a href="/export_item" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/export_item' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Ekspor Item</a></li>
-                                    <li><a href="/backup" class="flex rounded-md px-3 py-2 text-sm {% if request.path == '/backup' %}text-white font-medium{% else %}text-bodydark2 hover:text-white{% endif %}">Backup Database</a></li>
+                                    <li><a href="/opac" target="_blank" class="flex rounded-md px-3 py-2 text-sm text-bodydark2 hover:text-white">Katalog Publik (OPAC) <i class="fa-solid fa-external-link-alt ml-2 mt-1 text-[10px]"></i></a></li>
+                                    <li><a href="/kiosk" target="_blank" class="flex rounded-md px-3 py-2 text-sm text-bodydark2 hover:text-white">Buku Tamu / Kiosk <i class="fa-solid fa-external-link-alt ml-2 mt-1 text-[10px]"></i></a></li>
+                                    <li><a href="/kiosk_sirkulasi" target="_blank" class="flex rounded-md px-3 py-2 text-sm text-bodydark2 hover:text-white">Kiosk Cek Peminjaman <i class="fa-solid fa-external-link-alt ml-2 mt-1 text-[10px]"></i></a></li>
                                 </ul>
                             </div>
                         </li>
 
-                    </ul>
-
-                    <ul class="mt-8 flex flex-col gap-1.5 border-t border-boxdark2 pt-4">
+                        <!-- Menu Settings -->
                         <li>
-                            <a href="/logout" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium text-danger duration-300 ease-in-out hover:bg-boxdark2 hover:text-white">
-                                <i class="fa-solid fa-power-off w-5 text-center"></i> Keluar
+                            <a href="/settings" class="group relative flex items-center gap-3 rounded-md px-4 py-3 font-medium duration-300 ease-in-out {% if request.path == '/settings' %}bg-primary text-white{% else %}text-bodydark hover:bg-boxdark2 hover:text-white{% endif %}">
+                                <i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan
                             </a>
                         </li>
                     </ul>
