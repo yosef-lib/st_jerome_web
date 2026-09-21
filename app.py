@@ -758,6 +758,10 @@ def cetak_kartu():
     anggota_data = conn.execute(query, member_ids).fetchall()
     conn.close()
     
+    # Sort data to match the exact order of selected member_ids from the frontend
+    anggota_dict = {row['member_id']: row for row in anggota_data}
+    anggota_data = [anggota_dict[m_id] for m_id in member_ids if m_id in anggota_dict]
+    
     import template_kartu
     
     # Convert Row to dict
