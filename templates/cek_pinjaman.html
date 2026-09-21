@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Pinjaman - St. Jerome</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen pb-10">
+    <!-- Header -->
+    <div class="bg-yellow-800 text-white shadow-md">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-book-open-reader text-2xl"></i>
+                <h1 class="font-bold text-xl tracking-wide">ST. JEROME</h1>
+            </div>
+            <div class="text-sm opacity-80">Portal Anggota</div>
+        </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto px-4 mt-6">
+        <!-- Profil Anggota -->
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-200 mb-6 flex items-start gap-4">
+            <div class="w-14 h-14 rounded-full bg-yellow-100 text-yellow-800 flex items-center justify-center flex-shrink-0 text-xl font-bold">
+                {{ member.nama[0] }}
+            </div>
+            <div>
+                <h2 class="font-bold text-lg text-gray-800">{{ member.nama }}</h2>
+                <div class="text-gray-500 text-sm"><i class="fa-solid fa-id-card w-4"></i> {{ member.member_id }} &bull; {{ member.tipe_anggota or 'Reguler' }}</div>
+                <div class="text-sm mt-1">
+                    Status: 
+                    {% if member.status == 'AKTIF' %}
+                        <span class="text-green-600 font-bold"><i class="fa-solid fa-check-circle"></i> Aktif</span>
+                    {% else %}
+                        <span class="text-red-600 font-bold"><i class="fa-solid fa-ban"></i> Dibekukan (Suspend)</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if total_denda > 0 %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-red-500 text-xl mt-0.5"></i>
+            <div>
+                <h3 class="font-bold text-red-800 text-sm">Peringatan Denda</h3>
+                <p class="text-red-700 text-sm mt-1">Anda memiliki denda keterlambatan sebesar <strong>Rp {{ "{:,.0f}".format(total_denda).replace(',', '.') }}</strong> yang belum dibayar. Harap segera melunasi di meja sirkulasi.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <h3 class="font-bold text-gray-700 mb-4 text-lg border-b pb-2">Buku Yang Sedang Dipinjam ({{ loans|length }})</h3>
+
+        {% if loans %}
+            <div class="space-y-4">
+            {% for loan in loans %}
+                <!-- Hitung sisa hari -->
+                {% set due_parts = loan.due_date.split(' ')[0].split('-') %}
+                {% set due_date = due_parts[0] + '-' + due_parts[1] + '-' + due_parts[2] %}
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col sm:flex-row">
+                    <div class="p-4 flex-1">
+                        <h4 class="font-bold text-gray-800 text-base mb-1">{{ loan.judul }}</h4>
+                        <p class="text-gray-500 text-sm mb-3"><i class="fa-solid fa-user-pen"></i> {{ loan.pengarang or 'Tanpa Pengarang' }}</p>
+                        
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-400 block text-xs uppercase tracking-wider">Tgl Pinjam</span>
+                                <span class="font-medium">{{ loan.loan_date[:10] }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block text-xs uppercase tracking-wider">Batas Kembali</span>
+                                <span class="font-bold text-yellow-700">{{ loan.due_date[:10] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+                <i class="fa-solid fa-box-open text-gray-300 text-5xl mb-4"></i>
+                <h4 class="font-bold text-gray-600">Tidak ada pinjaman</h4>
+                <p class="text-gray-400 text-sm mt-2">Anda tidak sedang meminjam buku apapun saat ini.</p>
+            </div>
+        {% endif %}
+        
+        <div class="mt-8 text-center text-gray-400 text-xs">
+            &copy; 2026 Perpustakaan St. Jerome. <br>Harap kembalikan buku tepat waktu untuk menghindari denda harian.
+        </div>
+    </div>
+</body>
+</html>

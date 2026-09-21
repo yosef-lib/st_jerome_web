@@ -2031,6 +2031,24 @@ def cetak_struk(member_id):
     return render_template('cetak_struk.html', member=dict(member), loans=[dict(l) for l in loans])
 
 
+
+@app.route('/cek_pinjaman/<member_id>')
+def cek_pinjaman(member_id):
+    conn = database.get_db_connection()
+    member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
+    if not member:
+        conn.close()
+        return "Anggota tidak ditemukan", 404
+        
+    loans = conn.execute("SELECT s.*, b.judul, b.image, b.pengarang FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id WHERE s.member_id = ? AND s.return_date IS NULL ORDER BY s.due_date ASC", (member_id,)).fetchall()
+    
+    # Check fines
+    fines = conn.execute("SELECT SUM(fine_amount) FROM sirkulasi WHERE member_id = ? AND fine_status = 'BELUM_LUNAS'", (member_id,)).fetchone()[0] or 0
+    
+    conn.close()
+    return render_template('cek_pinjaman.html', member=dict(member), loans=[dict(l) for l in loans], total_denda=fines)
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
