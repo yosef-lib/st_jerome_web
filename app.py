@@ -1815,9 +1815,12 @@ def api_renew():
         tipe = 'Reguler'
         
     # Check max renewals (Reguler = 2, Skripsi = unlimited)
-    if 'Skripsi' not in tipe and loan['renewal_count'] >= 2:
+    member = conn.execute("SELECT is_tesis FROM anggota WHERE member_id = ?", (loan['member_id'],)).fetchone()
+    is_tesis = member['is_tesis'] if member else 0
+    
+    if not is_tesis and loan['renewal_count'] >= 1:
         conn.close()
-        return jsonify({'status': 'error', 'message': 'Batas maksimal perpanjangan (2 kali) telah tercapai.'})
+        return jsonify({'status': 'error', 'message': 'Batas maksimal perpanjangan (1 kali) telah tercapai untuk anggota non-tesis/skripsi.'})
         
     import datetime
     # Perpanjang 14 hari dari HARI INI
@@ -1829,6 +1832,68 @@ def api_renew():
     conn.close()
     
     return jsonify({'status': 'success', 'message': 'Berhasil diperpanjang 14 hari.', 'new_due_date': new_due_date.strftime('%Y-%m-%d')})
+
+
+@app.route('/api/kiosk_pinjam', methods=['POST'])
+def api_kiosk_pinjam():
+    data = request.json
+    member_id = data.get('member_id')
+    no_induk = data.get('no_induk')
+    
+    if not member_id or not no_induk:
+        return jsonify({'status': 'error', 'message': 'Data tidak lengkap.'})
+        
+    conn = database.get_db_connection()
+    member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
+    if not member:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Anggota tidak ditemukan.'})
+        
+    if member['status'] != 'AKTIF':
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Kartu anggota sedang tidak aktif.'})
+        
+    # Check max loans
+    is_tesis = member['is_tesis']
+    max_loans = 4 if is_tesis else 2
+    
+    current_loans = conn.execute("SELECT COUNT(*) FROM sirkulasi WHERE member_id = ? AND return_date IS NULL", (member_id,)).fetchone()[0]
+    if current_loans >= max_loans:
+        conn.close()
+        return jsonify({'status': 'error', 'message': f'Batas pinjaman maksimal tercapai ({max_loans} buku).'})
+        
+    # Check fines
+    fines = conn.execute("SELECT SUM(fine_amount) FROM sirkulasi WHERE member_id = ? AND fine_status = 'BELUM_LUNAS'", (member_id,)).fetchone()[0] or 0
+    if fines > 0:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Anda memiliki denda yang belum lunas. Selesaikan denda di petugas terlebih dahulu.'})
+        
+    # Check if book exists and available
+    book = conn.execute("SELECT e.*, b.judul FROM eksemplar e JOIN bibliografi b ON e.biblio_id = b.id WHERE e.no_induk = ?", (no_induk,)).fetchone()
+    if not book:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Buku tidak ditemukan di katalog.'})
+        
+    is_borrowed = conn.execute("SELECT id FROM sirkulasi WHERE no_induk = ? AND return_date IS NULL", (no_induk,)).fetchone()
+    if is_borrowed:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Buku ini sedang dipinjam oleh orang lain.'})
+        
+    # Process loan
+    import datetime
+    loan_date = datetime.datetime.now()
+    due_date = loan_date + datetime.timedelta(days=14)
+    
+    conn.execute("INSERT INTO sirkulasi (member_id, no_induk, loan_date, due_date) VALUES (?, ?, ?, ?)",
+                 (member_id, no_induk, loan_date.strftime('%Y-%m-%d %H:%M:%S'), due_date.strftime('%Y-%m-%d %H:%M:%S')))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+        'status': 'success',
+        'judul': book['judul'],
+        'due_date': due_date.strftime('%Y-%m-%d')
+    })
 
 @app.route('/api/sirkulasi/return', methods=['POST'])
 @api_login_required
@@ -2105,6 +2170,11 @@ def api_opac_discover_cover():
         ''', (image_url, biblio_id))
         conn.commit()
         conn.close()
+    except:
+        pass
+    
+    try:
+        conn.execute("ALTER TABLE anggota ADD COLUMN is_tesis INTEGER DEFAULT 0")
     except:
         pass
         
