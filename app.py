@@ -2055,6 +2055,23 @@ def kiosk_sirkulasi():
     return render_template('kiosk_sirkulasi.html')
 
 
+
+@app.route('/sirkulasi/cetak_struk_kembali/<member_id>')
+@login_required
+def cetak_struk_kembali(member_id):
+    conn = database.get_db_connection()
+    member = conn.execute("SELECT * FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
+    if not member:
+        conn.close()
+        return "Anggota tidak ditemukan", 404
+        
+    # Ambil buku yang dikembalikan HARI INI oleh member ini
+    returns = conn.execute("SELECT s.*, b.judul FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id WHERE s.member_id = ? AND s.return_date IS NOT NULL AND date(s.return_date) = date('now', 'localtime') ORDER BY s.return_date DESC", (member_id,)).fetchall()
+    conn.close()
+    
+    return render_template('cetak_struk_kembali.html', member=dict(member), returns=[dict(r) for r in returns])
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 

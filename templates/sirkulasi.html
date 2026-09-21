@@ -1,6 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <div class="flex flex-col md:flex-row gap-0 h-full border border-stroke bg-white shadow-default" x-data="sirkulasiApp()" @keydown.escape.window="endSession()" @keydown.f2.window.prevent="activeTab = 'peminjaman'" @keydown.f3.window.prevent="activeTab = 'saat_ini'" @keydown.f4.window.prevent="activeTab = 'reservasi'" @keydown.f9.window.prevent="activeTab = 'denda'" @keydown.f10.window.prevent="activeTab = 'sejarah'">
     
     <!-- Toast Alert Global -->
@@ -64,6 +65,9 @@
                     </button>
                     <button @click="cetakStruk()" class="bg-primary hover:bg-opacity-90 text-white px-4 py-1.5 rounded shadow flex items-center gap-2 transition text-sm font-medium">
                         <i class="fa-solid fa-print"></i> Cetak Struk
+                    </button>
+                    <button @click="cetakStrukKembali()" class="bg-secondary hover:bg-opacity-90 text-white px-4 py-1.5 rounded shadow flex items-center gap-2 transition text-sm font-medium">
+                        <i class="fa-solid fa-receipt"></i> Struk Kembali
                     </button>
                     
                 </div>
@@ -369,7 +373,35 @@ function sirkulasiApp() {
             }
         },
         
-        endSession() {
+        cetakStrukKembali() {
+            if (this.member) {
+                window.open('/sirkulasi/cetak_struk_kembali/' + encodeURIComponent(this.member.id), '_blank', 'width=350,height=600');
+            }
+        },
+        
+        async endSession() {
+            if (!this.member) return;
+            
+            // Tanya apakah mau cetak struk
+            const result = await Swal.fire({
+                title: 'Transaksi Selesai',
+                text: "Apakah Anda ingin mencetak struk untuk member ini?",
+                icon: 'question',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-print"></i> Ya, Cetak Struk Peminjaman',
+                denyButtonText: '<i class="fa-solid fa-receipt"></i> Struk Pengembalian',
+                cancelButtonText: 'Tidak Perlu',
+                confirmButtonColor: '#6D4C41',
+                denyButtonColor: '#8D6E63'
+            });
+            
+            if (result.isConfirmed) {
+                this.cetakStruk();
+            } else if (result.isDenied) {
+                this.cetakStrukKembali();
+            }
+            
             this.sessionActive = false;
             this.member = null;
             this.memberId = '';
