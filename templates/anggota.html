@@ -117,9 +117,14 @@
             <input type="date" name="masa_berlaku" id="edit_masa_berlaku" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary bg-slate-50" readonly>
             <span class="text-xs text-slate-500 mt-1 block">Masa berlaku akan menyesuaikan 4 tahun dari Tanggal Input.</span>
         </div>
-        <div class="flex justify-end gap-3">
-            <button type="button" onclick="document.getElementById('editModal').close()" class="rounded border border-stroke py-2 px-6 font-medium text-black hover:bg-slate-100 transition">Batal</button>
-            <button type="submit" class="rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90 transition">Simpan</button>
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
+            <button type="button" onclick="perpanjangHariIni()" class="w-full sm:w-auto rounded bg-success/10 border border-success/30 py-2 px-4 font-bold text-success hover:bg-success hover:text-white transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i> Perpanjang Hari Ini
+            </button>
+            <div class="flex gap-3 w-full sm:w-auto">
+                <button type="button" onclick="document.getElementById('editModal').close()" class="flex-1 sm:flex-none rounded border border-stroke py-2 px-6 font-medium text-black hover:bg-slate-100 transition">Batal</button>
+                <button type="submit" class="flex-1 sm:flex-none rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90 transition">Simpan</button>
+            </div>
         </div>
     </form>
 </dialog>
@@ -159,6 +164,28 @@ function openEditModal(btn) {
     document.getElementById('edit_masa_berlaku').value = masa;
     
     document.getElementById('editModal').showModal();
+}
+
+function perpanjangHariIni() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    
+    document.getElementById('edit_tanggal_input').value = ${yyyy}--;
+    autoHitungExpired();
+    
+    // Tampilkan notifikasi kecil pakai swal (kalau ada) atau alert
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Berhasil diperpanjang 4 tahun ke depan!',
+            showConfirmButton: false,
+            timer: 2000
+        });
+    }
 }
 
 function autoHitungExpired() {
