@@ -425,7 +425,18 @@ def export_item():
 @app.route('/scan')
 @login_required
 def scan():
-    return render_template('scan_baca.html')
+    conn = database.get_db_connection()
+    # Fetch recently read books today
+    recent = conn.execute('''
+        SELECT b.judul, e.no_induk, bd.tanggal as waktu
+        FROM buku_dibaca bd
+        JOIN eksemplar e ON bd.no_induk = e.no_induk
+        JOIN bibliografi b ON e.biblio_id = b.id
+        WHERE date(bd.tanggal) = date('now', 'localtime')
+        ORDER BY bd.tanggal DESC LIMIT 20
+    ''').fetchall()
+    conn.close()
+    return render_template('scan_baca.html', recent=recent)
 
 @app.route('/api/scan', methods=['POST'])
 def api_scan():
@@ -666,15 +677,16 @@ def edit_anggota():
     member_id = request.form.get('member_id')
     nama = request.form.get('nama')
     tipe_anggota = request.form.get('tipe_anggota')
+    tanggal_input = request.form.get('tanggal_input')
     masa_berlaku = request.form.get('masa_berlaku')
     
     if member_id and nama and tipe_anggota and masa_berlaku:
         conn = database.get_db_connection()
         conn.execute('''
             UPDATE anggota 
-            SET nama = ?, tipe_anggota = ?, masa_berlaku = ?
+            SET nama = ?, tipe_anggota = ?, tanggal_input = ?, masa_berlaku = ?
             WHERE member_id = ?
-        ''', (nama, tipe_anggota, masa_berlaku, member_id))
+        ''', (nama, tipe_anggota, tanggal_input, masa_berlaku, member_id))
         conn.commit()
         conn.close()
         

@@ -68,7 +68,7 @@
                             <p class="text-black">{{ anggota['masa_berlaku'] }}</p>
                         </td>
                         <td class="py-4 px-4">
-                            <button type="button" class="text-primary hover:text-blue-800 transition font-medium" onclick="openEditModal('{{ anggota['member_id'] }}', '{{ anggota['nama'] }}', '{{ anggota['tipe_anggota'] }}', '{{ anggota['masa_berlaku'] }}')">
+                            <button type="button" class="text-primary hover:text-blue-800 transition font-medium" onclick="openEditModal('{{ anggota['member_id'] }}', '{{ anggota['nama'] }}', '{{ anggota['tipe_anggota'] }}', '{{ anggota['tanggal_input'] }}', '{{ anggota['masa_berlaku'] }}')">
                                 Edit
                             </button>
                         </td>
@@ -102,10 +102,14 @@
             <label class="mb-2 block text-sm font-medium text-black">Tipe Anggota</label>
             <input type="text" name="tipe_anggota" id="edit_tipe_anggota" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
         </div>
+        <div class="mb-4">
+            <label class="mb-2 block text-sm font-medium text-black">Tanggal Input (Pendaftaran)</label>
+            <input type="date" name="tanggal_input" id="edit_tanggal_input" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary" onchange="autoHitungExpired()">
+        </div>
         <div class="mb-5">
-            <label class="mb-1 block text-sm font-medium text-black">Masa Berlaku (Tahun-Bulan-Tanggal)</label>
-            <input type="text" name="masa_berlaku" id="edit_masa_berlaku" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary">
-            <span class="text-xs text-slate-500 mt-1 block">Contoh: 2029-12-31</span>
+            <label class="mb-1 block text-sm font-medium text-black">Masa Berlaku (Otomatis +4 Tahun)</label>
+            <input type="date" name="masa_berlaku" id="edit_masa_berlaku" required class="w-full rounded border border-stroke bg-transparent py-2.5 px-4 outline-none transition focus:border-primary active:border-primary bg-slate-50" readonly>
+            <span class="text-xs text-slate-500 mt-1 block">Masa berlaku akan menyesuaikan 4 tahun dari Tanggal Input.</span>
         </div>
         <div class="flex justify-end gap-3">
             <button type="button" onclick="document.getElementById('editModal').close()" class="rounded border border-stroke py-2 px-6 font-medium text-black hover:bg-slate-100 transition">Batal</button>
@@ -135,13 +139,26 @@
 
 <script>
 // --- Logika Edit Modal ---
-function openEditModal(id, nama, tipe, masa) {
+function openEditModal(id, nama, tipe, tgl_input, masa) {
     document.getElementById('edit_member_id').value = id;
     document.getElementById('edit_nama').value = nama;
     document.getElementById('edit_tipe_anggota').value = tipe;
-    document.getElementById('edit_masa_berlaku').value = masa;
+    document.getElementById('edit_tanggal_input').value = tgl_input || '';
+    document.getElementById('edit_masa_berlaku').value = masa || '';
     
     document.getElementById('editModal').showModal();
+}
+
+function autoHitungExpired() {
+    const inputDate = document.getElementById('edit_tanggal_input').value;
+    if(inputDate) {
+        const d = new Date(inputDate);
+        d.setFullYear(d.getFullYear() + 4);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        document.getElementById('edit_masa_berlaku').value = ${yyyy}--;
+    }
 }
 
 // --- Logika Penyimpanan Pilihan (Checkbox) ---
