@@ -26,9 +26,9 @@
     </div>
     {% else %}
     <!-- ACTIVE SESSION -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="flex flex-col gap-6 max-w-4xl mx-auto">
         <!-- Panel Kiri: Scanner -->
-        <div class="md:col-span-1 rounded-sm border border-stroke bg-white shadow-default p-6">
+        <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
             <div class="mb-4">
                 <span class="inline-block rounded bg-success/10 px-2.5 py-0.5 text-sm font-medium text-success mb-2">Sesi Aktif</span>
                 <h3 class="text-xl font-bold text-black">{{ active_session.nama_sesi }}</h3>
@@ -95,7 +95,7 @@
         </div>
         
         <!-- Panel Kanan: Progress & Riwayat -->
-        <div class="md:col-span-2 rounded-sm border border-stroke bg-white shadow-default p-6">
+        <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="rounded border border-stroke p-4 bg-slate-50">
                     <p class="text-sm font-medium text-slate-500 mb-1">Total Eksemplar Katalog</p>
