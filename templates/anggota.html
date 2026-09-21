@@ -68,9 +68,15 @@
                             <p class="text-black">{{ anggota['masa_berlaku'] }}</p>
                         </td>
                         <td class="py-4 px-4">
-                            <button type="button" class="text-primary hover:text-blue-800 transition font-medium" onclick="openEditModal('{{ anggota['member_id'] }}', '{{ anggota['nama'] }}', '{{ anggota['tipe_anggota'] }}', '{{ anggota['tanggal_input'] }}', '{{ anggota['masa_berlaku'] }}')">
-                                Edit
-                            </button>
+                            <button type="button" class="text-primary hover:text-blue-800 transition font-medium" 
+    data-id="{{ anggota['member_id'] }}"
+    data-nama="{{ anggota['nama'] }}"
+    data-tipe="{{ anggota['tipe_anggota'] }}"
+    data-tgl="{{ anggota['tanggal_input'] or '' }}"
+    data-masa="{{ anggota['masa_berlaku'] or '' }}"
+    onclick="openEditModal(this)">
+    Edit
+</button>
                         </td>
                     </tr>
                     {% else %}
@@ -139,12 +145,18 @@
 
 <script>
 // --- Logika Edit Modal ---
-function openEditModal(id, nama, tipe, tgl_input, masa) {
-    document.getElementById('edit_member_id').value = id;
-    document.getElementById('edit_nama').value = nama;
-    document.getElementById('edit_tipe_anggota').value = tipe;
-    document.getElementById('edit_tanggal_input').value = tgl_input || '';
-    document.getElementById('edit_masa_berlaku').value = masa || '';
+function openEditModal(btn) {
+    let tgl_input = btn.getAttribute('data-tgl');
+    if (tgl_input === 'None' || tgl_input === 'null') tgl_input = '';
+    
+    let masa = btn.getAttribute('data-masa');
+    if (masa === 'None' || masa === 'null') masa = '';
+
+    document.getElementById('edit_member_id').value = btn.getAttribute('data-id');
+    document.getElementById('edit_nama').value = btn.getAttribute('data-nama');
+    document.getElementById('edit_tipe_anggota').value = btn.getAttribute('data-tipe');
+    document.getElementById('edit_tanggal_input').value = tgl_input;
+    document.getElementById('edit_masa_berlaku').value = masa;
     
     document.getElementById('editModal').showModal();
 }
