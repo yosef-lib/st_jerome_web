@@ -2173,10 +2173,7 @@ def api_opac_discover_cover():
     except:
         pass
     
-    try:
-        conn.execute("ALTER TABLE anggota ADD COLUMN is_tesis INTEGER DEFAULT 0")
-    except:
-        pass
+
         
     return jsonify({'status': 'success'})
 
@@ -2186,6 +2183,25 @@ import threading
 import json
 import urllib.request
 import urllib.parse
+
+# Startup Migrations
+try:
+    _conn = database.get_db_connection()
+    _conn.execute("ALTER TABLE anggota ADD COLUMN is_tesis INTEGER DEFAULT 0")
+    _conn.commit()
+    _conn.close()
+    print("Migrasi: Kolom is_tesis berhasil ditambahkan ke tabel anggota.")
+except Exception as e:
+    pass # Kemungkinan kolom sudah ada
+
+try:
+    _conn = database.get_db_connection()
+    _conn.execute("ALTER TABLE anggota ADD COLUMN tanggal_input TEXT")
+    _conn.commit()
+    _conn.close()
+except:
+    pass
+
 import time
 import os
 
