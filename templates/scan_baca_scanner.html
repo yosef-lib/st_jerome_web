@@ -12,21 +12,6 @@
     </div>
 
     <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
-        <!-- Result Box -->
-        <div id="resultBox" class="hidden text-center rounded-lg border border-success bg-success/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
-            <i class="fa-solid fa-circle-check text-success text-3xl mb-2"></i>
-            <div class="font-bold text-lg text-success mb-1">Berhasil Dicatat!</div>
-            <div id="bookTitle" class="font-semibold text-black text-sm"></div>
-            <div id="bookSubject" class="text-xs font-medium text-slate-500 mt-1"></div>
-        </div>
-
-        <!-- Error Result -->
-        <div id="errorBox" class="hidden text-center rounded-lg border border-danger bg-danger/10 p-5 mb-5 animate-[fadeIn_0.3s_ease-out]">
-            <i class="fa-solid fa-circle-xmark text-danger text-3xl mb-2"></i>
-            <div class="font-bold text-lg text-danger mb-1">Buku Tidak Ditemukan</div>
-            <div id="errorMsg" class="text-xs font-medium text-slate-500 mt-1"></div>
-        </div>
-
         <!-- CAMERA SCANNER -->
         <style>
             #reader { width: 100%; margin: 0 auto; text-align: center; }
@@ -113,8 +98,8 @@
         const no_induk = document.getElementById('manualInput').value.trim();
         if(!no_induk) return;
 
-        document.getElementById('resultBox').style.display = 'none';
-        document.getElementById('errorBox').style.display = 'none';
+        
+        
 
         fetch('/api/scan', {
             method: 'POST',
@@ -123,20 +108,29 @@
         }).then(r => r.json()).then(data => {
             if(data.status === 'success') {
                 playBeep(); 
-                document.getElementById('bookTitle').innerText = data.judul;
-                document.getElementById('bookSubject').innerText = data.subjek || 'Tanpa subjek';
-                document.getElementById('resultBox').style.display = 'block';
+                Swal.fire({
+                    position: 'top',
+                    icon: 'success',
+                    title: 'Berhasil Dicatat',
+                    text: data.judul,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
                 document.getElementById('manualInput').value = ''; 
             } else {
                 playBeepError();
-                document.getElementById('errorMsg').innerText = `No Induk: ${no_induk}`;
-                document.getElementById('errorBox').style.display = 'block';
+                Swal.fire('Gagal', data.message || `Buku ${no_induk} tidak ditemukan.`, 'error');
             }
         }).catch(err => {
             console.error(err);
             playBeepError();
-            document.getElementById('errorMsg').innerText = 'Kesalahan jaringan.';
-            document.getElementById('errorBox').style.display = 'block';
+            Swal.fire('Error', 'Kesalahan jaringan.', 'error');
+        }).finally(() => {
+            setTimeout(() => { 
+                if (html5QrCode && html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+                    html5QrCode.resume(); 
+                }
+            }, 1500);
         });
     }
 
