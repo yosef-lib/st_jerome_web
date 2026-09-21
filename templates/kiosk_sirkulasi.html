@@ -3,38 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiosk Mandiri - St. Jerome</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Cek Peminjaman - St. Jerome Library</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              boxdark: '#3E2723',
+              primary: '#6D4C41',
+              secondary: '#8D6E63',
+              cream: '#FDFBF7',
+              creamdark: '#F5F0E6'
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
     <style>
-        body { background-color: #292524; color: white; overflow: hidden; }
-        .kiosk-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .glass-input { background: rgba(0,0,0,0.3); color: white; border: 2px solid rgba(255,255,255,0.2); transition: all 0.3s; }
-        .glass-input:focus { border-color: #f59e0b; outline: none; background: rgba(0,0,0,0.5); }
+        body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #FDFBF7; }
+        .glass-card { background: white; border: 1px solid #F5F0E6; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02); }
+        .glass-input { background: #FDFBF7; color: #3E2723; border: 2px solid #E5E7EB; transition: all 0.3s; }
+        .glass-input:focus { border-color: #6D4C41; outline: none; background: white; box-shadow: 0 0 0 4px rgba(109, 76, 65, 0.1); }
+        .pattern-bg {
+            background-color: #FDFBF7;
+            background-image: radial-gradient(#8D6E63 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+        }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col items-center justify-center relative bg-stone-900" x-data="kioskApp()" @click="focusInput()">
+<body class="h-screen w-screen flex flex-col items-center justify-center relative pattern-bg" x-data="kioskApp()" @click="focusInput()">
     
-    <!-- Pattern Background -->
-    <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#f59e0b 1px, transparent 1px); background-size: 30px 30px;"></div>
+    <!-- Top Border Line -->
+    <div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
 
     <div class="relative z-10 w-full max-w-4xl px-6 flex flex-col items-center text-center">
-        <i class="fa-solid fa-book-open-reader text-6xl text-amber-500 mb-6"></i>
-        <h1 class="text-4xl md:text-5xl font-bold tracking-wider mb-2 text-white">KIOSK MANDIRI</h1>
-        <p class="text-xl text-stone-400 mb-12">Perpustakaan St. Jerome</p>
         
-        <div class="w-full max-w-2xl kiosk-card rounded-2xl p-10 shadow-2xl">
-            <h2 class="text-2xl font-semibold mb-6 text-stone-200">Silakan Scan Kartu Anggota Anda</h2>
+        <!-- Logo -->
+        <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-xl border-4 border-primary mx-auto overflow-hidden">
+            <img src="{{ url_for('static', filename='img/logo_imavi.png') }}" onerror="this.src='{{ url_for('static', filename='img/logo.jpg') }}'" alt="IMAVI Logo" class="w-full h-full object-cover">
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2 text-boxdark">CEK PEMINJAMAN</h1>
+        <p class="text-xl text-secondary font-medium mb-12 tracking-wide uppercase">St. Jerome Library</p>
+        
+        <div class="w-full max-w-2xl glass-card rounded-3xl p-12 relative overflow-hidden">
+            <!-- Decorative corner elements -->
+            <div class="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-primary/20 rounded-tl-3xl opacity-50 m-2"></div>
+            <div class="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-primary/20 rounded-br-3xl opacity-50 m-2"></div>
             
-            <form @submit.prevent="checkMember" class="relative">
-                <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                    <i class="fa-solid fa-barcode text-stone-400 text-2xl"></i>
+            <h2 class="text-2xl font-bold mb-8 text-boxdark">Silakan Scan Kartu Anggota Anda</h2>
+            
+            <form @submit.prevent="checkMember" class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none transition-colors group-focus-within:text-primary text-secondary">
+                    <i class="fa-solid fa-barcode text-3xl"></i>
                 </div>
-                <input type="text" id="barcodeInput" x-model="memberId" class="glass-input w-full rounded-xl pl-16 pr-6 py-6 text-3xl font-bold text-center tracking-widest placeholder-stone-500" placeholder="TAP KARTU DISINI" autocomplete="off" autofocus>
+                <input type="text" id="barcodeInput" x-model="memberId" class="glass-input w-full rounded-2xl pl-20 pr-6 py-6 text-3xl font-bold text-center tracking-widest placeholder-gray-400" placeholder="TAP KARTU DISINI" autocomplete="off" autofocus>
             </form>
             
-            <div class="mt-8 flex items-center justify-center gap-3 text-stone-400 animate-pulse">
+            <div class="mt-10 flex items-center justify-center gap-3 text-secondary font-medium animate-pulse">
                 <i class="fa-solid fa-arrow-down"></i>
                 <span>Gunakan mesin scanner di bawah layar</span>
                 <i class="fa-solid fa-arrow-down"></i>
@@ -43,14 +76,14 @@
     </div>
     
     <!-- Footer -->
-    <div class="absolute bottom-6 text-stone-500 text-sm">
-        Sistem Asisten Perpustakaan Terintegrasi &bull; 2026
+    <div class="absolute bottom-8 text-secondary font-medium text-sm flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved"></i> Sistem Keamanan Terintegrasi SJLA
     </div>
     
     <!-- Loading overlay -->
-    <div x-show="loading" class="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center" style="display: none;">
-        <i class="fa-solid fa-circle-notch fa-spin text-5xl text-amber-500 mb-4"></i>
-        <div class="text-xl font-bold text-white tracking-widest">MEMPROSES...</div>
+    <div x-show="loading" class="fixed inset-0 bg-boxdark/90 z-50 flex flex-col items-center justify-center backdrop-blur-sm" style="display: none;">
+        <i class="fa-solid fa-circle-notch fa-spin text-6xl text-cream mb-6"></i>
+        <div class="text-2xl font-bold text-white tracking-widest">MEMPROSES KARTU...</div>
     </div>
     
     <script>
