@@ -220,9 +220,14 @@
         }
     });
     
-    // Auto focus
-    document.addEventListener('click', () => {
-        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'BUTTON') {
+    // Auto focus (biarkan select dan element form lainnya berfungsi normal)
+    document.addEventListener('click', (e) => {
+        // Jangan auto-focus jika user sedang mengklik atau berada di dalam select/button/input lain
+        const activeTag = document.activeElement ? document.activeElement.tagName : '';
+        const targetTag = e.target ? e.target.tagName : '';
+        
+        if(activeTag !== 'INPUT' && activeTag !== 'BUTTON' && activeTag !== 'SELECT' && 
+           targetTag !== 'INPUT' && targetTag !== 'BUTTON' && targetTag !== 'SELECT') {
             barcodeInput.focus();
         }
     });
