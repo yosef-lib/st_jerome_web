@@ -1303,6 +1303,7 @@ def api_scan_opname():
     data = request.json
     no_induk = data.get('no_induk', '').strip()
     session_id = data.get('session_id')
+    target_rak = data.get('target_rak', '')
     
     if not no_induk or not session_id:
         return jsonify({'status': 'error', 'message': 'Data tidak lengkap'})
@@ -1311,7 +1312,7 @@ def api_scan_opname():
     
     # Check if book exists
     buku = conn.execute('''
-        SELECT e.no_induk, b.judul
+        SELECT e.no_induk, b.judul, b.klasifikasi
         FROM eksemplar e 
         LEFT JOIN bibliografi b ON e.biblio_id = b.id 
         WHERE e.no_induk = ?
@@ -1319,16 +1320,38 @@ def api_scan_opname():
     
     if not buku:
         conn.close()
-        return jsonify({'status': 'danger', 'message': f'Barcode {no_induk} tidak terdaftar di katalog!'})
+        return jsonify({'status': 'error', 'message': f'Barcode {no_induk} tidak terdaftar di katalog!'})
         
+    # Validate Rak
+    ddc = str(buku['klasifikasi'] or '')
+    status_rak = 'ANOMALI'
+    
+    if target_rak == 'F':
+        status_rak = 'BENAR' if ddc.upper().startswith('F') else 'SALAH RAK'
+    elif target_rak == 'R':
+        status_rak = 'BENAR' if ddc.upper().startswith('R') else 'SALAH RAK'
+    elif ddc.strip() and target_rak.isdigit():
+        digit_pertama = ddc.strip()[0]
+        if digit_pertama == target_rak[0]:
+            status_rak = 'BENAR'
+        else:
+            status_rak = 'SALAH RAK'
+
     # Check if already scanned in this session
     already = conn.execute("SELECT id FROM stock_opname_scan WHERE session_id = ? AND no_induk = ?", (session_id, no_induk)).fetchone()
     if already:
         conn.close()
-        return jsonify({'status': 'warning', 'message': f'Buku {buku["judul"]} sudah dipindai sebelumnya.'})
+        return jsonify({
+            'status': 'warning', 
+            'message': f'Buku {buku["judul"]} sudah dipindai sebelumnya.',
+            'no_induk': no_induk,
+            'judul': buku['judul'],
+            'status_rak': status_rak,
+            'ddc_asli': ddc
+        })
         
-    # Insert
-    conn.execute("INSERT INTO stock_opname_scan (session_id, no_induk, status) VALUES (?, ?, 'DITEMUKAN')", (session_id, no_induk))
+    # Insert with the rack status
+    conn.execute("INSERT INTO stock_opname_scan (session_id, no_induk, status) VALUES (?, ?, ?)", (session_id, no_induk, status_rak))
     conn.commit()
     conn.close()
     
@@ -1336,7 +1359,9 @@ def api_scan_opname():
         'status': 'success',
         'message': f'Berhasil: {buku["judul"]}',
         'no_induk': no_induk,
-        'judul': buku['judul']
+        'judul': buku['judul'],
+        'status_rak': status_rak,
+        'ddc_asli': ddc
     })
 
 @app.route('/laporan_opname/<int:session_id>')
