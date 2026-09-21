@@ -468,6 +468,12 @@ def export_item():
         download_name="item_export.csv"
     )
 
+
+@app.route('/scan_baca/scanner')
+@login_required
+def scan_baca_scanner():
+    return render_template('scan_baca_scanner.html')
+
 @app.route('/scan')
 @login_required
 def scan():
