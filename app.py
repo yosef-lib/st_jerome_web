@@ -472,11 +472,23 @@ def api_scan():
                      (no_induk, target_rak, status_audit))
         conn.commit()
         conn.close()
+        # Sesuaikan dengan ekspektasi frontend (success, danger, warning)
+        response_status = 'success'
+        message = f"Buku {buku['judul']} benar berada di rak ini."
+        
+        if status_audit == 'SALAH RAK':
+            response_status = 'danger'
+            message = f"Buku {buku['judul']} (DDC {ddc}) SEHARUSNYA di rak lain!"
+        elif status_audit == 'ANOMALI':
+            response_status = 'warning'
+            message = f"DDC untuk buku {buku['judul']} tidak jelas/kosong."
+            
         return jsonify({
-            'status': 'success', 
+            'status': response_status, 
             'judul': buku['judul'], 
             'subjek': ddc,
-            'status_audit': status_audit
+            'status_audit': status_audit,
+            'message': message
         })
     else:
         # Mode Baca
