@@ -1820,7 +1820,7 @@ def api_sampul_kosong():
     per_page = 15
     offset = (page - 1) * per_page
     
-    conn = get_db_connection()
+    conn = database.get_db_connection()
     query = '''
         SELECT id, judul, pengarang, penerbit, tahun_terbit, isbn
         FROM bibliografi
@@ -1861,7 +1861,7 @@ def api_sampul_update():
     if not biblio_id or not image_url:
         return jsonify({'status': 'error', 'message': 'Data tidak lengkap'}), 400
         
-    conn = get_db_connection()
+    conn = database.get_db_connection()
     conn.execute('UPDATE bibliografi SET image = ? WHERE id = ?', (image_url, biblio_id))
     conn.commit()
     conn.close()
