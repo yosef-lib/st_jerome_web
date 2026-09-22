@@ -3057,6 +3057,63 @@ def send_wa_notification(member_id, message):
     except:
         pass
 
+
+@app.route('/laporan_koleksi')
+@login_required
+def laporan_koleksi():
+    start_id = request.args.get('start_id', '').strip()
+    end_id = request.args.get('end_id', '').strip()
+    
+    has_result = False
+    total_filsafat = 0
+    total_teologi = 0
+    total_umum = 0
+    total_semua = 0
+    
+    if start_id and end_id:
+        has_result = True
+        conn = database.get_db_connection()
+        buku_list = conn.execute("SELECT no_induk, klasifikasi FROM buku").fetchall()
+        conn.close()
+        
+        def parse_no_induk(nid):
+            try:
+                parts = nid.split('/')
+                if len(parts) == 2:
+                    return (int(parts[1]), int(parts[0]))
+            except:
+                pass
+            return (-1, -1)
+            
+        s_val = parse_no_induk(start_id)
+        e_val = parse_no_induk(end_id)
+        
+        for b in buku_list:
+            b_val = parse_no_induk(b['no_induk'])
+            if b_val[0] == -1: continue # Skip if format doesn't match
+            
+            # Check if within range
+            if s_val <= b_val <= e_val:
+                total_semua += 1
+                klas = str(b['klasifikasi'] or '').strip()
+                # Filsafat = 100 - 199
+                # Teologi = 200 - 299
+                try:
+                    k_num = float(''.join([c for c in klas if c.isdigit() or c == '.']))
+                    if 100 <= k_num < 200:
+                        total_filsafat += 1
+                    elif 200 <= k_num < 300:
+                        total_teologi += 1
+                    else:
+                        total_umum += 1
+                except:
+                    total_umum += 1
+
+    return render_template('laporan_koleksi.html', 
+                          start_id=start_id, end_id=end_id, has_result=has_result,
+                          total_filsafat=total_filsafat, total_teologi=total_teologi, 
+                          total_umum=total_umum, total_semua=total_semua)
+
 @app.route('/api/version', methods=['GET'])
 def api_version():
     return jsonify({'version': '2b2fa3d-fix-401', 'status': 'ok'})

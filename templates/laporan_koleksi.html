@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Laporan Koleksi Custom{% endblock %}
+{% block page_subtitle %}Rekapitulasi Kategori Buku Berdasarkan Rentang Nomor Induk (Tahun Input){% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 gap-6">
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <form method="GET" action="{{ url_for('laporan_koleksi') }}">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="mb-2 block text-sm font-medium text-black">Nomor Induk Awal (Mulai)</label>
+                    <input type="text" name="start_id" value="{{ start_id }}" placeholder="Contoh: 0220/25" class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                </div>
+                <div>
+                    <label class="mb-2 block text-sm font-medium text-black">Nomor Induk Akhir (Sampai)</label>
+                    <input type="text" name="end_id" value="{{ end_id }}" placeholder="Contoh: 0441/26" class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                </div>
+            </div>
+            
+            <button type="submit" class="rounded bg-primary px-6 py-2.5 font-medium text-white hover:bg-opacity-90">
+                <i class="fa-solid fa-filter mr-2"></i> Buat Laporan
+            </button>
+        </form>
+    </div>
+
+    {% if has_result %}
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <div class="flex justify-between items-center border-b border-stroke pb-4 mb-4">
+            <h3 class="font-bold text-black text-lg">
+                <i class="fa-solid fa-chart-pie text-success mr-2"></i> Hasil Rekapitulasi ({{ start_id }} s/d {{ end_id }})
+            </h3>
+            <button onclick="window.print()" class="rounded bg-slate-100 border border-slate-300 px-4 py-1.5 font-medium text-slate-700 hover:bg-slate-200 text-sm">
+                <i class="fa-solid fa-print mr-1"></i> Cetak Laporan
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-md border border-stroke p-4 text-center bg-blue-50">
+                <div class="text-sm text-slate-500 font-bold uppercase">Buku Filsafat</div>
+                <div class="text-3xl font-bold text-black mt-2">{{ total_filsafat }}</div>
+                <div class="text-xs text-slate-400 mt-1">Klasifikasi 100-199</div>
+            </div>
+            <div class="rounded-md border border-stroke p-4 text-center bg-green-50">
+                <div class="text-sm text-slate-500 font-bold uppercase">Buku Teologi</div>
+                <div class="text-3xl font-bold text-black mt-2">{{ total_teologi }}</div>
+                <div class="text-xs text-slate-400 mt-1">Klasifikasi 200-299</div>
+            </div>
+            <div class="rounded-md border border-stroke p-4 text-center bg-orange-50">
+                <div class="text-sm text-slate-500 font-bold uppercase">Buku Umum / Lainnya</div>
+                <div class="text-3xl font-bold text-black mt-2">{{ total_umum }}</div>
+                <div class="text-xs text-slate-400 mt-1">Di luar 100 & 200</div>
+            </div>
+        </div>
+        
+        <div class="mt-4 p-4 bg-slate-50 rounded border border-slate-200">
+            <h4 class="font-bold text-black mb-2">Total Seluruh Koleksi pada Rentang Ini: <span class="text-primary">{{ total_semua }} Eksemplar</span></h4>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
