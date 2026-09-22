@@ -2400,9 +2400,11 @@ def settings():
         # Simpan pengaturan
         token = request.form.get('telegram_token', '').strip()
         chat_id = request.form.get('telegram_chat_id', '').strip()
+        gemini_key = request.form.get('gemini_api_key', '').strip()
         
         conn.execute("INSERT OR REPLACE INTO pengaturan_sistem (kunci, nilai) VALUES ('TELEGRAM_BOT_TOKEN', ?)", (token,))
         conn.execute("INSERT OR REPLACE INTO pengaturan_sistem (kunci, nilai) VALUES ('TELEGRAM_CHAT_ID', ?)", (chat_id,))
+        conn.execute("INSERT OR REPLACE INTO pengaturan_sistem (kunci, nilai) VALUES ('GEMINI_API_KEY', ?)", (gemini_key,))
         conn.commit()
         flash("Pengaturan berhasil disimpan!", "success")
         return redirect(url_for('settings'))

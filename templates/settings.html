@@ -37,6 +37,20 @@
                 <p class="text-xs text-slate-500 mt-1">Dapatkan dari <a href="https://t.me/userinfobot" target="_blank" class="text-primary hover:underline">@userinfobot</a></p>
             </div>
             
+            
+        <div class="border-b border-stroke pb-4 mb-4 mt-8">
+            <h3 class="font-bold text-black text-lg">
+                <i class="fa-solid fa-robot text-primary mr-2"></i> WhatsApp AI (Google Gemini)
+            </h3>
+            <p class="text-sm text-slate-500 mt-1">Kunci API untuk menghidupkan fitur obrolan pintar Customer Service WA.</p>
+        </div>
+        
+        <div class="mb-5.5">
+            <label class="mb-2 block text-sm font-medium text-black">Google Gemini API Key</label>
+            <input type="text" name="gemini_api_key" value="{{ config.get('GEMINI_API_KEY', '') }}" placeholder="Contoh: AIzaSyB..." class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+            <p class="text-xs text-slate-500 mt-1">Dapatkan secara gratis dari <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary hover:underline">Google AI Studio</a></p>
+        </div>
+
             <div class="flex gap-4">
                 <button type="submit" class="rounded bg-primary px-6 py-2.5 font-medium text-white hover:bg-opacity-90">
                     <i class="fa-solid fa-save mr-2"></i> Simpan Konfigurasi
