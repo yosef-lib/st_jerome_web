@@ -2930,7 +2930,6 @@ def api_get_biblio(id):
     return jsonify({}), 404
 
 
-import requests
 import json
 
 @app.route('/api/wa_webhook', methods=['POST'])
@@ -2993,7 +2992,8 @@ def wa_broadcast():
     conn.close()
     return render_template('wa_broadcast.html', total_anggota=total)
 
-import requests
+import urllib.request
+import json
 
 @app.route('/api/wa_broadcast', methods=['POST'])
 @api_login_required
@@ -3026,10 +3026,9 @@ def api_wa_broadcast():
         for m in members_list:
             final_msg = template.replace('[NAMA]', m['nama'])
             try:
-                requests.post('http://127.0.0.1:3000/api/send_message', json={
-                    'number': m['telepon'],
-                    'message': final_msg
-                }, timeout=5)
+                data = json.dumps({'number': m['telepon'], 'message': final_msg}).encode('utf-8')
+                req = urllib.request.Request('http://127.0.0.1:3000/api/send_message', data=data, headers={'Content-Type': 'application/json'})
+                urllib.request.urlopen(req, timeout=5)
             except:
                 pass
                 
@@ -3049,10 +3048,9 @@ def send_wa_notification(member_id, message):
             import threading
             def _send():
                 try:
-                    requests.post('http://127.0.0.1:3000/api/send_message', json={
-                        'number': member['telepon'],
-                        'message': message
-                    }, timeout=5)
+                    data = json.dumps({'number': member['telepon'], 'message': message}).encode('utf-8')
+                    req = urllib.request.Request('http://127.0.0.1:3000/api/send_message', data=data, headers={'Content-Type': 'application/json'})
+                    urllib.request.urlopen(req, timeout=5)
                 except:
                     pass
             threading.Thread(target=_send).start()
