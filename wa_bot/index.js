@@ -5,7 +5,7 @@ const axios = require('axios');
 
 // Konfigurasi port
 const PORT = 3005;
-const FLASK_URL = 'http://127.0.0.1/api/wa_webhook'; // Ganti dengan port gunicorn jika bukan 80
+const FLASK_URL = 'http://127.0.0.1:5001/api/wa_webhook'; // Ganti dengan port gunicorn jika bukan 80
 
 const app = express();
 app.use(express.json());
