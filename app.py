@@ -2919,6 +2919,61 @@ def api_get_biblio(id):
         return jsonify(dict(row))
     return jsonify({}), 404
 
+
+import requests
+import json
+
+@app.route('/api/wa_webhook', methods=['POST'])
+def api_wa_webhook():
+    data = request.json
+    if not data:
+        return jsonify({'status': 'error'})
+        
+    sender = data.get('from', '')
+    message = data.get('body', '')
+    name = data.get('sender_name', 'Pengguna')
+    
+    conn = database.get_db_connection()
+    config = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'GEMINI_API_KEY'").fetchone()
+    api_key = config['nilai'] if config else None
+    
+    if not api_key:
+        conn.close()
+        return jsonify({'reply': 'Mohon maaf, sistem AI perpustakaan saat ini sedang dinonaktifkan (API Key belum diisi oleh Admin).'})
+        
+    # Ambil sedikit data buku untuk konteks (5 buku terbaru)
+    buku = conn.execute("SELECT judul, pengarang, lokasi, status_buku FROM buku LIMIT 10").fetchall()
+    buku_context = "\n".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
+    conn.close()
+    
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        system_prompt = f"""Anda adalah St. Jerome Library Assistant, seorang asisten virtual ramah untuk Perpustakaan St. Jerome (Institutum Theologicum Ioannis Mariae Vianney).
+        Anda sedang berbicara dengan {name}. Jawab pertanyaan dengan sopan, ramah, dan ringkas (karena ini pesan WhatsApp).
+        
+        Informasi Perpustakaan:
+        - Buka: Senin - Jumat (08:00 - 16:00).
+        - Aturan pinjam: Reguler maksimal 2 buku (14 hari). Mahasiswa Tesis/Skripsi maksimal 4 buku (perpanjangan tanpa batas).
+        
+        Sebagian katalog buku (sebagai contoh jika ditanya):
+        {buku_context}
+        
+        Jika ditanya buku yang tidak ada di atas, katakan untuk datang langsung mengecek OPAC (Katalog Online) perpustakaan.
+        """
+        
+        response = model.generate_content([system_prompt, message])
+        reply_text = response.text
+        
+    except ImportError:
+        reply_text = "Sistem AI sedang offline. Admin belum menginstall modul google-generativeai di server."
+    except Exception as e:
+        reply_text = f"Maaf, saya sedang mengalami gangguan sistem. (Error: {str(e)})"
+        
+    return jsonify({'reply': reply_text})
+
 @app.route('/api/version', methods=['GET'])
 def api_version():
     return jsonify({'version': '2b2fa3d-fix-401', 'status': 'ok'})
