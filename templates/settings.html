@@ -51,6 +51,13 @@
             <p class="text-xs text-slate-500 mt-1">Dapatkan secara gratis dari <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-primary hover:underline">Google AI Studio</a></p>
         </div>
 
+          <div class="mb-5.5 border-t border-stroke pt-4 mt-4">
+              <label class="mb-2 block text-sm font-medium text-black">Informasi & Profil Perpustakaan (Untuk Bekal Pengetahuan AI)</label>
+              <textarea name="info_perpustakaan" rows="4" class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary" placeholder="Masukkan jam buka, aturan pinjam, denda, dll di sini agar AI bisa menjawab pertanyaan mahasiswa...">{{ config.get('INFO_PERPUSTAKAAN', '') }}</textarea>
+              <p class="text-xs text-slate-500 mt-1">Tuliskan panduan jam buka, denda, dan aturan perpustakaan. AI akan membaca teks ini setiap kali ditanya oleh mahasiswa.</p>
+          </div>
+
+
             <div class="flex gap-4">
                 <button type="submit" class="rounded bg-primary px-6 py-2.5 font-medium text-white hover:bg-opacity-90">
                     <i class="fa-solid fa-save mr-2"></i> Simpan Konfigurasi
