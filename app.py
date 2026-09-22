@@ -3064,50 +3064,49 @@ def laporan_koleksi():
     start_id = request.args.get('start_id', '').strip()
     end_id = request.args.get('end_id', '').strip()
     
-    has_result = False
+    has_result = True
     total_filsafat = 0
     total_teologi = 0
     total_umum = 0
     total_semua = 0
     
-    if start_id and end_id:
-        has_result = True
-        conn = database.get_db_connection()
-        buku_list = conn.execute("SELECT no_induk, klasifikasi FROM buku").fetchall()
-        conn.close()
+    conn = database.get_db_connection()
+    # Filter only for IMAVI if no range is given, but if range is given we filter the range
+    query = "SELECT no_induk, klasifikasi FROM buku WHERE lokasi = 'IMAVI'"
+    buku_list = conn.execute(query).fetchall()
+    conn.close()
+    
+    def parse_no_induk(nid):
+        try:
+            parts = nid.split('/')
+            if len(parts) == 2:
+                return (int(parts[1]), int(parts[0]))
+        except:
+            pass
+        return (-1, -1)
         
-        def parse_no_induk(nid):
-            try:
-                parts = nid.split('/')
-                if len(parts) == 2:
-                    return (int(parts[1]), int(parts[0]))
-            except:
-                pass
-            return (-1, -1)
-            
-        s_val = parse_no_induk(start_id)
-        e_val = parse_no_induk(end_id)
-        
-        for b in buku_list:
+    s_val = parse_no_induk(start_id) if start_id else None
+    e_val = parse_no_induk(end_id) if end_id else None
+    
+    for b in buku_list:
+        if s_val and e_val:
             b_val = parse_no_induk(b['no_induk'])
             if b_val[0] == -1: continue # Skip if format doesn't match
-            
-            # Check if within range
-            if s_val <= b_val <= e_val:
-                total_semua += 1
-                klas = str(b['klasifikasi'] or '').strip()
-                # Filsafat = 100 - 199
-                # Teologi = 200 - 299
-                try:
-                    k_num = float(''.join([c for c in klas if c.isdigit() or c == '.']))
-                    if 100 <= k_num < 200:
-                        total_filsafat += 1
-                    elif 200 <= k_num < 300:
-                        total_teologi += 1
-                    else:
-                        total_umum += 1
-                except:
-                    total_umum += 1
+            if not (s_val <= b_val <= e_val):
+                continue
+                
+        total_semua += 1
+        klas = str(b['klasifikasi'] or '').strip()
+        try:
+            k_num = float(''.join([c for c in klas if c.isdigit() or c == '.']))
+            if 100 <= k_num < 200:
+                total_filsafat += 1
+            elif 200 <= k_num < 300:
+                total_teologi += 1
+            else:
+                total_umum += 1
+        except:
+            total_umum += 1
 
     return render_template('laporan_koleksi.html', 
                           start_id=start_id, end_id=end_id, has_result=has_result,
