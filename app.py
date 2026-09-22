@@ -3027,7 +3027,7 @@ def api_wa_broadcast():
             final_msg = template.replace('[NAMA]', m['nama'])
             try:
                 data = json.dumps({'number': m['telepon'], 'message': final_msg}).encode('utf-8')
-                req = urllib.request.Request('http://127.0.0.1:3000/api/send_message', data=data, headers={'Content-Type': 'application/json'})
+                req = urllib.request.Request('http://127.0.0.1:3005/api/send_message', data=data, headers={'Content-Type': 'application/json'})
                 urllib.request.urlopen(req, timeout=5)
             except:
                 pass
@@ -3049,7 +3049,7 @@ def send_wa_notification(member_id, message):
             def _send():
                 try:
                     data = json.dumps({'number': member['telepon'], 'message': message}).encode('utf-8')
-                    req = urllib.request.Request('http://127.0.0.1:3000/api/send_message', data=data, headers={'Content-Type': 'application/json'})
+                    req = urllib.request.Request('http://127.0.0.1:3005/api/send_message', data=data, headers={'Content-Type': 'application/json'})
                     urllib.request.urlopen(req, timeout=5)
                 except:
                     pass

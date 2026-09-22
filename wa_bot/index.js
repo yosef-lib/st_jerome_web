@@ -4,7 +4,7 @@ const express = require('express');
 const axios = require('axios');
 
 // Konfigurasi port
-const PORT = 3000;
+const PORT = 3005;
 const FLASK_URL = 'http://127.0.0.1:5000/api/wa_webhook';
 
 const app = express();
