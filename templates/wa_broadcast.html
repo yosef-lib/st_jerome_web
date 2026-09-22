@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block page_title %}WhatsApp Broadcast{% endblock %}
+{% block page_subtitle %}Kirim Pengumuman Massal ke Anggota Perpustakaan{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 gap-6">
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6">
+        <div class="border-b border-stroke pb-4 mb-6">
+            <h3 class="font-bold text-black text-lg">
+                <i class="fa-brands fa-whatsapp text-success mr-2"></i> Kirim Pesan Broadcast
+            </h3>
+            <p class="text-sm text-slate-500 mt-1">Pesan akan dikirim otomatis oleh Bot Node.js ke nomor WA semua anggota aktif.</p>
+        </div>
+        
+        <form id="broadcastForm">
+            <div class="mb-5.5">
+                <label class="mb-2 block text-sm font-medium text-black">Target Penerima</label>
+                <select name="target" class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary">
+                    <option value="all">Semua Anggota Aktif ({{ total_anggota }} orang)</option>
+                    <option value="tesis">Hanya Mahasiswa Tesis/Skripsi</option>
+                    <option value="reguler">Hanya Mahasiswa Reguler</option>
+                </select>
+            </div>
+            
+            <div class="mb-5.5">
+                <label class="mb-2 block text-sm font-medium text-black">Isi Pesan Broadcast</label>
+                <textarea name="message" rows="6" placeholder="Halo Sobat St. Jerome! Ada koleksi buku baru lho di perpustakaan..." class="w-full rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary"></textarea>
+                <p class="text-xs text-slate-500 mt-1">Variabel didukung: [NAMA] akan diganti otomatis dengan nama mahasiswa.</p>
+            </div>
+            
+            <button type="submit" id="btnSend" class="rounded bg-success px-6 py-2.5 font-medium text-white hover:bg-opacity-90 w-full sm:w-auto">
+                <i class="fa-solid fa-paper-plane mr-2"></i> Kirim Broadcast Sekarang
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+document.getElementById('broadcastForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSend');
+    const msg = this.message.value.trim();
+    const target = this.target.value;
+    
+    if(!msg) {
+        Swal.fire('Peringatan', 'Pesan tidak boleh kosong', 'warning');
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Kirim Broadcast?',
+        text: "Pesan ini akan ditembak ke banyak nomor WA sekaligus. Pastikan isinya sudah benar.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#219653',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ya, Kirim Sekarang!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim...';
+            btn.disabled = true;
+            
+            fetch('/api/wa_broadcast', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ target: target, message: msg })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    Swal.fire('Berhasil!', data.message, 'success');
+                    this.reset();
+                } else {
+                    Swal.fire('Gagal', data.message, 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'Kesalahan jaringan', 'error');
+            })
+            .finally(() => {
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Kirim Broadcast Sekarang';
+                btn.disabled = false;
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

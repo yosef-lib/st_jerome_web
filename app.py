@@ -2974,6 +2974,81 @@ def api_wa_webhook():
         
     return jsonify({'reply': reply_text})
 
+
+@app.route('/wa_broadcast')
+@login_required
+def wa_broadcast():
+    conn = database.get_db_connection()
+    total = conn.execute("SELECT COUNT(*) FROM anggota WHERE status = 'AKTIF'").fetchone()[0]
+    conn.close()
+    return render_template('wa_broadcast.html', total_anggota=total)
+
+import requests
+
+@app.route('/api/wa_broadcast', methods=['POST'])
+@api_login_required
+def api_wa_broadcast():
+    data = request.json
+    target = data.get('target')
+    msg_template = data.get('message')
+    
+    if not msg_template:
+        return jsonify({'status': 'error', 'message': 'Pesan kosong'})
+        
+    conn = database.get_db_connection()
+    
+    query = "SELECT nama, telepon FROM anggota WHERE status = 'AKTIF' AND telepon IS NOT NULL AND telepon != ''"
+    if target == 'tesis':
+        query += " AND is_tesis = 1"
+    elif target == 'reguler':
+        query += " AND is_tesis = 0"
+        
+    members = conn.execute(query).fetchall()
+    conn.close()
+    
+    if not members:
+        return jsonify({'status': 'error', 'message': 'Tidak ada anggota yang memenuhi kriteria atau memiliki nomor WA.'})
+        
+    success_count = 0
+    import threading
+    
+    def send_broadcast_background(members_list, template):
+        for m in members_list:
+            final_msg = template.replace('[NAMA]', m['nama'])
+            try:
+                requests.post('http://127.0.0.1:3000/api/send_message', json={
+                    'number': m['telepon'],
+                    'message': final_msg
+                }, timeout=5)
+            except:
+                pass
+                
+    # Run in background to avoid blocking the UI
+    threading.Thread(target=send_broadcast_background, args=(members, msg_template)).start()
+    
+    return jsonify({'status': 'success', 'message': f'Broadcast sedang dikirim ke {len(members)} anggota di latar belakang.'})
+
+# Helper internal untuk notifikasi otomatis (struk dll)
+def send_wa_notification(member_id, message):
+    try:
+        conn = database.get_db_connection()
+        member = conn.execute("SELECT telepon FROM anggota WHERE member_id = ?", (member_id,)).fetchone()
+        conn.close()
+        
+        if member and member['telepon']:
+            import threading
+            def _send():
+                try:
+                    requests.post('http://127.0.0.1:3000/api/send_message', json={
+                        'number': member['telepon'],
+                        'message': message
+                    }, timeout=5)
+                except:
+                    pass
+            threading.Thread(target=_send).start()
+    except:
+        pass
+
 @app.route('/api/version', methods=['GET'])
 def api_version():
     return jsonify({'version': '2b2fa3d-fix-401', 'status': 'ok'})
