@@ -1,7 +1,87 @@
 {% extends "layout.html" %}
 
-{% block page_title %}WhatsApp Broadcast{% endblock %}
-{% block page_subtitle %}Kirim Pengumuman Massal ke Anggota Perpustakaan{% endblock %}
+{% block page_title %}WhatsApp Broadcast
+document.getElementById('btnReminder').addEventListener('click', function() {
+    Swal.fire({
+        title: 'Kirim Pengingat Jatuh Tempo?',
+        text: "Sistem akan memindai buku yang belum kembali dan mengirimkan WA ke mahasiswa terkait.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#F2C94C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ya, Jalankan!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const btn = document.getElementById('btnReminder');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memproses...';
+            btn.disabled = true;
+            
+            fetch('/api/trigger_wa_reminder', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    Swal.fire('Berhasil!', data.message, 'success');
+                } else {
+                    Swal.fire('Gagal', data.message || 'Terjadi kesalahan.', 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'Kesalahan jaringan', 'error');
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    });
+});
+
+{% endblock %}
+{% block page_subtitle %}Kirim Pengumuman Massal ke Anggota Perpustakaan
+document.getElementById('btnReminder').addEventListener('click', function() {
+    Swal.fire({
+        title: 'Kirim Pengingat Jatuh Tempo?',
+        text: "Sistem akan memindai buku yang belum kembali dan mengirimkan WA ke mahasiswa terkait.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#F2C94C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ya, Jalankan!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const btn = document.getElementById('btnReminder');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memproses...';
+            btn.disabled = true;
+            
+            fetch('/api/trigger_wa_reminder', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    Swal.fire('Berhasil!', data.message, 'success');
+                } else {
+                    Swal.fire('Gagal', data.message || 'Terjadi kesalahan.', 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'Kesalahan jaringan', 'error');
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    });
+});
+
+{% endblock %}
 
 {% block content %}
 <div class="grid grid-cols-1 gap-6">
@@ -34,6 +114,20 @@
                 <i class="fa-solid fa-paper-plane mr-2"></i> Kirim Broadcast Sekarang
             </button>
         </form>
+    </div>
+
+
+    <div class="rounded-sm border border-stroke bg-white shadow-default p-6 mt-6">
+        <div class="border-b border-stroke pb-4 mb-6">
+            <h3 class="font-bold text-black text-lg">
+                <i class="fa-solid fa-bell text-warning mr-2"></i> Pengingat Jatuh Tempo (Auto-Reminder)
+            </h3>
+            <p class="text-sm text-slate-500 mt-1">Sistem akan otomatis mengirim pesan WA ke mahasiswa setiap jam 08:00 pagi jika ada buku yang jatuh tempo hari ini, besok, atau sudah terlambat. Anda juga bisa memicunya secara manual sekarang.</p>
+        </div>
+        
+        <button type="button" id="btnReminder" class="rounded bg-warning px-6 py-2.5 font-medium text-white hover:bg-opacity-90 w-full sm:w-auto">
+            <i class="fa-solid fa-bolt mr-2"></i> Jalankan Pengingat Sekarang
+        </button>
     </div>
 
 </div>
@@ -88,4 +182,44 @@ document.getElementById('broadcastForm').addEventListener('submit', function(e) 
     });
 });
 </script>
+
+document.getElementById('btnReminder').addEventListener('click', function() {
+    Swal.fire({
+        title: 'Kirim Pengingat Jatuh Tempo?',
+        text: "Sistem akan memindai buku yang belum kembali dan mengirimkan WA ke mahasiswa terkait.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#F2C94C',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ya, Jalankan!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const btn = document.getElementById('btnReminder');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memproses...';
+            btn.disabled = true;
+            
+            fetch('/api/trigger_wa_reminder', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    Swal.fire('Berhasil!', data.message, 'success');
+                } else {
+                    Swal.fire('Gagal', data.message || 'Terjadi kesalahan.', 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'Kesalahan jaringan', 'error');
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    });
+});
+
 {% endblock %}
