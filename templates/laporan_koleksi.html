@@ -39,23 +39,26 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div class="rounded-md border border-stroke p-4 text-center bg-blue-50">
                 <div class="text-sm text-slate-500 font-bold uppercase">Buku Filsafat</div>
-                <div class="text-3xl font-bold text-black mt-2">{{ total_filsafat }}</div>
-                <div class="text-xs text-slate-400 mt-1">Klasifikasi 100-199</div>
+                <div class="text-3xl font-bold text-black mt-2">{{ total_filsafat }} <span class="text-sm font-normal text-slate-500">Eksemplar</span></div>
+                <div class="text-lg font-semibold text-slate-600 mt-1">{{ judul_filsafat }} <span class="text-xs font-normal">Judul</span></div>
+                <div class="text-xs text-slate-400 mt-2 border-t border-blue-200 pt-2">Klasifikasi 100-199</div>
             </div>
             <div class="rounded-md border border-stroke p-4 text-center bg-green-50">
                 <div class="text-sm text-slate-500 font-bold uppercase">Buku Teologi</div>
-                <div class="text-3xl font-bold text-black mt-2">{{ total_teologi }}</div>
-                <div class="text-xs text-slate-400 mt-1">Klasifikasi 200-299</div>
+                <div class="text-3xl font-bold text-black mt-2">{{ total_teologi }} <span class="text-sm font-normal text-slate-500">Eksemplar</span></div>
+                <div class="text-lg font-semibold text-slate-600 mt-1">{{ judul_teologi }} <span class="text-xs font-normal">Judul</span></div>
+                <div class="text-xs text-slate-400 mt-2 border-t border-green-200 pt-2">Klasifikasi 200-299</div>
             </div>
             <div class="rounded-md border border-stroke p-4 text-center bg-orange-50">
                 <div class="text-sm text-slate-500 font-bold uppercase">Buku Umum / Lainnya</div>
-                <div class="text-3xl font-bold text-black mt-2">{{ total_umum }}</div>
-                <div class="text-xs text-slate-400 mt-1">Di luar 100 & 200</div>
+                <div class="text-3xl font-bold text-black mt-2">{{ total_umum }} <span class="text-sm font-normal text-slate-500">Eksemplar</span></div>
+                <div class="text-lg font-semibold text-slate-600 mt-1">{{ judul_umum }} <span class="text-xs font-normal">Judul</span></div>
+                <div class="text-xs text-slate-400 mt-2 border-t border-orange-200 pt-2">Di luar 100 & 200</div>
             </div>
         </div>
         
         <div class="mt-4 p-4 bg-slate-50 rounded border border-slate-200">
-            <h4 class="font-bold text-black mb-2">Total Seluruh Eksemplar: <span class="text-primary">{{ total_semua }} Eksemplar</span></h4>
+            <h4 class="font-bold text-black mb-2">Total Seluruh Eksemplar: <span class="text-primary">{{ total_semua }} Eksemplar</span> <span class="text-slate-500 text-sm ml-2">({{ judul_semua }} Judul Unik)</span></h4>
         </div>
     </div>
     {% endif %}

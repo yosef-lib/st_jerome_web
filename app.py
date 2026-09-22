@@ -3070,9 +3070,14 @@ def laporan_koleksi():
     total_umum = 0
     total_semua = 0
     
+    judul_filsafat = set()
+    judul_teologi = set()
+    judul_umum = set()
+    judul_semua = set()
+    
     conn = database.get_db_connection()
     # Filter only for IMAVI if no range is given, but if range is given we filter the range
-    query = "SELECT no_induk, klasifikasi FROM buku WHERE lokasi = 'IMAVI'"
+    query = "SELECT no_induk, klasifikasi, judul FROM buku WHERE lokasi = 'IMAVI'"
     buku_list = conn.execute(query).fetchall()
     conn.close()
     
@@ -3096,22 +3101,31 @@ def laporan_koleksi():
                 continue
                 
         total_semua += 1
+        judul_buku = str(b['judul'] or '').strip().lower()
+        judul_semua.add(judul_buku)
+        
         klas = str(b['klasifikasi'] or '').strip()
         try:
             k_num = float(''.join([c for c in klas if c.isdigit() or c == '.']))
             if 100 <= k_num < 200:
                 total_filsafat += 1
+                judul_filsafat.add(judul_buku)
             elif 200 <= k_num < 300:
                 total_teologi += 1
+                judul_teologi.add(judul_buku)
             else:
                 total_umum += 1
+                judul_umum.add(judul_buku)
         except:
             total_umum += 1
+            judul_umum.add(judul_buku)
 
     return render_template('laporan_koleksi.html', 
                           start_id=start_id, end_id=end_id, has_result=has_result,
                           total_filsafat=total_filsafat, total_teologi=total_teologi, 
-                          total_umum=total_umum, total_semua=total_semua)
+                          total_umum=total_umum, total_semua=total_semua,
+                          judul_filsafat=len(judul_filsafat), judul_teologi=len(judul_teologi),
+                          judul_umum=len(judul_umum), judul_semua=len(judul_semua))
 
 @app.route('/api/version', methods=['GET'])
 def api_version():
