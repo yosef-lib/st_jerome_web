@@ -2472,6 +2472,83 @@ backup_thread = threading.Thread(target=daily_backup_job, daemon=True)
 backup_thread.start()
 
 
+
+import datetime
+import time
+
+def send_daily_wa_reminders():
+    try:
+        conn = database.get_db_connection()
+        today_str = datetime.date.today().strftime('%Y-%m-%d')
+        tomorrow_str = (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+        
+        loans = conn.execute('''
+            SELECT s.id, s.member_id, a.nama, a.telepon, b.judul, s.due_date 
+            FROM sirkulasi s
+            JOIN anggota a ON s.member_id = a.member_id
+            JOIN buku b ON s.no_induk = b.no_induk
+            WHERE s.return_date IS NULL 
+            AND a.telepon IS NOT NULL AND a.telepon != ''
+        ''').fetchall()
+        
+        count = 0
+        for loan in loans:
+            due = str(loan['due_date']).split(' ')[0]
+            
+            if due == tomorrow_str:
+                jenis = "Akan Jatuh Tempo Besok"
+                salam = "Jangan lupa dikembalikan tepat waktu ya."
+            elif due == today_str:
+                jenis = "JATUH TEMPO HARI INI"
+                salam = "Harap kembalikan ke perpustakaan hari ini."
+            elif due < today_str:
+                jenis = "TERLAMBAT"
+                salam = "Harap SEGERA dikembalikan. Mohon perhatikan denda keterlambatan."
+            else:
+                continue
+                
+            msg = f"?? *PENGINGAT PERPUSTAKAAN ST. JEROME*\n\n"
+            msg += f"Halo {loan['nama']}, mengingatkan status buku yang Anda pinjam:\n"
+            msg += f"?? *{loan['judul']}*\n"
+            msg += f"Status: *{jenis}* ({due})\n\n"
+            msg += f"{salam}\nTerima kasih!"
+            
+            send_wa_notification(loan['member_id'], msg)
+            count += 1
+            time.sleep(2) # delay to avoid rate limit
+            
+        conn.close()
+        return count
+    except Exception as e:
+        print("Error sending WA reminders:", e)
+        return 0
+
+@app.route('/api/trigger_wa_reminder', methods=['POST'])
+@login_required
+def trigger_wa_reminder():
+    import threading
+    def _run():
+        send_daily_wa_reminders()
+    threading.Thread(target=_run).start()
+    return jsonify({'status': 'success', 'message': 'Proses pengiriman pengingat WA sedang berjalan di latar belakang.'})
+
+def daily_reminder_job():
+    while True:
+        now = datetime.datetime.now()
+        target = datetime.datetime(now.year, now.month, now.day, 8, 0, 0)
+        if now > target:
+            target = target + datetime.timedelta(days=1)
+            
+        sleep_seconds = (target - now).total_seconds()
+        time.sleep(sleep_seconds)
+        
+        send_daily_wa_reminders()
+
+# Run reminder thread
+reminder_thread = threading.Thread(target=daily_reminder_job, daemon=True)
+reminder_thread.start()
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
