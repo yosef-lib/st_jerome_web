@@ -3090,6 +3090,16 @@ def wa_broadcast():
 import urllib.request
 import json
 
+
+@app.route('/api/wa_groups')
+def api_wa_groups():
+    try:
+        import requests
+        resp = requests.get('http://127.0.0.1:3005/api/groups', timeout=5)
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/wa_broadcast', methods=['POST'])
 @api_login_required
 def api_wa_broadcast():

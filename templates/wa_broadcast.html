@@ -41,6 +41,27 @@ document.getElementById('btnReminder').addEventListener('click', function() {
     });
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    fetch('/api/wa_groups')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('targetSelect');
+            // Remove the loading option
+            if (select.options[0].value === "") {
+                select.remove(0);
+            }
+            if (data.status === 'success' && data.groups.length > 0) {
+                data.groups.forEach(group => {
+                    const opt = document.createElement('option');
+                    opt.value = group.id;
+                    opt.innerHTML = "Grup: " + group.name;
+                    select.appendChild(opt);
+                });
+            }
+        }).catch(e => console.error("Gagal load grup WA", e));
+});
+</script>
 {% endblock %}
 {% block page_subtitle %}Kirim Pengumuman Massal ke Anggota Perpustakaan
 <script>
@@ -81,6 +102,27 @@ document.getElementById('btnReminder').addEventListener('click', function() {
             });
         }
     });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    fetch('/api/wa_groups')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('targetSelect');
+            // Remove the loading option
+            if (select.options[0].value === "") {
+                select.remove(0);
+            }
+            if (data.status === 'success' && data.groups.length > 0) {
+                data.groups.forEach(group => {
+                    const opt = document.createElement('option');
+                    opt.value = group.id;
+                    opt.innerHTML = "Grup: " + group.name;
+                    select.appendChild(opt);
+                });
+            }
+        }).catch(e => console.error("Gagal load grup WA", e));
 });
 </script>
 {% endblock %}
@@ -223,6 +265,27 @@ document.getElementById('btnReminder').addEventListener('click', function() {
             });
         }
     });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    fetch('/api/wa_groups')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('targetSelect');
+            // Remove the loading option
+            if (select.options[0].value === "") {
+                select.remove(0);
+            }
+            if (data.status === 'success' && data.groups.length > 0) {
+                data.groups.forEach(group => {
+                    const opt = document.createElement('option');
+                    opt.value = group.id;
+                    opt.innerHTML = "Grup: " + group.name;
+                    select.appendChild(opt);
+                });
+            }
+        }).catch(e => console.error("Gagal load grup WA", e));
 });
 </script>
 {% endblock %}

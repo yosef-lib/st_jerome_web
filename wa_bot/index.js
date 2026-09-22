@@ -63,12 +63,15 @@ app.post('/api/send_message', async (req, res) => {
 
     try {
         // Format nomor telepon Indonesia (misal: 0812... menjadi 62812...@c.us)
-        let formattedNumber = number.replace(/\D/g, '');
-        if (formattedNumber.startsWith('0')) {
-            formattedNumber = '62' + formattedNumber.substring(1);
-        }
-        if (!formattedNumber.endsWith('@c.us')) {
-            formattedNumber += '@c.us';
+        let formattedNumber = number;
+        if (!formattedNumber.endsWith('@g.us')) {
+            formattedNumber = formattedNumber.replace(/\D/g, '');
+            if (formattedNumber.startsWith('0')) {
+                formattedNumber = '62' + formattedNumber.substring(1);
+            }
+            if (!formattedNumber.endsWith('@c.us')) {
+                formattedNumber += '@c.us';
+            }
         }
 
         // Kirim pesan
@@ -77,6 +80,20 @@ app.post('/api/send_message', async (req, res) => {
         res.json({ status: 'success', message: 'Pesan berhasil dikirim.' });
     } catch (error) {
         console.error(`Gagal mengirim pesan ke ${number}:`, error);
+        res.status(500).json({ status: 'error', message: error.toString() });
+    }
+});
+
+
+app.get('/api/groups', async (req, res) => {
+    try {
+        const chats = await client.getChats();
+        const groups = chats.filter(chat => chat.isGroup).map(chat => ({
+            id: chat.id._serialized,
+            name: chat.name
+        }));
+        res.json({ status: 'success', groups: groups });
+    } catch (error) {
         res.status(500).json({ status: 'error', message: error.toString() });
     }
 });
