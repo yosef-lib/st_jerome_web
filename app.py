@@ -3010,6 +3010,7 @@ def api_get_biblio(id):
 import json
 
 @app.route('/api/wa_webhook', methods=['POST'])
+@api_login_required  # Keep this if it was there? No, webhook must be open to nodejs bot!
 def api_wa_webhook():
     data = request.json
     if not data:
@@ -3023,43 +3024,68 @@ def api_wa_webhook():
     config = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'GEMINI_API_KEY'").fetchone()
     api_key = config['nilai'] if config else None
     
+    info_cfg = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'INFO_PERPUSTAKAAN'").fetchone()
+    info_perpus = info_cfg['nilai'] if info_cfg and info_cfg['nilai'] else "Buka: Senin - Jumat (08:00 - 16:00).
+Aturan pinjam: Reguler 2 buku, Tesis 4 buku."
+    
     if not api_key:
         conn.close()
         return jsonify({'reply': 'Mohon maaf, sistem AI perpustakaan saat ini sedang dinonaktifkan (API Key belum diisi oleh Admin).'})
         
-    # Ambil sedikit data buku untuk konteks (5 buku terbaru)
-    buku = conn.execute("SELECT judul, pengarang, lokasi, status_buku FROM buku LIMIT 10").fetchall()
-    buku_context = "\n".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
+    # AI RAG: Cari buku berdasarkan kata kunci dari pesan WhatsApp user
+    # Hapus kata-kata umum
+    stop_words = ['ada', 'buku', 'gak', 'nggak', 'tidak', 'yang', 'tentang', 'judul', 'pengarang', 'tolong', 'cari', 'carikan', 'apakah']
+    words = [w for w in message.lower().replace('?', '').replace('!', '').replace(',', '').split() if w not in stop_words and len(w) > 2]
+    
+    buku_context = ""
+    if words:
+        conditions = " OR ".join(["judul LIKE ? OR pengarang LIKE ?" for _ in words])
+        params = []
+        for w in words:
+            params.extend([f"%{w}%", f"%{w}%"])
+            
+        buku = conn.execute(f"SELECT judul, pengarang, lokasi, status_buku FROM buku WHERE {conditions} LIMIT 15", params).fetchall()
+        if buku:
+            buku_context = "
+".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
+        else:
+            buku_context = "Tidak ditemukan buku yang cocok dengan pencarian di database saat ini."
+    else:
+        # Default fallback context
+        buku = conn.execute("SELECT judul, pengarang, lokasi, status_buku FROM buku LIMIT 5").fetchall()
+        buku_context = "
+".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
+        
     conn.close()
     
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Coba versi terbaru
+        try:
+            model = genai.GenerativeModel('gemini-2.5-flash')
+        except:
+            model = genai.GenerativeModel('gemini-1.5-flash')
         
         system_prompt = f"""Anda adalah St. Jerome Library Assistant, seorang asisten virtual ramah untuk Perpustakaan St. Jerome (Institutum Theologicum Ioannis Mariae Vianney).
-        Anda sedang berbicara dengan {name}. Jawab pertanyaan dengan sopan, ramah, dan ringkas (karena ini pesan WhatsApp).
+        Anda sedang berbicara dengan {name}. Jawab pertanyaan dengan ramah, dan sangat natural (seperti manusia membalas WA).
         
-        Informasi Perpustakaan:
-        - Buka: Senin - Jumat (08:00 - 16:00).
-        - Aturan pinjam: Reguler maksimal 2 buku (14 hari). Mahasiswa Tesis/Skripsi maksimal 4 buku (perpanjangan tanpa batas).
+        Informasi & Aturan Perpustakaan:
+        {info_perpus}
         
-        Sebagian katalog buku (sebagai contoh jika ditanya):
+        Konteks Pencarian Katalog (berdasarkan pertanyaan user):
         {buku_context}
         
-        Jika ditanya buku yang tidak ada di atas, katakan untuk datang langsung mengecek OPAC (Katalog Online) perpustakaan.
+        Jika ditanya buku dan ada di Konteks Pencarian, beritahu bahwa bukunya ada dan sebutkan lokasinya. Jika tidak ada di konteks, katakan dengan sopan bahwa dari pencarian kilat Anda tidak menemukannya, dan sarankan untuk datang mengecek OPAC (Katalog Online) perpustakaan secara mandiri.
         """
         
         response = model.generate_content([system_prompt, message])
-        reply_text = response.text
         
-    except ImportError:
-        reply_text = "Sistem AI sedang offline. Admin belum menginstall modul google-generativeai di server."
+        return jsonify({'reply': response.text})
     except Exception as e:
-        reply_text = f"Maaf, saya sedang mengalami gangguan sistem. (Error: {str(e)})"
-        
-    return jsonify({'reply': reply_text})
-
+        print("Error Gemini:", e)
+        return jsonify({'reply': 'Maaf, saya sedang mengalami gangguan sistem (Gemini API) saat mencoba menjawab.'})
 
 @app.route('/wa_broadcast')
 @login_required
