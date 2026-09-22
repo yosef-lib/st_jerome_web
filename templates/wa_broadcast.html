@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 
 {% block page_title %}WhatsApp Broadcast
+<script>
 document.getElementById('btnReminder').addEventListener('click', function() {
     Swal.fire({
         title: 'Kirim Pengingat Jatuh Tempo?',
@@ -39,9 +40,10 @@ document.getElementById('btnReminder').addEventListener('click', function() {
         }
     });
 });
-
+</script>
 {% endblock %}
 {% block page_subtitle %}Kirim Pengumuman Massal ke Anggota Perpustakaan
+<script>
 document.getElementById('btnReminder').addEventListener('click', function() {
     Swal.fire({
         title: 'Kirim Pengingat Jatuh Tempo?',
@@ -80,7 +82,7 @@ document.getElementById('btnReminder').addEventListener('click', function() {
         }
     });
 });
-
+</script>
 {% endblock %}
 
 {% block content %}
@@ -183,6 +185,7 @@ document.getElementById('broadcastForm').addEventListener('submit', function(e) 
 });
 </script>
 
+<script>
 document.getElementById('btnReminder').addEventListener('click', function() {
     Swal.fire({
         title: 'Kirim Pengingat Jatuh Tempo?',
@@ -221,5 +224,5 @@ document.getElementById('btnReminder').addEventListener('click', function() {
         }
     });
 });
-
+</script>
 {% endblock %}
