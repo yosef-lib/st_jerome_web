@@ -3025,8 +3025,7 @@ def api_wa_webhook():
     api_key = config['nilai'] if config else None
     
     info_cfg = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'INFO_PERPUSTAKAAN'").fetchone()
-    info_perpus = info_cfg['nilai'] if info_cfg and info_cfg['nilai'] else "Buka: Senin - Jumat (08:00 - 16:00).
-Aturan pinjam: Reguler 2 buku, Tesis 4 buku."
+    info_perpus = info_cfg['nilai'] if info_cfg and info_cfg['nilai'] else "Buka: Senin - Jumat (08:00 - 16:00).\nAturan pinjam: Reguler 2 buku, Tesis 4 buku."
     
     if not api_key:
         conn.close()
@@ -3046,15 +3045,13 @@ Aturan pinjam: Reguler 2 buku, Tesis 4 buku."
             
         buku = conn.execute(f"SELECT judul, pengarang, lokasi, status_buku FROM buku WHERE {conditions} LIMIT 15", params).fetchall()
         if buku:
-            buku_context = "
-".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
+            buku_context = "\n".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
         else:
             buku_context = "Tidak ditemukan buku yang cocok dengan pencarian di database saat ini."
     else:
         # Default fallback context
         buku = conn.execute("SELECT judul, pengarang, lokasi, status_buku FROM buku LIMIT 5").fetchall()
-        buku_context = "
-".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
+        buku_context = "\n".join([f"- {b['judul']} (Oleh: {b['pengarang']}) - Lokasi: {b['lokasi']} [{b['status_buku']}]" for b in buku])
         
     conn.close()
     
