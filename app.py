@@ -3058,7 +3058,7 @@ def api_wa_webhook():
         import google.generativeai as genai
         genai.configure(api_key=api_key)
         
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-3.6-flash')
         
         system_prompt = f"""Anda adalah St. Jerome Library Assistant, seorang asisten virtual ramah untuk Perpustakaan St. Jerome (Institutum Theologicum Ioannis Mariae Vianney).
         Anda sedang berbicara dengan {name}. Jawab pertanyaan dengan ramah, dan sangat natural (seperti manusia membalas WA).
