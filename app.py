@@ -3050,11 +3050,9 @@ def api_wa_webhook():
         ''', (anggota['member_id'],)).fetchall()
         
         if pinjaman:
-            peminjaman_context = f"Anggota bernama {name} saat ini sedang meminjam buku berikut:
-"
+            peminjaman_context = f"Anggota bernama {name} saat ini sedang meminjam buku berikut:\n"
             for p in pinjaman:
-                peminjaman_context += f"- Judul: {p['judul']}, Pinjam: {p['tanggal_pinjam']}, Batas Kembali: {p['batas_kembali']}, Denda Berjalan: Rp{p['denda'] or 0}
-"
+                peminjaman_context += f"- Judul: {p['judul']}, Pinjam: {p['tanggal_pinjam']}, Batas Kembali: {p['batas_kembali']}, Denda Berjalan: Rp{p['denda'] or 0}\n"
         else:
             peminjaman_context = f"Anggota bernama {name} saat ini TIDAK memiliki pinjaman buku yang aktif."
 
