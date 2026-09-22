@@ -162,6 +162,7 @@ function openEditModal(btn) {
     document.getElementById('edit_tipe_anggota').value = btn.getAttribute('data-tipe');
     document.getElementById('edit_tanggal_input').value = tgl_input;
     document.getElementById('edit_masa_berlaku').value = masa;
+    document.getElementById('edit_telepon').value = btn.getAttribute('data-telepon') || '';
     
     document.getElementById('editModal').showModal();
 }
