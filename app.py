@@ -3077,7 +3077,7 @@ def api_wa_webhook():
         return jsonify({'reply': response.text})
     except Exception as e:
         print("Error Gemini:", e)
-        return jsonify({'reply': 'Maaf, saya sedang mengalami gangguan sistem (Gemini API) saat mencoba menjawab.'})
+        return jsonify({'reply': f"Maaf, error sistem: {str(e)}"})
 
 @app.route('/wa_broadcast')
 @login_required
