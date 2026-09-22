@@ -1889,6 +1889,16 @@ def api_kiosk_pinjam():
     conn.commit()
     conn.close()
     
+    # Kirim Struk Digital WA
+    wa_msg = f"?? *STRUK PEMINJAMAN ST. JEROME*\n\n"
+    wa_msg += f"Halo {member['nama']}, Anda baru saja meminjam buku:\n"
+    wa_msg += f"?? *{book['judul']}*\n"
+    wa_msg += f"Barcode: {no_induk}\n"
+    wa_msg += f"Tanggal Kembali: *{due_date.strftime('%d-%m-%Y')}*\n\n"
+    wa_msg += "Harap kembalikan tepat waktu untuk menghindari denda. Terima kasih!"
+    
+    send_wa_notification(member_id, wa_msg)
+    
     return jsonify({
         'status': 'success',
         'judul': book['judul'],
