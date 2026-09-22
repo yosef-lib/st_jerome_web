@@ -3030,6 +3030,34 @@ def api_wa_webhook():
         conn.close()
         return jsonify({'reply': 'Mohon maaf, sistem AI perpustakaan saat ini sedang dinonaktifkan (API Key belum diisi oleh Admin).'})
         
+    # IDENTIFIKASI ANGGOTA & PEMINJAMAN
+    nomor_wa = sender.split('@')[0]
+    if nomor_wa.startswith('62'):
+        nomor_wa_lokal = '0' + nomor_wa[2:]
+    else:
+        nomor_wa_lokal = nomor_wa
+        
+    anggota = conn.execute("SELECT member_id, nama FROM anggota WHERE telepon = ? OR telepon = ?", (nomor_wa, nomor_wa_lokal)).fetchone()
+    
+    peminjaman_context = "User ini belum terdaftar di sistem sebagai anggota (nomor WA tidak dikenali), atau belum memiliki pinjaman."
+    if anggota:
+        name = anggota['nama'] # Ganti nama jadi nama asli dari database
+        pinjaman = conn.execute('''
+            SELECT b.judul, s.tanggal_pinjam, s.batas_kembali, s.denda 
+            FROM sirkulasi s
+            JOIN buku b ON s.book_id = b.book_id
+            WHERE s.member_id = ? AND s.status_pinjam = 'Dipinjam'
+        ''', (anggota['member_id'],)).fetchall()
+        
+        if pinjaman:
+            peminjaman_context = f"Anggota bernama {name} saat ini sedang meminjam buku berikut:
+"
+            for p in pinjaman:
+                peminjaman_context += f"- Judul: {p['judul']}, Pinjam: {p['tanggal_pinjam']}, Batas Kembali: {p['batas_kembali']}, Denda Berjalan: Rp{p['denda'] or 0}
+"
+        else:
+            peminjaman_context = f"Anggota bernama {name} saat ini TIDAK memiliki pinjaman buku yang aktif."
+
     # AI RAG: Cari buku berdasarkan kata kunci dari pesan WhatsApp user
     # Hapus kata-kata umum
     stop_words = ['ada', 'buku', 'gak', 'nggak', 'tidak', 'yang', 'tentang', 'judul', 'pengarang', 'tolong', 'cari', 'carikan', 'apakah']
@@ -3069,7 +3097,13 @@ def api_wa_webhook():
         Konteks Pencarian Katalog (berdasarkan pertanyaan user):
         {buku_context}
         
-        Jika ditanya buku dan ada di Konteks Pencarian, beritahu bahwa bukunya ada dan sebutkan lokasinya. Jika tidak ada di konteks, katakan dengan sopan bahwa dari pencarian kilat Anda tidak menemukannya, dan sarankan untuk datang mengecek OPAC (Katalog Online) perpustakaan secara mandiri.
+        Data Peminjaman User Ini Saat Ini (berdasarkan nomor WA-nya):
+        {peminjaman_context}
+        
+        TUGAS ANDA:
+        1. Jika user bertanya "apakah ada buku X", gunakan Konteks Pencarian Katalog. Jika ada, sebutkan lokasinya.
+        2. Jika user bertanya tentang pinjamannya sendiri (contoh: "buku apa yang saya pinjam?", "kapan saya harus mengembalikan?"), jawab menggunakan Data Peminjaman User.
+        3. Jika tidak ada di konteks, katakan dengan sopan bahwa dari pencarian kilat Anda tidak menemukannya, dan sarankan untuk datang mengecek OPAC (Katalog Online) perpustakaan secara mandiri.
         """
         
         response = model.generate_content([system_prompt, message])
