@@ -565,7 +565,7 @@ def api_scan():
 def dashboard():
     lokasi = request.args.get('lokasi')
     if not lokasi:
-        return redirect(url_for('index', lokasi='IMAVI'))
+        return redirect(url_for('dashboard', lokasi='IMAVI'))
         
     conn = database.get_db_connection()
     
