@@ -3010,7 +3010,6 @@ def api_get_biblio(id):
 import json
 
 @app.route('/api/wa_webhook', methods=['POST'])
-@api_login_required  # Keep this if it was there? No, webhook must be open to nodejs bot!
 def api_wa_webhook():
     data = request.json
     if not data:
