@@ -4,8 +4,9 @@ import os
 DB_NAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'katalog.db')
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_NAME, timeout=20.0)
     conn.row_factory = sqlite3.Row
+    conn.execute('PRAGMA journal_mode=WAL;')
     return conn
 
 def init_db():
@@ -64,6 +65,32 @@ def init_db():
         laporan_narasi_ai TEXT             
     )
     ''')
+
+    
+    # Pengaturan Sistem
+    cursor.execute('''CREATE TABLE IF NOT EXISTS pengaturan_sistem (
+        kunci TEXT PRIMARY KEY,
+        nilai TEXT
+    )''')
+    
+    # Sesi Stock Opname
+    cursor.execute('''CREATE TABLE IF NOT EXISTS stock_opname_session (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama_sesi TEXT NOT NULL,
+        start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        end_date DATETIME,
+        status TEXT DEFAULT 'AKTIF'
+    )''')
+    
+    # Hasil Scan Stock Opname
+    cursor.execute('''CREATE TABLE IF NOT EXISTS stock_opname_scan (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER,
+        no_induk TEXT,
+        scan_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'DITEMUKAN',
+        FOREIGN KEY (session_id) REFERENCES stock_opname_session(id)
+    )''' )
 
     conn.commit()
     conn.close()
