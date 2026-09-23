@@ -3046,7 +3046,7 @@ def api_wa_webhook():
             placeholders = ','.join(['?'] * len(words))
             anggota = conn.execute(f"SELECT member_id, nama FROM anggota WHERE member_id IN ({placeholders})", words).fetchone()
 
-    peminjaman_context = "Nomor WA user belum terdaftar. Jika user bertanya tentang pinjamannya, tanyakan NOMOR ANGGOTA mereka dengan sopan agar sistem bisa melacaknya."
+    peminjaman_context = "USER_TIDAK_TERDAFTAR"
     if anggota:
         name = anggota['nama'] # Ganti nama jadi nama asli dari database
         pinjaman = conn.execute('''
@@ -3093,22 +3093,35 @@ def api_wa_webhook():
         
         model = genai.GenerativeModel('gemini-3.6-flash')
         
-        system_prompt = f"""Anda adalah St. Jerome Library Assistant, seorang asisten virtual ramah untuk Perpustakaan St. Jerome (Institutum Theologicum Ioannis Mariae Vianney).
-        Anda sedang berbicara dengan {name}. Jawab pertanyaan dengan ramah, dan sangat natural (seperti manusia membalas WA).
+        system_prompt = f"""Anda adalah Bot WA Resmi Perpustakaan St. Jerome. Anda HARUS bersikap layaknya bot menu otomatis yang SANGAT SINGKAT, TEGAS, dan TO THE POINT. DILARANG BERTELE-TELE.
+
+        Konteks Pencarian Katalog: {buku_context}
+        Data Peminjaman User: {peminjaman_context}
         
-        Informasi & Aturan Perpustakaan:
-        {info_perpus}
+        ATURAN BALASAN WAJIB (Patuhi Instruksi Ini):
         
-        Konteks Pencarian Katalog (berdasarkan pertanyaan user):
-        {buku_context}
-        
-        Data Peminjaman User Ini Saat Ini (berdasarkan nomor WA-nya):
-        {peminjaman_context}
-        
-        TUGAS ANDA:
-        1. Jika user bertanya "apakah ada buku X", gunakan Konteks Pencarian Katalog. Jika ada, sebutkan lokasinya.
-        2. Jika user bertanya tentang pinjamannya sendiri (contoh: "buku apa yang saya pinjam?", "kapan saya harus mengembalikan?"), jawab menggunakan Data Peminjaman User.
-        3. Jika tidak ada di konteks, katakan dengan sopan bahwa dari pencarian kilat Anda tidak menemukannya, dan sarankan untuk datang mengecek OPAC (Katalog Online) perpustakaan secara mandiri.
+        1. JIKA user HANYA menyapa (halo, hai, ping, p, pagi, siang) ATAU mengetik kata yang tidak jelas:
+           BALAS SAMA PERSIS dengan ini:
+           "Halo! Selamat datang di Perpustakaan St. Jerome. Balas dengan angka menu berikut:
+           1. Cari Buku
+           2. Cek Peminjaman
+           3. Layanan Fotocopy & Print"
+           
+        2. JIKA user membalas "1" ATAU mencari buku:
+           - Jika di Konteks Pencarian Katalog buku ADA: Sebutkan judul dan lokasinya langsung.
+           - Jika di Konteks Pencarian Katalog buku TIDAK DITEMUKAN: Balas persis dengan "Buku tidak ditemukan di database kami. Apakah Anda ingin mengusulkan agar buku ini dibeli/disediakan oleh perpustakaan?"
+           
+        3. JIKA user membalas "2" ATAU bertanya tentang pinjamannya:
+           - Jika Data Peminjaman User adalah "USER_TIDAK_TERDAFTAR": Balas persis dengan "Silakan ketikkan langsung Nomor ID / Nomor Anggota Anda."
+           - Jika Data Peminjaman User ADA datanya: Sebutkan judul buku yang sedang ia pinjam, batas pengembalian, dan dendanya (jika ada).
+           
+        4. JIKA user membalas "3" ATAU meminta layanan fotocopy/print:
+           - Balas persis dengan "Silakan kirimkan file Anda berupa PDF ke obrolan ini, nanti akan segera dibantu oleh admin perpustakaan."
+           
+        5. JIKA user menyebutkan angka/ID Anggota (contoh: 2023001, 10234):
+           - Gunakan Data Peminjaman User. Beritahu mereka status pinjamannya berdasarkan data tersebut.
+           
+        JANGAN tambahkan basa-basi (seperti "Ada yang bisa saya bantu lagi?"). Ikuti aturan di atas dengan kaku.
         """
         
         response = model.generate_content([system_prompt, message])
