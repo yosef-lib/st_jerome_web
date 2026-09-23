@@ -1659,7 +1659,7 @@ def sirkulasi():
 # API SIRKULASI (FASE 2)
 # ==============================================================
 
-@app.route('/api/sirkulasi/member/<member_id>', methods=['GET'])
+@app.route('/api/sirkulasi/member/<path:member_id>', methods=['GET'])
 @api_login_required
 def api_get_member(member_id):
     conn = database.get_db_connection()
