@@ -2564,9 +2564,17 @@ def daily_reminder_job():
         
         send_daily_wa_reminders()
 
-# Run reminder thread
-reminder_thread = threading.Thread(target=daily_reminder_job, daemon=True)
-reminder_thread.start()
+# Matikan thread internal karena sekarang akan dipicu oleh wa_bot (menghindari duplikasi multi-worker)
+# reminder_thread = threading.Thread(target=daily_reminder_job, daemon=True)
+# reminder_thread.start()
+
+@app.route('/api/internal/cron_reminder', methods=['POST'])
+def internal_cron_reminder():
+    import threading
+    def _run():
+        send_daily_wa_reminders()
+    threading.Thread(target=_run).start()
+    return jsonify({'status': 'success'})
 
 
 if __name__ == '__main__':
