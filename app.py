@@ -3039,7 +3039,14 @@ def api_wa_webhook():
         
     anggota = conn.execute("SELECT member_id, nama FROM anggota WHERE telepon = ? OR telepon = ?", (nomor_wa, nomor_wa_lokal)).fetchone()
     
-    peminjaman_context = "User ini belum terdaftar di sistem sebagai anggota (nomor WA tidak dikenali), atau belum memiliki pinjaman."
+    # Jika tidak ketemu dari nomor WA, coba cari apakah user menyebutkan Nomor Anggota di dalam pesannya
+    if not anggota:
+        words = message.replace(',', ' ').replace('.', ' ').split()
+        if words:
+            placeholders = ','.join(['?'] * len(words))
+            anggota = conn.execute(f"SELECT member_id, nama FROM anggota WHERE member_id IN ({placeholders})", words).fetchone()
+
+    peminjaman_context = "Nomor WA user belum terdaftar. Jika user bertanya tentang pinjamannya, tanyakan NOMOR ANGGOTA mereka dengan sopan agar sistem bisa melacaknya."
     if anggota:
         name = anggota['nama'] # Ganti nama jadi nama asli dari database
         pinjaman = conn.execute('''
