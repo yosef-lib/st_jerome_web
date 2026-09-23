@@ -2,6 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const express = require('express');
 const axios = require('axios');
+const cron = require('node-cron');
 
 // Konfigurasi port
 const PORT = 3005;
@@ -54,7 +55,13 @@ client.on('message', async (msg) => {
 
         // Jika Flask memberikan balasan, kirim balik ke user
         if (response.data && response.data.reply) {
-            msg.reply(response.data.reply);
+            if (response.data.reply.trim() !== '') {
+                msg.reply(response.data.reply);
+            } else {
+                msg.reply("Maaf, permintaan tidak dapat diproses. Ketik 'Halo' untuk menampilkan menu.");
+            }
+        } else {
+            msg.reply("Maaf, terjadi kesalahan atau balasan kosong dari sistem AI. Ketik 'Halo' untuk mengulang.");
         }
     } catch (error) {
         console.error('Gagal menghubungi Flask backend:', error.message);
@@ -62,6 +69,18 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
+
+// Jadwalkan pengingat harian pada jam 08:00 pagi
+cron.schedule('0 8 * * *', async () => {
+    console.log('[CRON] Menjalankan tugas pengingat jatuh tempo harian...');
+    try {
+        const CRON_URL = FLASK_URL.replace('/wa_webhook', '/internal/cron_reminder');
+        await axios.post(CRON_URL, {});
+        console.log('[CRON] Perintah pengingat harian berhasil dikirim ke backend.');
+    } catch (error) {
+        console.error('[CRON] Gagal menghubungi backend untuk pengingat harian:', error.message);
+    }
+});
 
 // Endpoint API untuk dikirim pesan dari Flask (Notifikasi / Tagihan / Struk)
 app.post('/api/send_message', async (req, res) => {
