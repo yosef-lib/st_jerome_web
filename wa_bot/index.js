@@ -31,7 +31,17 @@ client.on('ready', () => {
 // Menangkap pesan masuk (Customer Service / Bot)
 client.on('message', async (msg) => {
     // Jangan tanggapi pesan dari grup (opsional) atau status
-    if (msg.isGroupMsg || msg.isStatus) return;
+        // Abaikan update status
+    if (msg.isStatus) return;
+    
+    // Jika di dalam grup, HANYA merespon jika bot di-mention (@) atau pesan me-reply bot
+    if (msg.isGroupMsg) {
+        const isMentioned = msg.mentionedIds && msg.mentionedIds.includes(client.info.wid._serialized);
+        // Bisa juga mengecek huruf awal, misalnya !tanya
+        if (!isMentioned) {
+            return; // Jangan merespon obrolan biasa di grup agar tidak spam
+        }
+    }
 
     try {
         console.log(`Menerima pesan dari ${msg.from}: ${msg.body}`);
