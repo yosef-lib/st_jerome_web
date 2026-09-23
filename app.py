@@ -89,6 +89,23 @@ def api_login_required(f):
 if not os.path.exists(database.DB_NAME):
     database.init_db()
 
+# Auto-migrate tabel baru
+try:
+    _conn = database.get_db_connection()
+    _conn.execute('''
+        CREATE TABLE IF NOT EXISTS reservasi (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            member_id TEXT NOT NULL,
+            biblio_id INTEGER NOT NULL,
+            tanggal_reservasi DATETIME DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'MENUNGGU'
+        )
+    ''')
+    _conn.commit()
+    _conn.close()
+except Exception as e:
+    print("Gagal auto-migrate:", e)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
