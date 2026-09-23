@@ -1971,7 +1971,7 @@ def api_return():
             res_msg += f"Halo {reservasi['nama']}, buku yang Anda antre:\n"
             res_msg += f"?? *{loan['judul']}*\n\n"
             res_msg += f"Saat ini SUDAH TERSEDIA dan siap dipinjam! Silakan ambil di Perpustakaan St. Jerome paling lambat dalam 2x24 jam sebelum dialihkan ke pengantre berikutnya."
-            send_wa_notification(reservasi['telepon'], res_msg)
+            send_wa_notification(reservasi['member_id'], res_msg)
     
     if denda > 0:
         suspend_until = return_datetime.date() + datetime.timedelta(days=1)
