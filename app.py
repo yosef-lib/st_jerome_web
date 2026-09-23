@@ -731,14 +731,15 @@ def edit_anggota():
     tipe_anggota = request.form.get('tipe_anggota')
     tanggal_input = request.form.get('tanggal_input')
     masa_berlaku = request.form.get('masa_berlaku')
+    telepon = request.form.get('telepon')
     
     if member_id and nama and tipe_anggota and masa_berlaku:
         conn = database.get_db_connection()
         conn.execute('''
             UPDATE anggota 
-            SET nama = ?, tipe_anggota = ?, tanggal_input = ?, masa_berlaku = ?
+            SET nama = ?, tipe_anggota = ?, tanggal_input = ?, masa_berlaku = ?, telepon = ?
             WHERE member_id = ?
-        ''', (nama, tipe_anggota, tanggal_input, masa_berlaku, member_id))
+        ''', (nama, tipe_anggota, tanggal_input, masa_berlaku, telepon, member_id))
         conn.commit()
         conn.close()
         
