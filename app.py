@@ -1771,6 +1771,14 @@ def api_borrow():
     conn.commit()
     conn.close()
     
+    wa_msg = f"?? *STRUK PEMINJAMAN ST. JEROME*\n\n"
+    wa_msg += f"Halo, Anda baru saja meminjam buku:\n"
+    wa_msg += f"?? *{eksemplar.get('judul')}*\n"
+    wa_msg += f"Barcode: {book_id}\n"
+    wa_msg += f"Tanggal Kembali: *{due_date.strftime('%d-%m-%Y')}*\n\n"
+    wa_msg += "Harap kembalikan tepat waktu untuk menghindari denda. Terima kasih!"
+    send_wa_notification(member_id, wa_msg)
+    
     return jsonify({'status': 'success', 'data': {'buku_judul': eksemplar.get('judul')}})
 
 def calculate_working_days(start_date, end_date, conn):
@@ -1940,6 +1948,18 @@ def api_return():
         
     conn.commit()
     conn.close()
+    
+    wa_msg = f"? *STRUK PENGEMBALIAN ST. JEROME*\n\n"
+    wa_msg += f"Halo, Anda telah mengembalikan buku:\n"
+    wa_msg += f"?? *{loan['judul']}*\n"
+    wa_msg += f"Barcode: {book_id}\n"
+    if denda > 0:
+        wa_msg += f"Keterlambatan: {terlambat_hari} hari\n"
+        wa_msg += f"Denda: *Rp{denda}* (Status: BELUM LUNAS)\n"
+    else:
+        wa_msg += f"Denda: Rp0 (Tepat Waktu)\n"
+    wa_msg += "\nTerima kasih telah mengembalikan buku!"
+    send_wa_notification(loan['member_id'], wa_msg)
     
     return jsonify({
         'status': 'success',
