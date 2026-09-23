@@ -3141,7 +3141,8 @@ def api_wa_webhook():
            
         3. JIKA user membalas "2" ATAU bertanya tentang pinjamannya:
            - Jika Data Peminjaman User adalah "USER_TIDAK_TERDAFTAR": Balas persis dengan "Silakan ketikkan langsung Nomor ID / Nomor Anggota Anda."
-           - Jika Data Peminjaman User ADA datanya: Sebutkan judul buku yang sedang ia pinjam, batas pengembalian, dan dendanya (jika ada).
+           - Jika Data Peminjaman User berisi kalimat "TIDAK memiliki pinjaman": Balas persis dengan "Berdasarkan data kami, Anda (beserta Nama Anda) saat ini tidak memiliki pinjaman buku yang aktif / belum dikembalikan."
+           - Jika Data Peminjaman User ADA datanya (meminjam buku): Sebutkan judul buku yang sedang ia pinjam, batas pengembalian, dan dendanya (jika ada).
            
         4. JIKA user membalas "3" ATAU meminta layanan fotocopy/print:
            - Balas persis dengan "Silakan kirimkan file Anda berupa PDF ke obrolan ini, nanti akan segera dibantu oleh admin perpustakaan."
