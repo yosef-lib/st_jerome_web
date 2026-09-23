@@ -1938,46 +1938,51 @@ def api_return():
     book_id = data.get('book_id')
     
     conn = database.get_db_connection()
-    loan = conn.execute("SELECT s.*, s.member_id as e_member_id, a.nama as anggota_nama, b.judul, e.biblio_id FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id LEFT JOIN anggota a ON s.member_id = a.member_id WHERE s.no_induk = ? AND s.return_date IS NULL", (book_id,)).fetchone()
+    try:
+        loan = conn.execute("SELECT s.*, s.member_id as e_member_id, a.nama as anggota_nama, b.judul, e.biblio_id FROM sirkulasi s JOIN eksemplar e ON s.no_induk = e.no_induk JOIN bibliografi b ON e.biblio_id = b.id LEFT JOIN anggota a ON s.member_id = a.member_id WHERE s.no_induk = ? AND s.return_date IS NULL", (book_id,)).fetchone()
     
-    if not loan:
+        if not loan:
+            return jsonify({'status': 'error', 'message': 'Tidak ada catatan peminjaman aktif untuk buku ini.'})
+        
+        loan = dict(loan)
+        import datetime
+    
+        return_datetime = datetime.datetime.now()
+        due_datetime = datetime.datetime.strptime(loan['due_date'], '%Y-%m-%d %H:%M:%S')
+    
+        denda = 0
+        terlambat_hari = 0
+    
+        if return_datetime.date() > due_datetime.date():
+            terlambat_hari = calculate_working_days(due_datetime.date(), return_datetime.date(), conn)
+            denda = terlambat_hari * 500
+        
+        conn.execute("UPDATE sirkulasi SET return_date = ?, fine_amount = ?, fine_status = ? WHERE id = ?", (return_datetime.strftime('%Y-%m-%d %H:%M:%S'), denda, 'BELUM_LUNAS' if denda > 0 else 'LUNAS', loan['id']))
+        conn.execute("UPDATE eksemplar SET status_buku = 'TERSEDIA' WHERE no_induk = ?", (book_id,))
+    
+        # CEK ANTRIAN RESERVASI
+        reservasi = conn.execute("SELECT r.id, r.member_id, a.telepon, a.nama FROM reservasi r JOIN anggota a ON r.member_id = a.member_id WHERE r.biblio_id = ? AND r.status = 'MENUNGGU' ORDER BY r.tanggal_reservasi ASC LIMIT 1", (loan['biblio_id'],)).fetchone()
+        if reservasi:
+            # Ubah status reservasi menjadi TERSEDIA
+            conn.execute("UPDATE reservasi SET status = 'TERSEDIA' WHERE id = ?", (reservasi['id'],))
+            # Kirim notifikasi WA
+            if reservasi['telepon']:
+                res_msg = f"?? *NOTIFIKASI ANTRIAN BUKU*\n\n"
+                res_msg += f"Halo {reservasi['nama']}, buku yang Anda antre:\n"
+                res_msg += f"?? *{loan['judul']}*\n\n"
+                res_msg += f"Saat ini SUDAH TERSEDIA dan siap dipinjam! Silakan ambil di Perpustakaan St. Jerome paling lambat dalam 2x24 jam sebelum dialihkan ke pengantre berikutnya."
+                send_wa_notification(reservasi['member_id'], res_msg)
+    
+        if denda > 0:
+            suspend_until = return_datetime.date() + datetime.timedelta(days=1)
+            conn.execute("UPDATE anggota SET status = 'DIBLOKIR', suspended_until = ? WHERE member_id = ?", (suspend_until.strftime('%Y-%m-%d'), loan['member_id']))
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
         conn.close()
-        return jsonify({'status': 'error', 'message': 'Tidak ada catatan peminjaman aktif untuk buku ini.'})
-        
-    loan = dict(loan)
-    import datetime
-    
-    return_datetime = datetime.datetime.now()
-    due_datetime = datetime.datetime.strptime(loan['due_date'], '%Y-%m-%d %H:%M:%S')
-    
-    denda = 0
-    terlambat_hari = 0
-    
-    if return_datetime.date() > due_datetime.date():
-        terlambat_hari = calculate_working_days(due_datetime.date(), return_datetime.date(), conn)
-        denda = terlambat_hari * 500
-        
-    conn.execute("UPDATE sirkulasi SET return_date = ?, fine_amount = ?, fine_status = ? WHERE id = ?", (return_datetime.strftime('%Y-%m-%d %H:%M:%S'), denda, 'BELUM_LUNAS' if denda > 0 else 'LUNAS', loan['id']))
-    conn.execute("UPDATE eksemplar SET status_buku = 'TERSEDIA' WHERE no_induk = ?", (book_id,))
-    
-    # CEK ANTRIAN RESERVASI
-    reservasi = conn.execute("SELECT r.id, r.member_id, a.telepon, a.nama FROM reservasi r JOIN anggota a ON r.member_id = a.member_id WHERE r.biblio_id = ? AND r.status = 'MENUNGGU' ORDER BY r.tanggal_reservasi ASC LIMIT 1", (loan['biblio_id'],)).fetchone()
-    if reservasi:
-        # Ubah status reservasi menjadi TERSEDIA
-        conn.execute("UPDATE reservasi SET status = 'TERSEDIA' WHERE id = ?", (reservasi['id'],))
-        # Kirim notifikasi WA
-        if reservasi['telepon']:
-            res_msg = f"?? *NOTIFIKASI ANTRIAN BUKU*\n\n"
-            res_msg += f"Halo {reservasi['nama']}, buku yang Anda antre:\n"
-            res_msg += f"?? *{loan['judul']}*\n\n"
-            res_msg += f"Saat ini SUDAH TERSEDIA dan siap dipinjam! Silakan ambil di Perpustakaan St. Jerome paling lambat dalam 2x24 jam sebelum dialihkan ke pengantre berikutnya."
-            send_wa_notification(reservasi['member_id'], res_msg)
-    
-    if denda > 0:
-        suspend_until = return_datetime.date() + datetime.timedelta(days=1)
-        conn.execute("UPDATE anggota SET status = 'DIBLOKIR', suspended_until = ? WHERE member_id = ?", (suspend_until.strftime('%Y-%m-%d'), loan['member_id']))
-        
-    conn.commit()
     conn.close()
     
     wa_msg = f"? *STRUK PENGEMBALIAN ST. JEROME*\n\n"
