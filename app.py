@@ -3043,10 +3043,10 @@ def api_wa_webhook():
     if anggota:
         name = anggota['nama'] # Ganti nama jadi nama asli dari database
         pinjaman = conn.execute('''
-            SELECT b.judul, s.tanggal_pinjam, s.batas_kembali, s.denda 
+            SELECT b.judul, s.loan_date as tanggal_pinjam, s.due_date as batas_kembali, s.fine_amount as denda 
             FROM sirkulasi s
-            JOIN buku b ON s.book_id = b.book_id
-            WHERE s.member_id = ? AND s.status_pinjam = 'Dipinjam'
+            JOIN buku b ON s.no_induk = b.no_induk
+            WHERE s.member_id = ? AND s.return_date IS NULL
         ''', (anggota['member_id'],)).fetchall()
         
         if pinjaman:
