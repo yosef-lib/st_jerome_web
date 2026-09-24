@@ -2359,29 +2359,11 @@ def robot_worker(limit=50):
             except Exception:
                 pass
 
-        # SUMBER 3: Google Books (fallback terakhir, jeda lebih lama)
-        if image_url == 'NOT_FOUND':
-            try:
-                time.sleep(2.0)
-                query = urllib.parse.quote((judul or '') + ' ' + (pengarang or ''))
-                gb_url = "https://www.googleapis.com/books/v1/volumes?q=" + query
-                req3 = urllib.request.Request(gb_url, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req3, timeout=10) as response:
-                    data = json.loads(response.read().decode('utf-8'))
-                    if 'items' in data and len(data['items']) > 0:
-                        img = data['items'][0]['volumeInfo'].get('imageLinks', {}).get('thumbnail')
-                        if img:
-                            image_url = img.replace('http:', 'https:')
-            except urllib.error.HTTPError as e:
-                if e.code == 429:
-                    image_url = 'RATE_LIMIT'
-            except Exception:
-                pass
-            
+        # Simpan hasil (hanya OpenLibrary, Google Books dihapus untuk mencegah rate limit)
         conn.execute("UPDATE bibliografi SET image = ? WHERE id = ?", (image_url, biblio_id))
         conn.commit()
         
-        status_text = "Ditemukan" if image_url.startswith('http') else ("Limit Google" if image_url == 'RATE_LIMIT' else "Kosong")
+        status_text = "Ditemukan" if image_url.startswith('http') else "Kosong"
         
         state["results"].insert(0, {
             "judul": judul,
@@ -2391,11 +2373,7 @@ def robot_worker(limit=50):
         state["progress"] += 1
         save_robot_state(state)
         
-        if image_url == 'RATE_LIMIT':
-            state["error"] = "Google Books mencapai batas. Silakan jalankan lagi - OpenLibrary masih bisa diakses!"
-            break
-            
-        time.sleep(0.5)
+        time.sleep(0.2)
         
     state["is_running"] = False
     state["current_book"] = "Selesai"
