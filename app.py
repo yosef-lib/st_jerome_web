@@ -139,7 +139,10 @@ def opac_page():
 @app.route('/input_buku')
 @login_required
 def input_buku():
-    return render_template('input_buku.html')
+    resp = make_response(render_template('input_buku.html'))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    return resp
 
 @app.route('/api/antrean', methods=['GET'])
 @api_login_required
