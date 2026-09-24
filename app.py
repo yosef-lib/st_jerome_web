@@ -54,10 +54,14 @@ migrate_db()
 @app.errorhandler(500)
 def internal_error(error):
     import traceback
+    trace = traceback.format_exc()
+    with open('error_debug.log', 'a') as lf:
+        lf.write("\n=== 500 ERROR ===\n")
+        lf.write(trace)
     return jsonify({
         'status': 'error', 
-        'message': 'Internal Server Error: ' + str(error),
-        'trace': traceback.format_exc()
+        'message': 'Internal Server Error: ' + str(error) + " | See error_debug.log",
+        'trace': trace
     }), 500
 
 
