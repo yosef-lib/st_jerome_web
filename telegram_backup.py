@@ -36,9 +36,17 @@ def run_backup(manual=False):
     zip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), zip_filename)
     
     try:
-        # 1. Zip the database
+        # 1. Zip the database and uploads directory
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             zipf.write(DB_PATH, arcname='katalog.db')
+            
+            uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+            if os.path.exists(uploads_dir):
+                for root, dirs, files in os.walk(uploads_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.join('static', 'uploads', os.path.relpath(file_path, uploads_dir))
+                        zipf.write(file_path, arcname=arcname)
             
         # 2. Send via Telegram API
         url = f"https://api.telegram.org/bot{token}/sendDocument"
