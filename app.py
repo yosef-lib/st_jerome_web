@@ -2813,7 +2813,7 @@ def api_ai_metadata():
         return jsonify({'status': 'error', 'message': 'Judul atau ISBN harus diisi.'})
         
     conn = database.get_db_connection()
-    api_key_row = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'gemini_api_key'").fetchone()
+    api_key_row = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'GEMINI_API_KEY'").fetchone()
     conn.close()
     
     if not api_key_row or not api_key_row['nilai']:
