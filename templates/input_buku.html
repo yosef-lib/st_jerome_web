@@ -123,7 +123,7 @@
                     <div class="md:col-span-3">
                         <label class="block text-sm font-medium mb-1">Gambar Sampul / Cover (Opsional)</label>
                         <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="file" @change="handleFile" accept="image/*" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black">
+                            <input type="file" @change="handleFile" accept="image/*" class="border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black" style="flex:1; min-width:0;">
                             <button type="button" @click="scanCoverAI()" :disabled="isAILoading" style="background-color: #10B981; color: white; border-radius: 6px; padding: 8px 16px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap;" class="inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 shadow-md hover:brightness-110">
                                 <span x-show="!isAILoading"><i class="fa-solid fa-wand-magic-sparkles"></i> Pindai dgn AI</span>
                                 <span x-show="isAILoading"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</span>
