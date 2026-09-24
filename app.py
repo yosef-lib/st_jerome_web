@@ -2304,7 +2304,7 @@ def robot_worker(limit=50):
     save_robot_state(state)
     
     conn = database.get_db_connection()
-    cursor = conn.execute("SELECT id, judul, pengarang FROM bibliografi WHERE image IS NULL OR image = '' OR image = 'NOT_FOUND' OR image = 'RATE_LIMIT' LIMIT ?", (limit,))
+    cursor = conn.execute("SELECT id, judul, pengarang, isbn FROM bibliografi WHERE image IS NULL OR image = '' OR image = 'NOT_FOUND' OR image = 'RATE_LIMIT' LIMIT ?", (limit,))
     books = cursor.fetchall()
     
     if not books:
@@ -2322,34 +2322,67 @@ def robot_worker(limit=50):
         if not current_state.get("is_running"):
             break # manual stop
             
-        biblio_id, judul, pengarang = row['id'], row['judul'], row['pengarang']
+        biblio_id = row['id']
+        judul = row['judul']
+        pengarang = row['pengarang']
+        isbn = row['isbn'] if row['isbn'] else ''
         state["current_book"] = f"{judul} - {pengarang}"
         save_robot_state(state)
         
-        query = (judul or "") + " " + (pengarang or "")
         image_url = 'NOT_FOUND'
-        
-        try:
-            url = "https://www.googleapis.com/books/v1/volumes?q=" + urllib.parse.quote(query)
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-            with urllib.request.urlopen(req, timeout=10) as response:
-                data = json.loads(response.read().decode('utf-8'))
-                if 'items' in data and len(data['items']) > 0:
-                    img = data['items'][0]['volumeInfo'].get('imageLinks', {}).get('thumbnail')
-                    if img:
-                        image_url = img.replace('http:', 'https:')
-        except urllib.error.HTTPError as e:
-            if e.code == 429:
-                image_url = 'RATE_LIMIT'
-        except Exception:
-            pass
+
+        # SUMBER 1: OpenLibrary by ISBN (gratis, instant, tanpa rate limit)
+        if isbn and isbn.strip() and isbn.strip() not in ('', 'None', '-'):
+            clean_isbn = isbn.strip().replace('-', '').replace(' ', '')
+            try:
+                check_url = "https://covers.openlibrary.org/b/isbn/" + clean_isbn + "-M.jpg?default=false"
+                req_chk = urllib.request.Request(check_url, headers={'User-Agent': 'StJeromeLib/1.0'})
+                with urllib.request.urlopen(req_chk, timeout=8) as r:
+                    if r.status == 200:
+                        image_url = "https://covers.openlibrary.org/b/isbn/" + clean_isbn + "-M.jpg"
+            except Exception:
+                pass
+
+        # SUMBER 2: OpenLibrary Search by judul+pengarang (gratis, tanpa rate limit)
+        if image_url == 'NOT_FOUND':
+            try:
+                time.sleep(0.3)
+                q = urllib.parse.quote((judul or '') + ' ' + (pengarang or ''))
+                ol_url = "https://openlibrary.org/search.json?q=" + q + "&fields=cover_i&limit=1"
+                req2 = urllib.request.Request(ol_url, headers={'User-Agent': 'StJeromeLib/1.0'})
+                with urllib.request.urlopen(req2, timeout=10) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                    docs = data.get('docs', [])
+                    if docs and docs[0].get('cover_i'):
+                        cover_id = docs[0]['cover_i']
+                        image_url = "https://covers.openlibrary.org/b/id/" + str(cover_id) + "-M.jpg"
+            except Exception:
+                pass
+
+        # SUMBER 3: Google Books (fallback terakhir, jeda lebih lama)
+        if image_url == 'NOT_FOUND':
+            try:
+                time.sleep(2.0)
+                query = urllib.parse.quote((judul or '') + ' ' + (pengarang or ''))
+                gb_url = "https://www.googleapis.com/books/v1/volumes?q=" + query
+                req3 = urllib.request.Request(gb_url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req3, timeout=10) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                    if 'items' in data and len(data['items']) > 0:
+                        img = data['items'][0]['volumeInfo'].get('imageLinks', {}).get('thumbnail')
+                        if img:
+                            image_url = img.replace('http:', 'https:')
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    image_url = 'RATE_LIMIT'
+            except Exception:
+                pass
             
         conn.execute("UPDATE bibliografi SET image = ? WHERE id = ?", (image_url, biblio_id))
         conn.commit()
         
         status_text = "Ditemukan" if image_url.startswith('http') else ("Limit Google" if image_url == 'RATE_LIMIT' else "Kosong")
         
-        # Add to beginning of results so newest is at top
         state["results"].insert(0, {
             "judul": judul,
             "status": status_text,
@@ -2359,10 +2392,10 @@ def robot_worker(limit=50):
         save_robot_state(state)
         
         if image_url == 'RATE_LIMIT':
-            state["error"] = "Terhenti otomatis karena Google mendeteksi terlalu banyak permintaan. Silakan coba lagi nanti."
+            state["error"] = "Google Books mencapai batas. Silakan jalankan lagi - OpenLibrary masih bisa diakses!"
             break
             
-        time.sleep(2.5) # Sleep 2.5 seconds to be safe
+        time.sleep(0.5)
         
     state["is_running"] = False
     state["current_book"] = "Selesai"
