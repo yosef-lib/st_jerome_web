@@ -2822,7 +2822,7 @@ def api_ai_metadata():
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key_row['nilai'])
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = f'''Anda adalah asisten pakar katalogisasi perpustakaan (DDC). 
 Carikan metadata untuk buku dengan kata kunci/ISBN berikut: "{query}"
@@ -3222,7 +3222,7 @@ def api_wa_webhook():
         import google.generativeai as genai
         genai.configure(api_key=api_key)
         
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         system_prompt = f"""Anda adalah Bot WA Resmi Perpustakaan St. Jerome. Anda HARUS bersikap layaknya bot menu otomatis yang SANGAT SINGKAT, TEGAS, dan TO THE POINT. DILARANG BERTELE-TELE.
 
