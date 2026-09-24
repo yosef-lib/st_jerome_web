@@ -2872,10 +2872,8 @@ Gunakan persis key berikut (jika tidak ada di sampul, isi dengan string kosong "
         
         import re, json
         json_str = response.text
-        json_str = re.sub(r'```json
-?', '', json_str)
-        json_str = re.sub(r'```
-?', '', json_str)
+        json_str = re.sub(r'```json\n?', '', json_str)
+        json_str = re.sub(r'```\n?', '', json_str)
         
         data = json.loads(json_str.strip())
         return jsonify({'status': 'success', 'data': data})
