@@ -178,6 +178,7 @@ document.addEventListener('alpine:init', () => {
                     
                     let image_url = 'NOT_FOUND';
                     let statusText = 'Kosong';
+                    let needGoogleDelay = false;
                     
                     try {
                         // SUMBER 1: OpenLibrary by ISBN (instant, tanpa rate limit)
@@ -196,13 +197,38 @@ document.addEventListener('alpine:init', () => {
                         
                         // SUMBER 2: OpenLibrary Search by judul+pengarang
                         if (image_url === 'NOT_FOUND') {
-                            const query = encodeURIComponent((book.judul || '') + ' ' + (book.pengarang || ''));
-                            const olRes = await fetch('https://openlibrary.org/search.json?q=' + query + '&fields=cover_i&limit=1');
-                            const olData = await olRes.json();
-                            if (olData.docs && olData.docs.length > 0 && olData.docs[0].cover_i) {
-                                image_url = 'https://covers.openlibrary.org/b/id/' + olData.docs[0].cover_i + '-M.jpg';
-                                statusText = 'Ditemukan';
-                            }
+                            try {
+                                const query = encodeURIComponent((book.judul || '') + ' ' + (book.pengarang || ''));
+                                const olRes = await fetch('https://openlibrary.org/search.json?q=' + query + '&fields=cover_i&limit=1');
+                                const olData = await olRes.json();
+                                if (olData.docs && olData.docs.length > 0 && olData.docs[0].cover_i) {
+                                    image_url = 'https://covers.openlibrary.org/b/id/' + olData.docs[0].cover_i + '-M.jpg';
+                                    statusText = 'Ditemukan';
+                                }
+                            } catch(e) {}
+                        }
+
+                        // SUMBER 3: Google Books (fallback, jeda 6 detik agar tidak diblokir)
+                        if (image_url === 'NOT_FOUND') {
+                            needGoogleDelay = true;
+                            try {
+                                const gQuery = encodeURIComponent((book.judul || '') + ' ' + (book.pengarang || ''));
+                                const gRes = await fetch('https://www.googleapis.com/books/v1/volumes?q=' + gQuery);
+                                if (gRes.status === 429) {
+                                    this.robot.error = "Google Books sementara membatasi. Silakan klik 'Cari' lagi dalam 1 menit.";
+                                    this.robot.is_running = false;
+                                    this.robot.current_book = "Terhenti sementara";
+                                    return;
+                                }
+                                const gData = await gRes.json();
+                                if (gData.items && gData.items.length > 0) {
+                                    let img = gData.items[0].volumeInfo?.imageLinks?.thumbnail;
+                                    if (img) {
+                                        image_url = img.replace('http:', 'https:');
+                                        statusText = 'Ditemukan (Google)';
+                                    }
+                                }
+                            } catch(e) {}
                         }
                     } catch (e) {
                         console.error(e);
@@ -221,8 +247,8 @@ document.addEventListener('alpine:init', () => {
                     });
                     this.robot.progress++;
                     
-                    // Jeda singkat (OpenLibrary tidak ketat rate limit)
-                    await new Promise(r => setTimeout(r, 300));
+                    // Jeda: 300ms untuk buku OpenLibrary, 6 detik kalau pakai Google Books
+                    await new Promise(r => setTimeout(r, needGoogleDelay ? 6000 : 300));
                 }
             } catch (e) {
                 this.robot.error = "Terjadi kesalahan jaringan.";
