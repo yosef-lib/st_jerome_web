@@ -180,20 +180,27 @@ document.addEventListener('alpine:init', () => {
                     let statusText = 'Kosong';
                     
                     try {
-                        const query = book.judul + (book.pengarang ? ' ' + book.pengarang : '');
-                        const gRes = await fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query));
-                        
-                        if (gRes.status === 429) {
-                            this.robot.error = "Terhenti: Jaringan internet/WiFi Bapak terdeteksi melakukan terlalu banyak pencarian ke Google.";
-                            break;
+                        // SUMBER 1: OpenLibrary by ISBN (instant, tanpa rate limit)
+                        if (book.isbn && book.isbn.trim() && book.isbn.trim() !== '-') {
+                            const cleanIsbn = book.isbn.replace(/-/g, '').replace(/ /g, '').trim();
+                            try {
+                                const isbnRes = await fetch('https://openlibrary.org/api/books?bibkeys=ISBN:' + cleanIsbn + '&format=json&jscmd=data');
+                                const isbnData = await isbnRes.json();
+                                const key = 'ISBN:' + cleanIsbn;
+                                if (isbnData[key] && isbnData[key].cover) {
+                                    image_url = isbnData[key].cover.medium || isbnData[key].cover.small || isbnData[key].cover.large;
+                                    if (image_url) statusText = 'Ditemukan';
+                                }
+                            } catch(e) {}
                         }
                         
-                        const gData = await gRes.json();
-                        
-                        if (gData.items && gData.items.length > 0) {
-                            let img = gData.items[0].volumeInfo?.imageLinks?.thumbnail;
-                            if (img) {
-                                image_url = img.replace('http:', 'https:');
+                        // SUMBER 2: OpenLibrary Search by judul+pengarang
+                        if (image_url === 'NOT_FOUND') {
+                            const query = encodeURIComponent((book.judul || '') + ' ' + (book.pengarang || ''));
+                            const olRes = await fetch('https://openlibrary.org/search.json?q=' + query + '&fields=cover_i&limit=1');
+                            const olData = await olRes.json();
+                            if (olData.docs && olData.docs.length > 0 && olData.docs[0].cover_i) {
+                                image_url = 'https://covers.openlibrary.org/b/id/' + olData.docs[0].cover_i + '-M.jpg';
                                 statusText = 'Ditemukan';
                             }
                         }
@@ -214,8 +221,8 @@ document.addEventListener('alpine:init', () => {
                     });
                     this.robot.progress++;
                     
-                    // Jeda 2 detik agar Google tidak marah
-                    await new Promise(r => setTimeout(r, 2000));
+                    // Jeda singkat (OpenLibrary tidak ketat rate limit)
+                    await new Promise(r => setTimeout(r, 300));
                 }
             } catch (e) {
                 this.robot.error = "Terjadi kesalahan jaringan.";
