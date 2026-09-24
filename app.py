@@ -1540,7 +1540,8 @@ def analitik_kunjungan():
     end_date = request.args.get('end_date')
     
     # Default: hari ini untuk rentang default jika tidak ada filter
-    today_str = datetime.now().strftime('%Y-%m-%d')
+    import datetime
+    today_str = datetime.datetime.now().strftime('%Y-%m-%d')
     if not start_date:
         start_date = today_str
     if not end_date:
