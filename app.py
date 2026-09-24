@@ -2857,6 +2857,9 @@ Note: "klasifikasi" diisi HANYA dengan angka DDC (contoh: "200" atau "813").
         return jsonify({'status': 'success', 'data': metadata})
         
     except Exception as e:
+        import traceback
+        with open('error_debug.log', 'a', encoding='utf-8') as f:
+            f.write("=== AI METADATA ERROR ===\n" + traceback.format_exc() + "\n")
         error_str = str(e)
         if '429' in error_str or 'Quota exceeded' in error_str:
             return jsonify({'status': 'error', 'message': 'Kuota API Gemini Anda telah habis (Error 429). Silakan periksa limit/tagihan API Google Anda.'})
