@@ -1965,10 +1965,10 @@ def api_return():
         conn.execute("UPDATE eksemplar SET status_buku = 'TERSEDIA' WHERE no_induk = ?", (book_id,))
     
         # CEK ANTRIAN RESERVASI
-        reservasi = conn.execute("SELECT r.id, r.member_id, a.telepon, a.nama FROM reservasi r JOIN anggota a ON r.member_id = a.member_id WHERE r.biblio_id = ? AND r.status = 'MENUNGGU' ORDER BY r.tanggal_reservasi ASC LIMIT 1", (loan['biblio_id'],)).fetchone()
+        reservasi = conn.execute("SELECT r.id, r.nim_pemustaka as member_id, a.telepon, a.nama FROM reservasi r JOIN anggota a ON r.nim_pemustaka = a.member_id WHERE r.biblio_id = ? AND r.status = 'Aktif' ORDER BY r.tanggal ASC LIMIT 1", (loan['biblio_id'],)).fetchone()
         if reservasi:
             # Ubah status reservasi menjadi TERSEDIA
-            conn.execute("UPDATE reservasi SET status = 'TERSEDIA' WHERE id = ?", (reservasi['id'],))
+            conn.execute("UPDATE reservasi SET status = 'Tersedia' WHERE id = ?", (reservasi['id'],))
             # Kirim notifikasi WA
             if reservasi['telepon']:
                 res_msg = f"?? *NOTIFIKASI ANTRIAN BUKU*\n\n"
