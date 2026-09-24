@@ -125,7 +125,7 @@
                         <input type="file" @change="handleFile" accept="image/*" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black">
                         <div x-show="imagePreview" class="mt-2 flex items-end gap-3">
                             <img :src="imagePreview" class="h-32 object-contain border border-stroke rounded p-1">
-                            <button type="button" @click="scanCoverAI()" :disabled="isAILoading" class="inline-flex items-center justify-center gap-2 rounded bg-primary py-2 px-4 text-sm font-medium text-white hover:bg-opacity-90 disabled:opacity-50">
+                            <button type="button" @click="scanCoverAI()" :disabled="isAILoading" style="background-color: #3C50E0; color: white; border-radius: 6px; padding: 8px 16px; font-weight: bold; border: none; cursor: pointer;" class="inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 shadow-md hover:brightness-110">
                                 <span x-show="!isAILoading"><i class="fa-solid fa-wand-magic-sparkles"></i> Pindai Sampul dgn AI</span>
                                 <span x-show="isAILoading"><i class="fa-solid fa-spinner fa-spin"></i> Memindai...</span>
                             </button>
