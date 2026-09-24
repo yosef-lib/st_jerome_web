@@ -123,8 +123,12 @@
                     <div class="md:col-span-3">
                         <label class="block text-sm font-medium mb-1">Gambar Sampul / Cover (Opsional)</label>
                         <input type="file" @change="handleFile" accept="image/*" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black">
-                        <div x-show="imagePreview" class="mt-2">
+                        <div x-show="imagePreview" class="mt-2 flex items-end gap-3">
                             <img :src="imagePreview" class="h-32 object-contain border border-stroke rounded p-1">
+                            <button type="button" @click="scanCoverAI()" :disabled="aiLoading" class="inline-flex items-center justify-center gap-2 rounded bg-meta-3 py-2 px-4 text-sm font-medium text-white hover:bg-opacity-90 disabled:opacity-50">
+                                <span x-show="!aiLoading"><i class="fa-solid fa-wand-magic-sparkles"></i> Pindai Sampul dgn AI</span>
+                                <span x-show="aiLoading"><i class="fa-solid fa-spinner fa-spin"></i> Memindai...</span>
+                            </button>
                         </div>
                     </div>
 
