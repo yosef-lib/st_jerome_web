@@ -3366,6 +3366,64 @@ def send_wa_notification(member_id, message):
 
 
 
+
+@app.route('/laporan_pertumbuhan')
+@login_required
+def laporan_pertumbuhan():
+    conn = database.get_db_connection()
+    rows = conn.execute("SELECT no_induk FROM buku WHERE status_buku != 'HILANG' AND status_buku != 'DIHAPUS'").fetchall()
+    conn.close()
+    
+    from collections import defaultdict
+    yearly_counts = defaultdict(int)
+    
+    for row in rows:
+        no_induk = row['no_induk']
+        if not no_induk: continue
+        
+        if '/' in no_induk:
+            parts = no_induk.split('/')
+            year_part = parts[-1].strip()
+            
+            # Sanitasi hanya angka
+            import re
+            year_part = re.sub(r'[^0-9]', '', year_part)
+            
+            if len(year_part) == 2:
+                if int(year_part) > 50:
+                    year = "19" + year_part
+                else:
+                    year = "20" + year_part
+                yearly_counts[year] += 1
+            elif len(year_part) == 4:
+                yearly_counts[year_part] += 1
+            else:
+                yearly_counts["Tidak Diketahui"] += 1
+        else:
+            yearly_counts["Tidak Diketahui"] += 1
+            
+    # Sort valid years
+    sorted_years = sorted([y for y in yearly_counts.keys() if y != "Tidak Diketahui"])
+    
+    labels = sorted_years
+    data = [yearly_counts[y] for y in sorted_years]
+    
+    # Cumulative data
+    cumulative = []
+    current_total = 0
+    for d in data:
+        current_total += d
+        cumulative.append(current_total)
+        
+    unknown_count = yearly_counts.get("Tidak Diketahui", 0)
+    
+    return render_template('laporan_pertumbuhan.html', 
+                           labels=labels, 
+                           data_yearly=data, 
+                           data_cumulative=cumulative,
+                           unknown_count=unknown_count)
+
+
 @app.route('/laporan_ddc')
 @login_required
 def laporan_ddc():

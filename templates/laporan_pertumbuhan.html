@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-title-md2 font-bold text-black">Laporan Pertumbuhan Koleksi (Berdasarkan No. Induk)</h2>
+    <nav>
+        <ol class="flex items-center gap-2">
+            <li><a class="font-medium" href="/dashboard">Dashboard /</a></li>
+            <li class="font-medium text-primary">Pertumbuhan Koleksi</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- INFO BOX -->
+<div class="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default mb-6">
+    <div class="flex items-center gap-4">
+        <div class="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2 text-primary">
+            <i class="fa-solid fa-circle-info text-xl"></i>
+        </div>
+        <div>
+            <h4 class="text-title-sm font-bold text-black mb-1">Informasi</h4>
+            <p class="text-sm font-medium">Tahun buku dihitung secara otomatis berdasarkan 2 digit terakhir atau pola pada <strong class="text-black">No. Induk (Barcode)</strong> eksemplar. Terdapat <strong class="text-danger">{{ unknown_count }} buku</strong> yang tahun inputnya tidak dapat diidentifikasi karena tidak sesuai standar pola No. Induk.</p>
+        </div>
+    </div>
+</div>
+
+<!-- CHART GRAFIK PERTUMBUHAN -->
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <!-- CHART 1: Penambahan Per Tahun (Bar) -->
+    <div class="rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default sm:px-7.5">
+        <h3 class="text-xl font-bold text-black mb-2">Penambahan Koleksi Tahunan</h3>
+        <p class="text-sm font-medium mb-6">Jumlah buku baru yang diinput per tahun</p>
+        <div id="chartBar"></div>
+    </div>
+    
+    <!-- CHART 2: Kumulatif Total (Line) -->
+    <div class="rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default sm:px-7.5">
+        <h3 class="text-xl font-bold text-black mb-2">Total Pertumbuhan Koleksi</h3>
+        <p class="text-sm font-medium mb-6">Akumulasi jumlah keseluruhan buku dari waktu ke waktu</p>
+        <div id="chartLine"></div>
+    </div>
+</div>
+
+<!-- TABEL DATA -->
+<div class="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default sm:px-7.5 mt-6 xl:pb-1">
+    <h3 class="text-xl font-bold text-black mb-4">Rincian Data</h3>
+    <div class="max-w-full overflow-x-auto">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="bg-gray-2 text-left">
+                    <th class="py-4 px-4 font-medium text-black xl:pl-11">Tahun</th>
+                    <th class="py-4 px-4 font-medium text-black text-center">Tambahan Eksemplar Baru</th>
+                    <th class="py-4 px-4 font-medium text-black text-center">Total Akumulasi Buku</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(labels|length) %}
+                <tr class="{% if loop.index % 2 == 0 %}bg-gray-50{% endif %}">
+                    <td class="border-b border-[#eee] py-5 px-4 xl:pl-11">
+                        <p class="text-black font-semibold">{{ labels[i] }}</p>
+                    </td>
+                    <td class="border-b border-[#eee] py-5 px-4 text-center">
+                        <p class="text-success font-semibold">+ {{ data_yearly[i] }}</p>
+                    </td>
+                    <td class="border-b border-[#eee] py-5 px-4 text-center">
+                        <p class="text-primary font-bold">{{ data_cumulative[i] }}</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Load ApexCharts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const labels = {{ labels | tojson }};
+        const dataYearly = {{ data_yearly | tojson }};
+        const dataCumulative = {{ data_cumulative | tojson }};
+
+        // Chart 1: Bar Chart (Penambahan Tahunan)
+        const optionsBar = {
+            series: [{
+                name: 'Buku Baru',
+                data: dataYearly
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: { show: false },
+                fontFamily: 'Satoshi, sans-serif'
+            },
+            colors: ['#3C50E0'],
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    columnWidth: '50%',
+                }
+            },
+            dataLabels: { enabled: true },
+            stroke: { width: 2, colors: ['transparent'] },
+            xaxis: {
+                categories: labels,
+            },
+            yaxis: {
+                title: { text: 'Jumlah Eksemplar' }
+            },
+            fill: { opacity: 1 },
+            tooltip: {
+                y: { formatter: function (val) { return val + " buku" } }
+            }
+        };
+
+        const chartBar = new ApexCharts(document.querySelector("#chartBar"), optionsBar);
+        chartBar.render();
+
+        // Chart 2: Line Chart (Kumulatif)
+        const optionsLine = {
+            series: [{
+                name: 'Total Koleksi',
+                data: dataCumulative
+            }],
+            chart: {
+                type: 'area',
+                height: 350,
+                toolbar: { show: false },
+                fontFamily: 'Satoshi, sans-serif'
+            },
+            colors: ['#10B981'],
+            dataLabels: { enabled: false },
+            stroke: {
+                curve: 'smooth',
+                width: 3
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.7,
+                    opacityTo: 0.1,
+                    stops: [0, 90, 100]
+                }
+            },
+            xaxis: {
+                categories: labels,
+            },
+            yaxis: {
+                title: { text: 'Total Eksemplar' }
+            },
+            tooltip: {
+                y: { formatter: function (val) { return val + " buku" } }
+            }
+        };
+
+        const chartLine = new ApexCharts(document.querySelector("#chartLine"), optionsLine);
+        chartLine.render();
+    });
+</script>
+{% endblock %}
