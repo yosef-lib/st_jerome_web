@@ -125,9 +125,9 @@
                         <input type="file" @change="handleFile" accept="image/*" class="w-full border border-stroke rounded px-3 py-2 outline-none focus:border-primary text-black">
                         <div x-show="imagePreview" class="mt-2 flex items-end gap-3">
                             <img :src="imagePreview" class="h-32 object-contain border border-stroke rounded p-1">
-                            <button type="button" @click="scanCoverAI()" :disabled="aiLoading" class="inline-flex items-center justify-center gap-2 rounded bg-meta-3 py-2 px-4 text-sm font-medium text-white hover:bg-opacity-90 disabled:opacity-50">
-                                <span x-show="!aiLoading"><i class="fa-solid fa-wand-magic-sparkles"></i> Pindai Sampul dgn AI</span>
-                                <span x-show="aiLoading"><i class="fa-solid fa-spinner fa-spin"></i> Memindai...</span>
+                            <button type="button" @click="scanCoverAI()" :disabled="isAILoading" class="inline-flex items-center justify-center gap-2 rounded bg-meta-3 py-2 px-4 text-sm font-medium text-white hover:bg-opacity-90 disabled:opacity-50">
+                                <span x-show="!isAILoading"><i class="fa-solid fa-wand-magic-sparkles"></i> Pindai Sampul dgn AI</span>
+                                <span x-show="isAILoading"><i class="fa-solid fa-spinner fa-spin"></i> Memindai...</span>
                             </button>
                         </div>
                     </div>
@@ -307,6 +307,55 @@ document.addEventListener('alpine:init', () => {
         },
         
         
+        
+        async scanCoverAI() {
+            if (!this.imageFile) return;
+            
+            this.isAILoading = true;
+            let formData = new FormData();
+            formData.append('image', this.imageFile);
+            
+            try {
+                const res = await fetch('/api/ai/scan_cover', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const json = await res.json();
+                if (json.status === 'success') {
+                    if(json.data.judul) this.form.judul = json.data.judul;
+                    if(json.data.pengarang) this.form.pengarang = json.data.pengarang;
+                    if(json.data.penerbit) this.form.penerbit = json.data.penerbit;
+                    
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Metadata berhasil diekstrak dari gambar!',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                } else {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Gagal!', json.message, 'error');
+                    } else {
+                        alert(json.message);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Error!', 'Terjadi kesalahan jaringan atau server saat memindai sampul.', 'error');
+                } else {
+                    alert('Error server.');
+                }
+            } finally {
+                this.isAILoading = false;
+            }
+        },
+
         async autoFillAI() {
             let query = this.form.isbn || this.form.judul;
             if (!query.trim()) {
