@@ -2829,6 +2829,61 @@ def list_ai_models():
             models.append(m.name)
     return jsonify(models)
 
+
+@app.route('/api/ai/scan_cover', methods=['POST'])
+@api_login_required
+def api_ai_scan_cover():
+    if 'image' not in request.files:
+        return jsonify({'status': 'error', 'message': 'Tidak ada gambar yang diunggah.'})
+        
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'File gambar kosong.'})
+        
+    conn = database.get_db_connection()
+    api_key_row = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'GEMINI_API_KEY'").fetchone()
+    conn.close()
+    
+    if not api_key_row or not api_key_row['nilai']:
+        return jsonify({'status': 'error', 'message': 'API Key Gemini belum diatur di menu Pengaturan.'})
+        
+    try:
+        import google.generativeai as genai
+        import PIL.Image
+        import io
+        
+        # Read image to memory
+        img_bytes = file.read()
+        img = PIL.Image.open(io.BytesIO(img_bytes))
+        
+        genai.configure(api_key=api_key_row['nilai'])
+        model = genai.GenerativeModel('gemini-3.6-flash')
+        
+        prompt = '''Anda adalah pakar pustakawan. 
+Lihat gambar sampul buku ini dan ekstrak metadatanya.
+Kembalikan HANYA format JSON murni.
+Gunakan persis key berikut (jika tidak ada di sampul, isi dengan string kosong ""):
+{
+  "judul": "...",
+  "pengarang": "...",
+  "penerbit": "..."
+}'''
+        response = model.generate_content([prompt, img])
+        
+        import re, json
+        json_str = response.text
+        json_str = re.sub(r'```json
+?', '', json_str)
+        json_str = re.sub(r'```
+?', '', json_str)
+        
+        data = json.loads(json_str.strip())
+        return jsonify({'status': 'success', 'data': data})
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @app.route('/api/ai/metadata', methods=['POST'])
 @api_login_required
 def api_ai_metadata():
