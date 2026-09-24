@@ -3356,3 +3356,25 @@ def laporan_koleksi():
 @app.route('/api/version', methods=['GET'])
 def api_version():
     return jsonify({'version': '2b2fa3d-fix-401', 'status': 'ok'})
+
+@app.route('/debug_schema')
+def debug_schema():
+    conn = database.get_db_connection()
+    try:
+        r_schema = conn.execute("SELECT sql FROM sqlite_master WHERE name='reservasi'").fetchone()
+        a_schema = conn.execute("SELECT sql FROM sqlite_master WHERE name='anggota'").fetchone()
+        
+        # Test query to see where it breaks
+        error_msg = 'NO_ERROR'
+        try:
+            conn.execute("SELECT r.id, r.member_id, a.telepon, a.nama FROM reservasi r JOIN anggota a ON r.member_id = a.member_id LIMIT 1")
+        except Exception as e:
+            error_msg = str(e)
+            
+        return jsonify({
+            'reservasi': r_schema['sql'] if r_schema else 'TABLE NOT FOUND',
+            'anggota': a_schema['sql'] if a_schema else 'TABLE NOT FOUND',
+            'test_error': error_msg
+        })
+    finally:
+        conn.close()
