@@ -1971,10 +1971,10 @@ def api_return():
             conn.execute("UPDATE reservasi SET status = 'Tersedia' WHERE id = ?", (reservasi['id'],))
             # Kirim notifikasi WA
             if reservasi['telepon']:
-                res_msg = f"?? *NOTIFIKASI ANTRIAN BUKU*\n\n"
+                res_msg = f" *NOTIFIKASI ANTRIAN BUKU*\n\n"
                 res_msg += f"Halo {reservasi['nama']}, buku yang Anda antre:\n"
-                res_msg += f"?? *{loan['judul']}*\n\n"
-                res_msg += f"Saat ini SUDAH TERSEDIA dan siap dipinjam! Silakan ambil di Perpustakaan St. Jerome paling lambat dalam 2x24 jam sebelum dialihkan ke pengantre berikutnya."
+                res_msg += f" *{loan['judul']}*\n\n"
+                res_msg += f"Saat ini SUDAH TERSEDIA dan siap dipinjam! Silakan ambil di Perpustakaan St. Jerome.\nTerima Kasih"
                 send_wa_notification(reservasi['member_id'], res_msg)
     
         if denda > 0:
@@ -1989,9 +1989,9 @@ def api_return():
         conn.close()
     conn.close()
     
-    wa_msg = f"? *STRUK PENGEMBALIAN ST. JEROME*\n\n"
+    wa_msg = f" *STRUK PENGEMBALIAN ST. JEROME*\n\n"
     wa_msg += f"Halo, Anda telah mengembalikan buku:\n"
-    wa_msg += f"?? *{loan['judul']}*\n"
+    wa_msg += f" *{loan['judul']}*\n"
     wa_msg += f"Barcode: {book_id}\n"
     if denda > 0:
         wa_msg += f"Keterlambatan: {terlambat_hari} hari\n"
