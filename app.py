@@ -2802,6 +2802,66 @@ def api_biblio_search():
     conn.close()
     return jsonify(results)
 
+
+@app.route('/api/ai/metadata', methods=['POST'])
+@api_login_required
+def api_ai_metadata():
+    data = request.json
+    query = data.get('query', '').strip()
+    
+    if not query:
+        return jsonify({'status': 'error', 'message': 'Judul atau ISBN harus diisi.'})
+        
+    conn = database.get_db_connection()
+    api_key_row = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'gemini_api_key'").fetchone()
+    conn.close()
+    
+    if not api_key_row or not api_key_row['nilai']:
+        return jsonify({'status': 'error', 'message': 'API Key Gemini belum diatur di menu Pengaturan.'})
+        
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key_row['nilai'])
+        model = genai.GenerativeModel('gemini-3.6-flash')
+        
+        prompt = f'''Anda adalah asisten pakar katalogisasi perpustakaan (DDC). 
+Carikan metadata untuk buku dengan kata kunci/ISBN berikut: "{query}"
+
+Kembalikan HANYA format JSON murni (tanpa markdown backticks, tanpa kata-kata lain).
+Gunakan persis key berikut (jika tidak tahu, isi dengan string kosong ""):
+{{
+  "judul": "...",
+  "pengarang": "...",
+  "penerbit": "...",
+  "tempat_terbit": "...",
+  "tahun_terbit": "...",
+  "isbn": "...",
+  "klasifikasi": "...", 
+  "subjek": "..."
+}}
+Note: "klasifikasi" diisi HANYA dengan angka DDC (contoh: "200" atau "813").
+'''
+        response = model.generate_content(prompt)
+        import json
+        
+        # Bersihkan markdown json block jika AI bandel
+        text = response.text.strip()
+        if text.startswith('```json'):
+            text = text[7:]
+        if text.startswith('```'):
+            text = text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+            
+        metadata = json.loads(text.strip())
+        return jsonify({'status': 'success', 'data': metadata})
+        
+    except Exception as e:
+        error_str = str(e)
+        if '429' in error_str or 'Quota exceeded' in error_str:
+            return jsonify({'status': 'error', 'message': 'Kuota API Gemini Anda telah habis (Error 429). Silakan periksa limit/tagihan API Google Anda.'})
+        return jsonify({'status': 'error', 'message': 'Gagal mengambil data dari AI: ' + error_str})
+
 @app.route('/api/buku/input_batch', methods=['POST'])
 @api_login_required
 def api_input_batch():
