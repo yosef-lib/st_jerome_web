@@ -584,6 +584,13 @@ def api_scan():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    conn = database.get_db_connection()
+
+    # AUTO-CANCEL RESERVASI: Batalkan reservasi yang lebih dari 1x24 jam (Hanya jika status = 'Aktif' atau 'MENUNGGU')
+    conn.execute("UPDATE reservasi SET status = 'Batal (Kedaluwarsa)' WHERE status IN ('Aktif', 'MENUNGGU') AND julianday('now', 'localtime') - julianday(tanggal) > 1")
+    conn.commit()
+
+    conn.close()
     lokasi = request.args.get('lokasi')
     if not lokasi:
         return redirect(url_for('dashboard', lokasi='IMAVI'))
