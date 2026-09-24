@@ -302,6 +302,52 @@ document.addEventListener('alpine:init', () => {
             this.notif.show = false;
         },
         
+        
+        async autoFillAI() {
+            let query = this.form.isbn || this.form.judul;
+            if (!query.trim()) {
+                Swal.fire({icon: 'warning', title: 'Kosong', text: 'Ketik Judul atau ISBN terlebih dahulu!'});
+                return;
+            }
+            
+            this.isAILoading = true;
+            try {
+                const response = await fetch('/api/ai/metadata', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ query: query })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    const d = result.data;
+                    if(d.judul && !this.form.judul) this.form.judul = d.judul;
+                    if(d.pengarang) this.form.pengarang = d.pengarang;
+                    if(d.penerbit) this.form.penerbit = d.penerbit;
+                    if(d.tempat_terbit) this.form.tempat_terbit = d.tempat_terbit;
+                    if(d.tahun_terbit) this.form.tahun_terbit = d.tahun_terbit;
+                    if(d.isbn && !this.form.isbn) this.form.isbn = d.isbn;
+                    if(d.klasifikasi) this.form.klasifikasi = d.klasifikasi;
+                    if(d.subjek) this.form.subjek = d.subjek;
+                    
+                    Swal.fire({
+                        icon: 'success', 
+                        title: 'AI Berhasil', 
+                        text: 'Metadata buku telah diisi secara otomatis.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } else {
+                    Swal.fire({icon: 'error', title: 'Gagal', text: result.message});
+                }
+            } catch (err) {
+                Swal.fire({icon: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan atau server.'});
+            } finally {
+                this.isAILoading = false;
+            }
+        },
+
         async submitForm() {
             this.isSubmitting = true;
             this.notif.show = false;
