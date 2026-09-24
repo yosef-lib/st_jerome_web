@@ -14,15 +14,15 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-slate-50 border border-stroke rounded-lg p-4 text-center">
                 <p class="text-xs text-slate-500 mb-1">Total Buku di Katalog</p>
-                <p class="text-3xl font-bold text-slate-700" x-text="stats.total || '-'"></p>
+                <p class="text-3xl font-bold text-slate-700" x-text="stats.total !== undefined ? stats.total : '-'"></p>
             </div>
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                 <p class="text-xs text-green-600 mb-1">✅ Sudah Punya Sampul</p>
-                <p class="text-3xl font-bold text-green-600" x-text="stats.punya_sampul || '-'"></p>
+                <p class="text-3xl font-bold text-green-600" x-text="stats.punya_sampul !== undefined ? stats.punya_sampul : '-'"></p>
             </div>
             <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
                 <p class="text-xs text-red-500 mb-1">❌ Belum Ada Sampul</p>
-                <p class="text-3xl font-bold text-red-500" x-text="stats.belum_sampul || '-'"></p>
+                <p class="text-3xl font-bold text-red-500" x-text="stats.belum_sampul !== undefined ? stats.belum_sampul : '-'"></p>
             </div>
         </div>
         <!-- Progress Bar -->
@@ -242,10 +242,20 @@ document.addEventListener('alpine:init', () => {
                                 const gQuery = encodeURIComponent((book.judul || '') + ' ' + (book.pengarang || ''));
                                 const gRes = await fetch('https://www.googleapis.com/books/v1/volumes?q=' + gQuery);
                                 if (gRes.status === 429) {
-                                    this.robot.error = "Google Books sementara membatasi. Silakan klik 'Cari' lagi dalam 1 menit.";
-                                    this.robot.is_running = false;
-                                    this.robot.current_book = "Terhenti sementara";
-                                    return;
+                                    let wait = 60;
+                                    while (wait > 0) {
+                                        if (this.shouldStop) {
+                                            this.robot.error = "Dihentikan manual.";
+                                            this.robot.is_running = false;
+                                            return;
+                                        }
+                                        this.robot.error = `Google Books membatasi. Menunggu otomatis ${wait} detik...`;
+                                        await new Promise(r => setTimeout(r, 1000));
+                                        wait--;
+                                    }
+                                    this.robot.error = "";
+                                    i--; // Ulangi buku ini
+                                    continue;
                                 }
                                 const gData = await gRes.json();
                                 if (gData.items && gData.items.length > 0) {
