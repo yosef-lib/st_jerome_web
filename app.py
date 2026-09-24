@@ -2223,14 +2223,35 @@ def api_sampul_update():
     
     if not biblio_id or not image_url:
         return jsonify({'status': 'error', 'message': 'Data tidak lengkap'}), 400
-        
-    conn = database.get_db_connection()
-    conn.execute('UPDATE bibliografi SET image = ? WHERE id = ?', (image_url, biblio_id))
-    conn.commit()
-    conn.close()
+    
+    # Hanya simpan kalau benar-benar ada gambar (URL valid)
+    # Kalau NOT_FOUND, biarkan kosong supaya bisa dicoba lagi nanti
+    if image_url and image_url.startswith('http'):
+        conn = database.get_db_connection()
+        conn.execute('UPDATE bibliografi SET image = ? WHERE id = ?', (image_url, biblio_id))
+        conn.commit()
+        conn.close()
     
     return jsonify({'status': 'success'})
 
+@app.route('/api/sampul/stats', methods=['GET'])
+@api_login_required
+def api_sampul_stats():
+    conn = database.get_db_connection()
+    total = conn.execute('SELECT COUNT(*) as c FROM bibliografi').fetchone()['c']
+    punya_sampul = conn.execute(
+        "SELECT COUNT(*) as c FROM bibliografi WHERE image IS NOT NULL AND image != '' AND image != 'NOT_FOUND' AND image != 'RATE_LIMIT'"
+    ).fetchone()['c']
+    conn.close()
+    belum_sampul = total - punya_sampul
+    persen = round((punya_sampul / total * 100), 1) if total > 0 else 0
+    return jsonify({
+        'status': 'success',
+        'total': total,
+        'punya_sampul': punya_sampul,
+        'belum_sampul': belum_sampul,
+        'persen': persen
+    })
 
 
 @app.route('/api/opac/discover_cover', methods=['POST'])
