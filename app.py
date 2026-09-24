@@ -3365,6 +3365,67 @@ def send_wa_notification(member_id, message):
         pass
 
 
+
+@app.route('/laporan_ddc')
+@login_required
+def laporan_ddc():
+    conn = database.get_db_connection()
+    
+    # 1. Ambil data buku
+    rows = conn.execute("SELECT judul, klasifikasi FROM buku WHERE status_buku != 'HILANG' AND status_buku != 'DIHAPUS'").fetchall()
+    conn.close()
+    
+    # Kategori DDC
+    categories = {
+        '0': {'name': '000-099 Karya Umum', 'judul': set(), 'eksemplar': 0},
+        '1': {'name': '100-199 Filsafat & Psikologi', 'judul': set(), 'eksemplar': 0},
+        '2': {'name': '200-299 Agama / Teologi', 'judul': set(), 'eksemplar': 0},
+        '3': {'name': '300-399 Ilmu Sosial', 'judul': set(), 'eksemplar': 0},
+        '4': {'name': '400-499 Bahasa', 'judul': set(), 'eksemplar': 0},
+        '5': {'name': '500-599 Ilmu Murni', 'judul': set(), 'eksemplar': 0},
+        '6': {'name': '600-699 Ilmu Terapan / Teknologi', 'judul': set(), 'eksemplar': 0},
+        '7': {'name': '700-799 Seni & Olahraga', 'judul': set(), 'eksemplar': 0},
+        '8': {'name': '800-899 Kesusastraan', 'judul': set(), 'eksemplar': 0},
+        '9': {'name': '900-999 Sejarah & Geografi', 'judul': set(), 'eksemplar': 0},
+        'other': {'name': 'Tanpa DDC / Format Tidak Dikenali', 'judul': set(), 'eksemplar': 0}
+    }
+    
+    for row in rows:
+        judul = row['judul'].strip().lower()
+        klasifikasi = str(row['klasifikasi'] or '').strip()
+        
+        # Cari digit pertama (0-9)
+        import re
+        match = re.search(r'\d', klasifikasi)
+        if match:
+            first_digit = match.group(0)
+            cat = categories.get(first_digit)
+            if cat:
+                cat['eksemplar'] += 1
+                cat['judul'].add(judul)
+            else:
+                categories['other']['eksemplar'] += 1
+                categories['other']['judul'].add(judul)
+        else:
+            categories['other']['eksemplar'] += 1
+            categories['other']['judul'].add(judul)
+            
+    # Konversi set ke int count
+    results = []
+    for k, v in categories.items():
+        results.append({
+            'kategori': v['name'],
+            'total_judul': len(v['judul']),
+            'total_eksemplar': v['eksemplar']
+        })
+        
+    # Total
+    total_all_judul = sum([r['total_judul'] for r in results])
+    total_all_eksemplar = sum([r['total_eksemplar'] for r in results])
+    
+    return render_template('laporan_ddc.html', results=results, total_judul=total_all_judul, total_eksemplar=total_all_eksemplar)
+
+
 @app.route('/laporan_koleksi')
 @login_required
 def laporan_koleksi():
