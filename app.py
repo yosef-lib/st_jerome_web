@@ -383,11 +383,10 @@ def cetak_stiker_tas():
     import io
     from PIL import Image, ImageDraw, ImageFont
     
-    pages = []
-    A4_WIDTH = 2480
-    A4_HEIGHT = 3508
-    STICKER_WIDTH = 1890
-    STICKER_HEIGHT = 1181
+    A4_WIDTH = 3508  # Landscape A4 at 300 DPI
+    A4_HEIGHT = 2480
+    STICKER_WIDTH = 660
+    STICKER_HEIGHT = 440
 
     logo_path = os.path.join(app.root_path, 'static', 'img', 'logo_stiker_tas.png')
     if not os.path.exists(logo_path):
@@ -396,11 +395,8 @@ def cetak_stiker_tas():
     logo = Image.open(logo_path).convert('RGBA')
 
     try:
-        # Use Times New Roman or Georgia for the number to match the mockup
-        font_num_path = r'C:\Windows\Fonts	imesbd.ttf'
-        if not os.path.exists(font_num_path):
-            pass
-        font_large = ImageFont.truetype(font_num_path, 750)
+        font_num_path = os.path.join(app.root_path, 'static', 'fonts', 'timesbd.ttf')
+        font_large = ImageFont.truetype(font_num_path, 220)
     except:
         font_large = ImageFont.load_default()
 
@@ -408,25 +404,19 @@ def cetak_stiker_tas():
         sticker = Image.new('RGB', (STICKER_WIDTH, STICKER_HEIGHT), 'white')
         draw = ImageDraw.Draw(sticker)
         
-        # Draw Rounded Rectangle Border (Dark Brown)
-        # Pillow's rounded_rectangle is available in newer versions. 
-        # For safety across PIL versions, we can draw a normal rectangle with thick border, 
-        # or use rounded_rectangle if available.
         border_color = '#5A3315'
         try:
-            draw.rounded_rectangle([20, 20, STICKER_WIDTH-20, STICKER_HEIGHT-20], radius=80, outline=border_color, width=15)
+            draw.rounded_rectangle([10, 10, STICKER_WIDTH-10, STICKER_HEIGHT-10], radius=40, outline=border_color, width=6)
         except AttributeError:
-            draw.rectangle([20, 20, STICKER_WIDTH-20, STICKER_HEIGHT-20], outline=border_color, width=15)
+            draw.rectangle([10, 10, STICKER_WIDTH-10, STICKER_HEIGHT-10], outline=border_color, width=6)
         
-        # Logo placement (Left side)
         logo_w, logo_h = logo.size
-        # Make logo take up about 65% of width
-        target_w = 1200
+        target_w = 420
         ratio = target_w / logo_w
         new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
         logo_resized = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
         
-        logo_x = 80
+        logo_x = 30
         logo_y = (STICKER_HEIGHT - new_h) // 2
         
         if logo_resized.mode == 'RGBA':
@@ -434,32 +424,39 @@ def cetak_stiker_tas():
         else:
             sticker.paste(logo_resized, (logo_x, logo_y))
             
-        # Vertical Line
-        line_x = logo_x + new_w + 80
-        draw.line([(line_x, 250), (line_x, STICKER_HEIGHT - 250)], fill=border_color, width=8)
+        line_x = logo_x + new_w + 20
+        draw.line([(line_x, 60), (line_x, STICKER_HEIGHT - 60)], fill=border_color, width=4)
         
-        # Number (Right side)
         text_num = str(num)
         bbox_num = draw.textbbox((0,0), text_num, font=font_large)
         num_w = bbox_num[2] - bbox_num[0]
         num_h = bbox_num[3] - bbox_num[1]
         
-        # Center number in remaining space
         remaining_width = STICKER_WIDTH - line_x
         num_x = line_x + (remaining_width - num_w) // 2
-        
-        # Y centering
-        num_y = (STICKER_HEIGHT - num_h) // 2 - 120 # slight offset upwards for visual balance
-        draw.text((num_x, num_y), text_num, fill='#003366', font=font_large) # Navy Blue
+        num_y = (STICKER_HEIGHT - num_h) // 2 - 45 
+        draw.text((num_x, num_y), text_num, fill='#003366', font=font_large) 
         
         return sticker
 
+    page = Image.new('RGB', (A4_WIDTH, A4_HEIGHT), 'white')
+    
+    margin_x = (A4_WIDTH - (5 * STICKER_WIDTH)) // 2
+    margin_y = (A4_HEIGHT - (5 * STICKER_HEIGHT)) // 2
+    
     for i in range(1, 26):
-        pages.append(create_sticker(i))
+        sticker = create_sticker(i)
+        
+        row = (i - 1) // 5
+        col = (i - 1) % 5
+        
+        x_pos = margin_x + col * STICKER_WIDTH
+        y_pos = margin_y + row * STICKER_HEIGHT
+        
+        page.paste(sticker, (x_pos, y_pos))
 
     pdf_bytes = io.BytesIO()
-    if pages:
-        pages[0].save(pdf_bytes, format='PDF', save_all=True, append_images=pages[1:], resolution=300.0)
+    page.save(pdf_bytes, format='PDF', resolution=300.0)
     pdf_bytes.seek(0)
     
     return send_file(pdf_bytes, mimetype='application/pdf', as_attachment=False, download_name='Stiker_Tas_StJerome.pdf')
