@@ -456,11 +456,6 @@ def cetak_stiker_tas():
 
     for i in range(1, 26):
         pages.append(create_sticker(i))
-        else:
-            x_pos = (A4_WIDTH - STICKER_WIDTH) // 2
-            y_pos = 300 + STICKER_HEIGHT + 300
-            current_page.paste(sticker, (x_pos, y_pos))
-            pages.append(current_page)
 
     pdf_bytes = io.BytesIO()
     if pages:
