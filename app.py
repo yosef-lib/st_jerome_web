@@ -376,7 +376,100 @@ def add_antrean_existing():
     return jsonify({'status': 'success', 'data': buku_dict})
 
 
+
+@app.route('/cetak_stiker_tas')
+@login_required
+def cetak_stiker_tas():
+    import io
+    from PIL import Image, ImageDraw, ImageFont
+    
+    pages = []
+    A4_WIDTH = 2480
+    A4_HEIGHT = 3508
+    STICKER_WIDTH = 1890
+    STICKER_HEIGHT = 1181
+
+    logo_path = os.path.join(app.root_path, 'static', 'img', 'logo_stiker_tas.png')
+    if not os.path.exists(logo_path):
+        return "Logo image not found.", 404
+        
+    logo = Image.open(logo_path).convert('RGBA')
+
+    try:
+        font_large = ImageFont.truetype(r'C:\Windows\Fontsrialbd.ttf', 450)
+        font_small = ImageFont.truetype(r'C:\Windows\Fontsrialbd.ttf', 130)
+    except:
+        font_large = ImageFont.load_default()
+        font_small = ImageFont.load_default()
+
+    def create_sticker(num):
+        sticker = Image.new('RGB', (STICKER_WIDTH, STICKER_HEIGHT), 'white')
+        draw = ImageDraw.Draw(sticker)
+        
+        draw.rectangle([0, 0, STICKER_WIDTH-1, STICKER_HEIGHT-1], outline='gray', width=3)
+        
+        logo_w, logo_h = logo.size
+        ratio = min(900/logo_w, 900/logo_h)
+        new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
+        logo_resized = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        
+        logo_x = 50 + (900 - new_w) // 2
+        logo_y = (STICKER_HEIGHT - new_h) // 2
+        
+        if logo_resized.mode == 'RGBA':
+            sticker.paste(logo_resized, (logo_x, logo_y), logo_resized)
+        else:
+            sticker.paste(logo_resized, (logo_x, logo_y))
+            
+        text_tas = "TAS"
+        bbox_tas = draw.textbbox((0,0), text_tas, font=font_small)
+        tas_w = bbox_tas[2] - bbox_tas[0]
+        tas_x = 950 + (900 - tas_w) // 2
+        tas_y = 250
+        draw.text((tas_x, tas_y), text_tas, fill='#0D274D', font=font_small)
+        
+        text_no = "NO."
+        bbox_no = draw.textbbox((0,0), text_no, font=font_small)
+        no_w = bbox_no[2] - bbox_no[0]
+        no_x = 950 + (900 - no_w) // 2
+        no_y = 400
+        draw.text((no_x, no_y), text_no, fill='#0D274D', font=font_small)
+        
+        text_num = str(num)
+        bbox_num = draw.textbbox((0,0), text_num, font=font_large)
+        num_w = bbox_num[2] - bbox_num[0]
+        num_x = 950 + (900 - num_w) // 2
+        num_y = 520
+        draw.text((num_x, num_y), text_num, fill='#B38B42', font=font_large)
+        
+        return sticker
+
+    current_page = None
+    for i in range(1, 26):
+        sticker = create_sticker(i)
+        
+        if i % 2 == 1:
+            current_page = Image.new('RGB', (A4_WIDTH, A4_HEIGHT), 'white')
+            x_pos = (A4_WIDTH - STICKER_WIDTH) // 2
+            y_pos = 400
+            current_page.paste(sticker, (x_pos, y_pos))
+            if i == 25:
+                pages.append(current_page)
+        else:
+            x_pos = (A4_WIDTH - STICKER_WIDTH) // 2
+            y_pos = 400 + STICKER_HEIGHT + 300
+            current_page.paste(sticker, (x_pos, y_pos))
+            pages.append(current_page)
+
+    pdf_bytes = io.BytesIO()
+    if pages:
+        pages[0].save(pdf_bytes, format='PDF', save_all=True, append_images=pages[1:], resolution=300.0)
+    pdf_bytes.seek(0)
+    
+    return send_file(pdf_bytes, mimetype='application/pdf', as_attachment=False, download_name='Stiker_Tas_StJerome.pdf')
+
 @app.route('/cetak_sirkulasi')
+
 @login_required
 def cetak_sirkulasi():
     search = request.args.get('search', '')
