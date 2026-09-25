@@ -381,84 +381,52 @@ def add_antrean_existing():
 @login_required
 def cetak_stiker_tas():
     import io
-    from PIL import Image, ImageDraw, ImageFont
+    import os
+    from PIL import Image
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.units import cm
+    from reportlab.lib.utils import ImageReader
     
-    STICKER_WIDTH = 1890
-    STICKER_HEIGHT = 1181
-
     logo_path = os.path.join(app.root_path, 'static', 'img', 'logo_stiker_tas.png')
     if not os.path.exists(logo_path):
         return "Logo image not found.", 404
         
+    # Crop logo memakai Pillow agar bingkai biru hilang
+    # Bingkai biru berada di koordinat y:176-492 dan x:41-982.
+    # Kita crop tepat di dalam area tersebut: (105, 190, 940, 475)
     logo = Image.open(logo_path).convert('RGBA')
-
-    try:
-        font_num_path = os.path.join(app.root_path, 'static', 'fonts', 'timesbd.ttf')
-        font_large = ImageFont.truetype(font_num_path, 700)
-    except:
-        font_large = ImageFont.load_default()
-
-    def create_sticker(num):
-        sticker = Image.new('RGB', (STICKER_WIDTH, STICKER_HEIGHT), 'white')
-        draw = ImageDraw.Draw(sticker)
-        
-        border_color = '#5A3315'
-        
-        # --- OUTER BORDER (coklat tua, sudut melengkung) ---
-        try:
-            draw.rounded_rectangle([25, 25, STICKER_WIDTH-25, STICKER_HEIGHT-25], radius=90, outline=border_color, width=18)
-        except AttributeError:
-            draw.rectangle([25, 25, STICKER_WIDTH-25, STICKER_HEIGHT-25], outline=border_color, width=18)
-        
-        # --- LOGO: Crop agresif untuk buang semua bingkai biru & putih ---
-        # Logo asli 1024x682 — bingkai biru ada di ~80-90px dari tiap sisi
-        logo_cropped = logo.crop((100, 100, logo.width - 100, logo.height - 100))
-        logo_w, logo_h = logo_cropped.size
-        
-        # Isi area kiri sampai garis vertikal (x=1380)
-        # Margin kiri dari border: 60px. Area logo = 1380 - 60 = 1320px lebar
-        # Margin atas/bawah: 80px. Area logo = 1181 - 160 = 1021px tinggi
-        max_w = 1320
-        max_h = STICKER_HEIGHT - 160
-        ratio_w = max_w / logo_w
-        ratio_h = max_h / logo_h
-        ratio = min(ratio_w, ratio_h)
-        new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
-        
-        logo_resized = logo_cropped.resize((new_w, new_h), Image.Resampling.LANCZOS)
-        
-        # Posisikan logo: secara horizontal mulai dari kiri, vertikal di tengah
-        logo_x = 60 + (max_w - new_w) // 2
-        logo_y = (STICKER_HEIGHT - new_h) // 2
-        
-        if logo_resized.mode == 'RGBA':
-            sticker.paste(logo_resized, (logo_x, logo_y), logo_resized)
-        else:
-            sticker.paste(logo_resized, (logo_x, logo_y))
-            
-        # --- GARIS PEMISAH VERTIKAL ---
-        line_x = 1420
-        draw.line([(line_x, 120), (line_x, STICKER_HEIGHT - 120)], fill=border_color, width=8)
-        
-        # --- ANGKA di sebelah kanan garis ---
-        text_num = str(num)
-        bbox_num = draw.textbbox((0, 0), text_num, font=font_large)
-        num_w = bbox_num[2] - bbox_num[0]
-        num_h = bbox_num[3] - bbox_num[1]
-        
-        right_area_w = STICKER_WIDTH - line_x - 30
-        num_x = line_x + (right_area_w - num_w) // 2
-        num_y = (STICKER_HEIGHT - num_h) // 2 - 120
-        draw.text((num_x, num_y), text_num, fill='#003366', font=font_large)
-        
-        return sticker
-
-    pages = []
-    for i in range(1, 26):
-        pages.append(create_sticker(i))
+    logo_cropped = logo.crop((105, 190, 940, 475))
+    logo_io = io.BytesIO()
+    logo_cropped.save(logo_io, format="PNG")
+    logo_io.seek(0)
+    img_reader = ImageReader(logo_io)
 
     pdf_bytes = io.BytesIO()
-    pages[0].save(pdf_bytes, format='PDF', save_all=True, append_images=pages[1:], resolution=300.0)
+    # Buat halaman tepat 16cm x 10cm
+    c = canvas.Canvas(pdf_bytes, pagesize=(16*cm, 10*cm))
+
+    for num in range(1, 26):
+        # --- BINGKAI LUAR (Coklat Tua) ---
+        c.setStrokeColorRGB(90/255.0, 51/255.0, 21/255.0) # #5A3315
+        c.setLineWidth(4)
+        c.roundRect(0.3*cm, 0.3*cm, 15.4*cm, 9.4*cm, 0.5*cm, stroke=1, fill=0)
+
+        # --- LOGO (Kiri) ---
+        c.drawImage(img_reader, 0.5*cm, 0.5*cm, width=11.5*cm, height=9*cm, preserveAspectRatio=True, anchor='c')
+
+        # --- GARIS PEMISAH VERTIKAL ---
+        c.setLineWidth(2)
+        c.line(12.5*cm, 1*cm, 12.5*cm, 9*cm)
+
+        # --- ANGKA (Kanan) ---
+        c.setFont("Times-Bold", 110)
+        c.setFillColorRGB(0, 51/255.0, 102/255.0) # #003366
+        # Posisi di tengah area kanan: x ~ 14.1cm, y ~ 4cm
+        c.drawCentredString(14.1*cm, 4.0*cm, str(num))
+        
+        c.showPage()
+        
+    c.save()
     pdf_bytes.seek(0)
     
     return send_file(pdf_bytes, mimetype='application/pdf', as_attachment=False, download_name='Stiker_Tas_StJerome.pdf')
