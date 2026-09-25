@@ -383,7 +383,6 @@ def cetak_stiker_tas():
     import io
     from PIL import Image, ImageDraw, ImageFont
     
-    # 16 cm x 10 cm at 300 DPI
     STICKER_WIDTH = 1890
     STICKER_HEIGHT = 1181
 
@@ -395,7 +394,7 @@ def cetak_stiker_tas():
 
     try:
         font_num_path = os.path.join(app.root_path, 'static', 'fonts', 'timesbd.ttf')
-        font_large = ImageFont.truetype(font_num_path, 600)
+        font_large = ImageFont.truetype(font_num_path, 700)
     except:
         font_large = ImageFont.load_default()
 
@@ -410,14 +409,26 @@ def cetak_stiker_tas():
         except AttributeError:
             draw.rectangle([30, 30, STICKER_WIDTH-30, STICKER_HEIGHT-30], outline=border_color, width=15)
         
-        # Logo 
-        logo_w, logo_h = logo.size
-        target_w = 1100
+        # Crop the blue border from the logo (50px from all sides)
+        logo_cropped = logo.crop((50, 50, logo.width-50, logo.height-50))
+        logo_w, logo_h = logo_cropped.size
+        
+        # Make logo fill up to the vertical line
+        # Vertical line is at x = 1400. Logo x starts at 60. Max width = 1400 - 60 - 60 = 1280.
+        target_w = 1280
         ratio = target_w / logo_w
         new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
-        logo_resized = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
         
-        logo_x = 80
+        # Prevent it from overflowing vertically just in case
+        if new_h > STICKER_HEIGHT - 100:
+            target_h = STICKER_HEIGHT - 100
+            ratio = target_h / logo_h
+            new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
+            
+        logo_resized = logo_cropped.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        
+        # Center logo vertically
+        logo_x = 60 + (1280 - new_w) // 2
         logo_y = (STICKER_HEIGHT - new_h) // 2
         
         if logo_resized.mode == 'RGBA':
@@ -425,8 +436,8 @@ def cetak_stiker_tas():
         else:
             sticker.paste(logo_resized, (logo_x, logo_y))
             
-        # Vertical Line
-        line_x = logo_x + new_w + 50
+        # Vertical Line at fixed position x=1400
+        line_x = 1400
         draw.line([(line_x, 150), (line_x, STICKER_HEIGHT - 150)], fill=border_color, width=10)
         
         # Number
@@ -437,7 +448,7 @@ def cetak_stiker_tas():
         
         remaining_width = STICKER_WIDTH - line_x
         num_x = line_x + (remaining_width - num_w) // 2
-        num_y = (STICKER_HEIGHT - num_h) // 2 - 120
+        num_y = (STICKER_HEIGHT - num_h) // 2 - 140 # Adjust vertical offset for font
         draw.text((num_x, num_y), text_num, fill='#003366', font=font_large) 
         
         return sticker
