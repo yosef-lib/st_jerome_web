@@ -396,25 +396,37 @@ def cetak_stiker_tas():
     logo = Image.open(logo_path).convert('RGBA')
 
     try:
-        font_path = os.path.join(app.root_path, 'static', 'fonts', 'arialbd.ttf')
-        font_large = ImageFont.truetype(font_path, 450)
-        font_small = ImageFont.truetype(font_path, 130)
+        # Use Times New Roman or Georgia for the number to match the mockup
+        font_num_path = r'C:\Windows\Fonts	imesbd.ttf'
+        if not os.path.exists(font_num_path):
+            font_num_path = r'C:\Windows\Fonts\georgiab.ttf'
+        font_large = ImageFont.truetype(font_num_path, 750)
     except:
         font_large = ImageFont.load_default()
-        font_small = ImageFont.load_default()
 
     def create_sticker(num):
         sticker = Image.new('RGB', (STICKER_WIDTH, STICKER_HEIGHT), 'white')
         draw = ImageDraw.Draw(sticker)
         
-        draw.rectangle([0, 0, STICKER_WIDTH-1, STICKER_HEIGHT-1], outline='gray', width=3)
+        # Draw Rounded Rectangle Border (Dark Brown)
+        # Pillow's rounded_rectangle is available in newer versions. 
+        # For safety across PIL versions, we can draw a normal rectangle with thick border, 
+        # or use rounded_rectangle if available.
+        border_color = '#5A3315'
+        try:
+            draw.rounded_rectangle([20, 20, STICKER_WIDTH-20, STICKER_HEIGHT-20], radius=80, outline=border_color, width=15)
+        except AttributeError:
+            draw.rectangle([20, 20, STICKER_WIDTH-20, STICKER_HEIGHT-20], outline=border_color, width=15)
         
+        # Logo placement (Left side)
         logo_w, logo_h = logo.size
-        ratio = min(900/logo_w, 900/logo_h)
+        # Make logo take up about 65% of width
+        target_w = 1200
+        ratio = target_w / logo_w
         new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
         logo_resized = logo.resize((new_w, new_h), Image.Resampling.LANCZOS)
         
-        logo_x = 50 + (900 - new_w) // 2
+        logo_x = 80
         logo_y = (STICKER_HEIGHT - new_h) // 2
         
         if logo_resized.mode == 'RGBA':
@@ -422,26 +434,23 @@ def cetak_stiker_tas():
         else:
             sticker.paste(logo_resized, (logo_x, logo_y))
             
-        text_tas = "TAS"
-        bbox_tas = draw.textbbox((0,0), text_tas, font=font_small)
-        tas_w = bbox_tas[2] - bbox_tas[0]
-        tas_x = 950 + (900 - tas_w) // 2
-        tas_y = 250
-        draw.text((tas_x, tas_y), text_tas, fill='#0D274D', font=font_small)
+        # Vertical Line
+        line_x = logo_x + new_w + 80
+        draw.line([(line_x, 250), (line_x, STICKER_HEIGHT - 250)], fill=border_color, width=8)
         
-        text_no = "NO."
-        bbox_no = draw.textbbox((0,0), text_no, font=font_small)
-        no_w = bbox_no[2] - bbox_no[0]
-        no_x = 950 + (900 - no_w) // 2
-        no_y = 400
-        draw.text((no_x, no_y), text_no, fill='#0D274D', font=font_small)
-        
+        # Number (Right side)
         text_num = str(num)
         bbox_num = draw.textbbox((0,0), text_num, font=font_large)
         num_w = bbox_num[2] - bbox_num[0]
-        num_x = 950 + (900 - num_w) // 2
-        num_y = 520
-        draw.text((num_x, num_y), text_num, fill='#B38B42', font=font_large)
+        num_h = bbox_num[3] - bbox_num[1]
+        
+        # Center number in remaining space
+        remaining_width = STICKER_WIDTH - line_x
+        num_x = line_x + (remaining_width - num_w) // 2
+        
+        # Y centering
+        num_y = (STICKER_HEIGHT - num_h) // 2 - 120 # slight offset upwards for visual balance
+        draw.text((num_x, num_y), text_num, fill='#003366', font=font_large) # Navy Blue
         
         return sticker
 
@@ -452,13 +461,13 @@ def cetak_stiker_tas():
         if i % 2 == 1:
             current_page = Image.new('RGB', (A4_WIDTH, A4_HEIGHT), 'white')
             x_pos = (A4_WIDTH - STICKER_WIDTH) // 2
-            y_pos = 400
+            y_pos = 300
             current_page.paste(sticker, (x_pos, y_pos))
             if i == 25:
                 pages.append(current_page)
         else:
             x_pos = (A4_WIDTH - STICKER_WIDTH) // 2
-            y_pos = 400 + STICKER_HEIGHT + 300
+            y_pos = 300 + STICKER_HEIGHT + 300
             current_page.paste(sticker, (x_pos, y_pos))
             pages.append(current_page)
 
