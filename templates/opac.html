@@ -220,7 +220,7 @@
                         <!-- Book Cover -->
                         <div class="w-24 shrink-0 mx-auto md:mx-0">
                             <template x-if="book.cover_url">
-                                <img :src="book.cover_url" class="w-24 h-36 object-cover rounded shadow-sm" alt="Cover" @error=".style.display='none'; .nextElementSibling.style.display='flex'">
+                                <img :src="book.cover_url" class="w-24 h-36 object-cover rounded shadow-sm" alt="Cover" @error="book.cover_url = null">
                             </template>
                             <div x-show="!book.cover_url" class="w-24 h-36 bg-slate-100 text-slate-300 rounded shadow-sm border border-slate-200 flex flex-col items-center justify-center">
                                 <i class="fa-solid fa-book text-2xl mb-2"></i>

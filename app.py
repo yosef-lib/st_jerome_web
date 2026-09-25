@@ -8,6 +8,12 @@ from functools import wraps
 
 app = Flask(__name__)
 
+from werkzeug.utils import secure_filename
+ALLOWED_EXTENSIONS_IMAGE = {'png', 'jpg', 'jpeg', 'webp'}
+def allowed_image(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_IMAGE
+
+
 def migrate_db():
     conn = database.get_db_connection()
     try:
@@ -65,7 +71,34 @@ def internal_error(error):
     }), 500
 
 
-app.secret_key = 'stjerome_secret_key_imavi_2026'
+
+# === Security Config (Anti-CSRF & Secret Key) ===
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True # Untuk HTTPS
+
+import secrets
+def get_or_create_secret_key():
+    import database
+    conn = database.get_db_connection()
+    try:
+        row = conn.execute("SELECT nilai FROM pengaturan_sistem WHERE kunci = 'FLASK_SECRET_KEY'").fetchone()
+        if row and row['nilai']:
+            key = row['nilai']
+        else:
+            key = secrets.token_hex(32)
+            conn.execute("INSERT OR REPLACE INTO pengaturan_sistem (kunci, nilai) VALUES (?, ?)", ('FLASK_SECRET_KEY', key))
+            conn.commit()
+    except Exception as e:
+        key = secrets.token_hex(32)
+    finally:
+        conn.close()
+    return key
+
+app.secret_key = get_or_create_secret_key()
+# ================================================
+
+
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7  # 7 days
@@ -3000,7 +3033,7 @@ def api_input_batch():
     image_filename = None
     if 'image' in request.files:
         file = request.files['image']
-        if file and file.filename != '':
+        if file and file.filename != '' and allowed_image(file.filename):
             filename = secure_filename(file.filename)
             upload_dir = os.path.join(app.root_path, 'static', 'uploads')
             os.makedirs(upload_dir, exist_ok=True)
