@@ -399,7 +399,7 @@ def cetak_stiker_tas():
         # Use Times New Roman or Georgia for the number to match the mockup
         font_num_path = r'C:\Windows\Fonts	imesbd.ttf'
         if not os.path.exists(font_num_path):
-            font_num_path = r'C:\Windows\Fonts\georgiab.ttf'
+            pass
         font_large = ImageFont.truetype(font_num_path, 750)
     except:
         font_large = ImageFont.load_default()
