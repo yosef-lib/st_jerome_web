@@ -396,8 +396,9 @@ def cetak_stiker_tas():
     logo = Image.open(logo_path).convert('RGBA')
 
     try:
-        font_large = ImageFont.truetype(r'C:\Windows\Fontsrialbd.ttf', 450)
-        font_small = ImageFont.truetype(r'C:\Windows\Fontsrialbd.ttf', 130)
+        font_path = os.path.join(app.root_path, 'static', 'fonts', 'arialbd.ttf')
+        font_large = ImageFont.truetype(font_path, 450)
+        font_small = ImageFont.truetype(font_path, 130)
     except:
         font_large = ImageFont.load_default()
         font_small = ImageFont.load_default()
