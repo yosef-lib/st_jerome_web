@@ -402,33 +402,33 @@ def cetak_stiker_tas():
         sticker = Image.new('RGB', (STICKER_WIDTH, STICKER_HEIGHT), 'white')
         draw = ImageDraw.Draw(sticker)
         
-        # Border
         border_color = '#5A3315'
-        try:
-            draw.rounded_rectangle([30, 30, STICKER_WIDTH-30, STICKER_HEIGHT-30], radius=80, outline=border_color, width=15)
-        except AttributeError:
-            draw.rectangle([30, 30, STICKER_WIDTH-30, STICKER_HEIGHT-30], outline=border_color, width=15)
         
-        # Crop the blue border from the logo (50px from all sides)
-        logo_cropped = logo.crop((50, 50, logo.width-50, logo.height-50))
+        # --- OUTER BORDER (coklat tua, sudut melengkung) ---
+        try:
+            draw.rounded_rectangle([25, 25, STICKER_WIDTH-25, STICKER_HEIGHT-25], radius=90, outline=border_color, width=18)
+        except AttributeError:
+            draw.rectangle([25, 25, STICKER_WIDTH-25, STICKER_HEIGHT-25], outline=border_color, width=18)
+        
+        # --- LOGO: Crop agresif untuk buang semua bingkai biru & putih ---
+        # Logo asli 1024x682 — bingkai biru ada di ~80-90px dari tiap sisi
+        logo_cropped = logo.crop((100, 100, logo.width - 100, logo.height - 100))
         logo_w, logo_h = logo_cropped.size
         
-        # Make logo fill up to the vertical line
-        # Vertical line is at x = 1400. Logo x starts at 60. Max width = 1400 - 60 - 60 = 1280.
-        target_w = 1280
-        ratio = target_w / logo_w
+        # Isi area kiri sampai garis vertikal (x=1380)
+        # Margin kiri dari border: 60px. Area logo = 1380 - 60 = 1320px lebar
+        # Margin atas/bawah: 80px. Area logo = 1181 - 160 = 1021px tinggi
+        max_w = 1320
+        max_h = STICKER_HEIGHT - 160
+        ratio_w = max_w / logo_w
+        ratio_h = max_h / logo_h
+        ratio = min(ratio_w, ratio_h)
         new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
         
-        # Prevent it from overflowing vertically just in case
-        if new_h > STICKER_HEIGHT - 100:
-            target_h = STICKER_HEIGHT - 100
-            ratio = target_h / logo_h
-            new_w, new_h = int(logo_w * ratio), int(logo_h * ratio)
-            
         logo_resized = logo_cropped.resize((new_w, new_h), Image.Resampling.LANCZOS)
         
-        # Center logo vertically
-        logo_x = 60 + (1280 - new_w) // 2
+        # Posisikan logo: secara horizontal mulai dari kiri, vertikal di tengah
+        logo_x = 60 + (max_w - new_w) // 2
         logo_y = (STICKER_HEIGHT - new_h) // 2
         
         if logo_resized.mode == 'RGBA':
@@ -436,20 +436,20 @@ def cetak_stiker_tas():
         else:
             sticker.paste(logo_resized, (logo_x, logo_y))
             
-        # Vertical Line at fixed position x=1400
-        line_x = 1400
-        draw.line([(line_x, 150), (line_x, STICKER_HEIGHT - 150)], fill=border_color, width=10)
+        # --- GARIS PEMISAH VERTIKAL ---
+        line_x = 1420
+        draw.line([(line_x, 120), (line_x, STICKER_HEIGHT - 120)], fill=border_color, width=8)
         
-        # Number
+        # --- ANGKA di sebelah kanan garis ---
         text_num = str(num)
-        bbox_num = draw.textbbox((0,0), text_num, font=font_large)
+        bbox_num = draw.textbbox((0, 0), text_num, font=font_large)
         num_w = bbox_num[2] - bbox_num[0]
         num_h = bbox_num[3] - bbox_num[1]
         
-        remaining_width = STICKER_WIDTH - line_x
-        num_x = line_x + (remaining_width - num_w) // 2
-        num_y = (STICKER_HEIGHT - num_h) // 2 - 140 # Adjust vertical offset for font
-        draw.text((num_x, num_y), text_num, fill='#003366', font=font_large) 
+        right_area_w = STICKER_WIDTH - line_x - 30
+        num_x = line_x + (right_area_w - num_w) // 2
+        num_y = (STICKER_HEIGHT - num_h) // 2 - 120
+        draw.text((num_x, num_y), text_num, fill='#003366', font=font_large)
         
         return sticker
 
