@@ -454,17 +454,8 @@ def cetak_stiker_tas():
         
         return sticker
 
-    current_page = None
     for i in range(1, 26):
-        sticker = create_sticker(i)
-        
-        if i % 2 == 1:
-            current_page = Image.new('RGB', (A4_WIDTH, A4_HEIGHT), 'white')
-            x_pos = (A4_WIDTH - STICKER_WIDTH) // 2
-            y_pos = 300
-            current_page.paste(sticker, (x_pos, y_pos))
-            if i == 25:
-                pages.append(current_page)
+        pages.append(create_sticker(i))
         else:
             x_pos = (A4_WIDTH - STICKER_WIDTH) // 2
             y_pos = 300 + STICKER_HEIGHT + 300
