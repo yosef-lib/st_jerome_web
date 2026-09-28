@@ -193,6 +193,7 @@ def get_antrean():
 @login_required
 def cetak_khusus():
     search = request.args.get('search', '')
+    mode = request.args.get('mode', '')
     page = int(request.args.get('page', 1))
     per_page = 15
     offset = (page - 1) * per_page
@@ -215,7 +216,7 @@ def cetak_khusus():
     
     total_pages = (total // per_page) + (1 if total % per_page > 0 else 0)
     
-    return render_template('cetak_khusus.html', koleksi_list=[dict(row) for row in koleksi], search=search, page=page, total_pages=total_pages)
+    return render_template('cetak_khusus.html', koleksi_list=[dict(row) for row in koleksi], search=search, page=page, total_pages=total_pages, mode=mode)
 
 @app.route('/api/cetak_khusus', methods=['POST'])
 @api_login_required

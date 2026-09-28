@@ -1,12 +1,17 @@
 {% extends 'layout.html' %}
 
-{% block page_title %}Cetak Stiker Khusus{% endblock %}
-{% block page_subtitle %}Pilih buku dan jenis stiker yang ingin dicetak{% endblock %}
+{% block page_title %}
+{% if mode == 'identitas' %}Cetak Label Identitas
+{% elif mode == 'punggung' %}Cetak Label Punggung
+{% elif mode == 'barcode' %}Cetak Barcode Eksemplar
+{% else %}Cetak Stiker Khusus{% endif %}
+{% endblock %}
+{% block page_subtitle %}Pilih buku yang ingin dicetak stikernya{% endblock %}
 
 {% block content %}
 <div class="flex flex-col gap-6">
     <!-- Opsi Cetak -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default">
+    <div class="rounded-sm border border-stroke bg-white shadow-default" {% if mode %}style="display:none;"{% endif %}>
         <div class="border-b border-stroke py-4 px-6.5">
             <h3 class="font-medium text-black">
                 <i class="fa-solid fa-gear mr-2 text-primary"></i> Pengaturan Cetak
@@ -17,22 +22,22 @@
             
             <div class="flex flex-wrap gap-6 mb-6">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="opt_identitas" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <input type="checkbox" id="opt_identitas" {% if mode == 'identitas' or not mode %}checked{% endif %} class="w-5 h-5 accent-primary cursor-pointer">
                     <span class="text-black font-medium">Stiker Identitas</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="opt_punggung" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <input type="checkbox" id="opt_punggung" {% if mode == 'punggung' or not mode %}checked{% endif %} class="w-5 h-5 accent-primary cursor-pointer">
                     <span class="text-black font-medium">Label Punggung</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="opt_barcode" checked class="w-5 h-5 accent-primary cursor-pointer">
+                    <input type="checkbox" id="opt_barcode" {% if mode == 'barcode' or not mode %}checked{% endif %} class="w-5 h-5 accent-primary cursor-pointer">
                     <span class="text-black font-medium">Stiker Barcode</span>
                 </label>
             </div>
             
             <div class="flex items-center gap-4">
                 <button onclick="cetakTerpilih()" class="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white hover:bg-opacity-90 transition gap-2">
-                    <i class="fa-solid fa-print mt-1"></i> Cetak PDF Terpilih
+                    <i class="fa-solid fa-print mt-1"></i> {% if mode == 'identitas' %}Cetak Label Identitas{% elif mode == 'punggung' %}Cetak Label Punggung{% elif mode == 'barcode' %}Cetak Barcode{% else %}Cetak PDF Terpilih{% endif %}
                 </button>
                 <span id="selectedBadge" class="inline-flex rounded-full bg-warning bg-opacity-20 py-1 px-3 text-sm font-medium text-warning">0 Buku Terpilih</span>
                 <button onclick="resetSelection()" class="text-sm text-danger hover:underline">Reset Pilihan</button>
